@@ -1,0 +1,53 @@
+name: E2E Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # permite rodar manualmente pela aba Actions
+
+jobs:
+  e2e:
+    name: Playwright + pytest (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v7
+
+      - name: Configurar Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip # reaproveita downloads do pip entre execuções
+
+      - name: Criar ambiente virtual (venv)
+        run: |
+          python -m venv .venv
+          # Coloca o .venv/bin no PATH dos próximos steps: "python", "pip",
+          # "pytest" e "playwright" passam a ser os do venv, sem precisar
+          # de "source .venv/bin/activate" em cada step.
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Instalar navegador do Playwright
+        # --with-deps instala também as bibliotecas de sistema que o Chromium precisa
+        run: playwright install --with-deps chromium
+
+      - name: Executar testes
+        run: pytest
+
+      - name: Publicar relatório HTML e traces
+        if: always() # publica mesmo (e principalmente) quando algum teste falha
+        uses: actions/upload-artifact@v7
+        with:
+          name: relatorio-e2e
+          path: |
+            reports/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore
