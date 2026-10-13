@@ -7,7 +7,8 @@ espalhadas pelos testes: se o site mudar um texto, ajustamos em um lugar só.
 
 PASSWORD = "secret_sauce"
 
-
+# Quantidade de produtos do catálogo (evita o "número mágico" 6 espalhado nos testes).
+TOTAL_PRODUCTS = 6
 class Users:
     STANDARD = "standard_user"
     LOCKED_OUT = "locked_out_user"

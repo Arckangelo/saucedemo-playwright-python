@@ -5,7 +5,7 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import PASSWORD, Messages, Users
+from data.constants import PASSWORD, TOTAL_PRODUCTS, Messages, Users
 from pages import InventoryPage, LoginPage
 
 

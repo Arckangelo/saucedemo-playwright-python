@@ -62,7 +62,9 @@ class InventoryPage(BasePage):
         return [parse_money(text) for text in self.item_prices.all_inner_texts()]
 
     def get_image_sources(self) -> list[str]:
-        return [img.get_attribute("src") for img in self.item_images.all()]
+        # get_attribute devolve None se o atributo não existir; "or ''" evita
+        # um TypeError mais adiante e mantém o retorno sempre como list[str].
+        return [img.get_attribute("src") or "" for img in self.item_images.all()]
 
     # --- Navegação ----------------------------------------------------------
     # Métodos que levam a outra página devolvem o Page Object da próxima tela.

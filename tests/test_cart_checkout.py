@@ -67,13 +67,13 @@ def test_checkout_exige_campos_obrigatorios(
     postal_code: str,
     expected_error: str,
 ):
-    page = checkout_information_page
-    page.fill_information(first_name, last_name, postal_code)
-    page.continue_button.click()
+    checkout = checkout_information_page
+    checkout.fill_information(first_name, last_name, postal_code)
+    checkout.continue_button.click()
 
-    expect(page.error_message).to_have_text(expected_error)
-    expect(page.page).to_have_url(re.compile(re.escape(CheckoutInformationPage.PATH) + "$"))
-
+    expect(checkout.error_message).to_have_text(expected_error)
+    # Continua no passo 1: o formulário inválido não pode avançar.
+    expect(checkout.page).to_have_url(re.compile(re.escape(checkout.PATH) + "$"))
 
 def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPage):
     inventory_page.add_to_cart(Products.BACKPACK)

@@ -83,7 +83,6 @@ def inventory_page(
 
 # --- Relatório ------------------------------------------------------------
 
-
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """Anexa um screenshot ao relatório HTML quando um teste falha.
@@ -99,5 +98,12 @@ def pytest_runtest_makereport(item, call):
     page = item.funcargs.get("page")
     if page is None or page.is_closed():
         return
-    screenshot = base64.b64encode(page.screenshot(full_page=True)).decode()
+    try:
+        png = page.screenshot(full_page=True)
+    except Exception as error:  # ex.: navegador travou junto com o teste
+        # Um erro DENTRO do hook quebraria o relatório inteiro e esconderia a
+        # falha original. O screenshot é um "extra": se não der, só avisamos.
+        report.sections.append(("screenshot", f"Não foi possível capturar: {error}"))
+        return
+    screenshot = base64.b64encode(png).decode()
     report.extras = [*getattr(report, "extras", []), extras.png(screenshot, "Screenshot")]

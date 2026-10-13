@@ -31,7 +31,7 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 
 - **24 execuções de teste** a partir de 10 cenários, usando parametrização.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
-- **Login feito uma única vez** por execução e reaproveitado, o que deixa a suíte rápida (cerca de 20 s).
+- **Login feito uma única vez** por execução e reaproveitado, o que deixa a suíte rápida (menos de 1 minuto).
 - **Bugs conhecidos documentados como testes**, em vez de ignorados.
 - **Relatório HTML** com screenshot automático de cada falha.
 - **CI no GitHub Actions** a cada push e pull request.
@@ -164,9 +164,10 @@ saucedemo-playwright-python/
 O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) roda a cada push, pull request ou manualmente pela aba **Actions**. Ele:
 
 1. Prepara o Python 3.13;
-2. Instala as dependências e o Chromium;
-3. Executa a suíte;
-4. Publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
+2. Cria um ambiente virtual (`venv`) e instala as dependências com `pip`;
+3. Instala o Chromium;
+4. Executa a suíte;
+5. Publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
 
 ---
 
@@ -175,11 +176,11 @@ O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) roda a cada push, 
 <details>
 <summary><b>Clique para ver os detalhes</b></summary>
 
-- **Seletores estáveis:** os elementos são localizados pelo atributo `data-test` do site, que não muda quando o layout muda.
+- **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. As exceções são o botão do menu, encontrado pelo papel acessível (como um leitor de tela o enxerga), e as imagens dos produtos, encontradas pela classe CSS.
 - **Login reaproveitado:** o login é feito uma única vez e o cookie de sessão é reutilizado. Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
 - **Resultados calculados, não decorados:** a ordenação é comparada com a lista ordenada a partir da própria tela, e no checkout subtotal, imposto e total são recalculados a partir dos preços exibidos.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
-- **Bugs conhecidos com `xfail(strict=True)`:** o bug de imagens do `problem_user` fica marcado como falha esperada. Se um dia for corrigido, o teste avisa que a marcação pode ser removida.
+- **Bugs conhecidos com `xfail(strict=True)`:** o bug de imagens do `problem_user` fica marcado como falha esperada. A marcação aceita apenas a falha específica desse bug: se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
 
 </details>
@@ -189,7 +190,7 @@ O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) roda a cada push, 
 Bugs já observados no `problem_user` que podem virar novos testes:
 
 - a ordenação de produtos não funciona;
-- no checkout, digitar o sobrenome apaga o campo de nome e impede a compra.
+- no checkout, o texto digitado no campo de sobrenome vai para o campo de nome, e o sobrenome fica vazio, o que impede a compra.
 
 ---
 
