@@ -1,0 +1,10 @@
+# Configuração do gitleaks: usa todas as regras padrão.
+# Exceções para falsos positivos devem ser adicionadas aqui como [[allowlists]],
+# específicas (arquivo E valor) e comentadas, nunca liberando um segredo real.
+# Hoje não há nenhuma: a varredura do histórico completo não teve achados, e a
+# senha pública do site de demonstração ("secret_sauce", em data/constants.py)
+# não é sinalizada pelas regras padrão.
+title = "saucedemo-playwright-python"
+
+[extend]
+useDefault = true
