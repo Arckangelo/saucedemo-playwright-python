@@ -32,6 +32,7 @@ e [bugs](relatorio-de-bugs.md)). Esforço e impacto são estimativas qualitativa
 | A8 | Mostrar mensagem ao usuário quando adicionar, remover, ordenar ou finalizar falhar, em vez de falhar em silêncio ou só no console. Trocar o `alert()` nativo por uma notificação na página. | BUG-010, BUG-014, BUG-015, BUG-018 | Médio | Alto |
 | A9 | Configurar a telemetria com credenciais reais por variável de ambiente, ou desligá-la. Hoje os erros "reportados ao Backtrace" nunca chegam. | BUG-006 | Baixo | Médio |
 | A10 | Servir as rotas da aplicação com HTTP 200 (fallback de SPA configurado no servidor), em vez de 404. | BUG-005 | Baixo | Médio |
+| A15 | No menu lateral, cancelar o timer que esconde o menu no próprio clique em "Open Menu" (ou conferir o estado atual quando o timer dispara, em vez do valor capturado ao agendá-lo). | BUG-023 | Baixo | Baixo |
 
 ### Acessibilidade
 
@@ -82,7 +83,7 @@ os três navegadores rodam em paralelo; o tempo total do CI quase não muda, só
 carrinho vazio a cada teste), pré-requisito para paralelizar. Medido localmente, 8 núcleos: suíte
 completa de ~81 s em série para ~24 s com `-n auto`; a execução do push (`-m "not known_bug"`)
 leva ~14 s. Cada worker faz o próprio login de sessão (`user_cookies` tem escopo de sessão por
-processo). O paralelismo expôs uma condição de corrida no menu do site, documentada nas decisões
+processo). O paralelismo expôs uma condição de corrida no menu do site (BUG-023), documentada nas decisões
 técnicas do README e contornada esperando um sinal concreto, sem retry.
 
 **B3. Acessibilidade no CI (com justificativa).** Nesta análise, o axe-core foi usado só na

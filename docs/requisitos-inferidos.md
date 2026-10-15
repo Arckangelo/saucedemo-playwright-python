@@ -140,7 +140,7 @@ Referência: `standard_user`. ✅ = igual ao `standard_user`; ❌ = diverge (bug
 | Menu: About | ✅ | — | ❌ aponta para `/error/404` (BUG-012) | ✅ | ✅ | ✅ |
 | Voltar ao inventário | ✅ | — | ✅ | ⏱ ~5,1 s | ✅ | ✅ |
 
-Bugs que afetam **todos** os usuários, inclusive o `standard_user`: BUG-001 a BUG-006.
+Bugs que afetam **todos** os usuários, inclusive o `standard_user`: BUG-001 a BUG-006 e BUG-023 (menu lateral que abre invisível se clicado logo após a página carregar, numa máquina lenta).
 
 ### Padrão nos botões do problem_user e do error_user
 

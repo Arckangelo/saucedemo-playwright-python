@@ -19,17 +19,18 @@ As sugestões de melhoria estão em [sugestoes-de-melhoria.md](sugestoes-de-melh
 
 ## Resumo
 
-**22 bugs confirmados**: 21 novos e 1 que a suíte já cobria (BUG-007). Cada um foi reproduzido
-em pelo menos duas execuções independentes e virou um teste automatizado `xfail(strict=True)`,
-que falha somente pelo defeito descrito.
+**23 bugs confirmados**: 22 novos e 1 que a suíte já cobria (BUG-007). Cada um foi reproduzido
+em pelo menos duas execuções independentes. 22 viraram um teste automatizado `xfail(strict=True)`,
+que falha somente pelo defeito descrito; o BUG-023, um bug de tempo, ficou sem teste de propósito
+e tem um script de reprodução controlada.
 
 | Severidade | Qtd. | | Usuário afetado | Qtd. |
 |---|:-:|---|---|:-:|
-| Crítica | 2 | | Todos (inclusive `standard_user`) | 6 |
+| Crítica | 2 | | Todos (inclusive `standard_user`) | 7 |
 | Alta | 3 | | `problem_user` | 7 |
 | Média | 11 | | `error_user` | 5 |
-| Baixa | 6 | | `visual_user` | 4 |
-| **Total** | **22** | | `performance_glitch_user` e `locked_out_user` | 0 |
+| Baixa | 7 | | `visual_user` | 4 |
+| **Total** | **23** | | `performance_glitch_user` e `locked_out_user` | 0 |
 
 | ID | Título | Usuário | Severidade | Prioridade | Issue |
 |---|---|---|---|---|:-:|
@@ -39,6 +40,7 @@ que falha somente pelo defeito descrito.
 | [BUG-004](#bug-004) | Produto inexistente entra no carrinho e é contado | todos | Média | P3 | [#5](https://github.com/Arckangelo/saucedemo-playwright-python/issues/5) |
 | [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 | [#6](https://github.com/Arckangelo/saucedemo-playwright-python/issues/6) |
 | [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 | [#7](https://github.com/Arckangelo/saucedemo-playwright-python/issues/7) |
+| [BUG-023](#bug-023) | Menu lateral abre invisível se clicado logo após a página carregar | todos | Baixa | P4 | (a criar) |
 | [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 | [#8](https://github.com/Arckangelo/saucedemo-playwright-python/issues/8) |
 | [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 | [#9](https://github.com/Arckangelo/saucedemo-playwright-python/issues/9) |
 | [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 | [#10](https://github.com/Arckangelo/saucedemo-playwright-python/issues/10) |
@@ -208,6 +210,42 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 **Obtido:** as chamadas vão para `events.backtrace.io/...?universe=UNIVERSE&token=TOKEN` (valores literais de exemplo), recebem **401 Unauthorized** e geram erros no console. Os eventos saem uma vez por sessão do navegador, na primeira carga. Com o `error_user` e o `locked_out_user` há também erros de CORS em `submit.backtrace.io`. Os erros reportados pelo próprio site, como o do BUG-014, nunca chegam ao destino.
 
 **Evidência:** [logs-rede-console-e-estado.json](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-006")
+
+<a id="bug-023"></a>
+### BUG-023: Menu lateral abre invisível se clicado logo após a página carregar
+
+| Usuário | Severidade | Prioridade | Teste |
+|---|---|---|---|
+| todos (`standard_user`) | Baixa | P4 | Sem teste automatizado (de propósito); reprodução em [`scripts/reproduzir_bug_023.py`](../scripts/reproduzir_bug_023.py) |
+
+**Sem teste automatizado, de propósito:** é um bug de tempo; um `xfail(strict=True)` passaria por acaso em parte das execuções e deixaria o CI instável.
+
+**Como foi descoberto:** ao paralelizar a suíte com pytest-xdist (vários navegadores ao mesmo tempo, máquina sob carga), o teste do Reset App State passou a falhar de forma intermitente, em 3 de 10 execuções completas. O clique em "Open Menu" era aceito, mas o link do menu nunca ficava visível. O trace do Playwright mostrou o menu num estado contraditório: `aria-hidden="false"` (aberto para o componente) e `hidden="true"` (invisível). A leitura do código do componente de menu do site (`react-burger-menu`) isolou a causa no site, não no teste.
+
+**Causa:** ao carregar a página (e ao fechar o menu), o componente agenda um timer de 500 ms que esconde o menu fechado (atributo `hidden`). O clique em "Open Menu" remove o `hidden` na hora, mas só marca o menu como aberto numa tarefa seguinte, que é quando o timer é cancelado. Se a máquina está lenta e o clique cai pouco antes dos 500 ms, o timer dispara no meio desse caminho e esconde o menu que acabou de abrir.
+
+**Pré-condições:** usuário logado; máquina lenta (reproduzido deixando a CPU do navegador 30x mais lenta pelas DevTools).
+
+**Passos**
+1. Abrir o inventário.
+2. Clicar em **Open Menu** entre ~300 e ~450 ms depois de a página aparecer.
+
+**Esperado:** o menu lateral abre.
+
+**Obtido:** o menu não aparece; o componente fica com `aria-hidden="false"` e `hidden="true"`.
+
+**Reprodutibilidade** (script de reprodução controlada, 2 rodadas):
+
+| Condição | Menu invisível |
+|---|---|
+| CPU 30x mais lenta, clique entre 300 e 450 ms | 32 de 36 tentativas (89%) |
+| CPU 30x mais lenta, clique entre 480 e 540 ms | 0 de 18 (0%) |
+| CPU 30x mais lenta, total | 32 de 54 (59%) |
+| CPU normal (controle), mesmos atrasos | 1 de 54 (2%), com o clique a 450 ms |
+
+**Efeito na suíte e contorno:** como os testes de menu clicam logo depois de a página carregar, a falha aparecia sob carga. O `Header.open_menu()` agora espera o atributo `hidden` aparecer no menu fechado antes de clicar. Esse é o sinal de que o timer de 500 ms já rodou e o clique é seguro. Com o contorno, a suíte paralela passou em 10 de 10 execuções. O bug do site continua lá; a suíte só deixou de tropeçar nele.
+
+**Evidência:** [resultado da reprodução controlada](evidencias/bug-023-reproducao.json) · [script de reprodução](../scripts/reproduzir_bug_023.py)
 
 ---
 

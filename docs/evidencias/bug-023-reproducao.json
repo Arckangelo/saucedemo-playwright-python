@@ -1,0 +1,434 @@
+{
+  "gerado_em": "2026-10-15T12:12:17+00:00",
+  "protocolo": {
+    "usuario": "standard_user",
+    "atrasos_ms": [
+      300,
+      330,
+      360,
+      390,
+      420,
+      450,
+      480,
+      510,
+      540
+    ],
+    "tentativas_por_atraso": 3,
+    "cpu_teste": "30x",
+    "cpu_controle": "1x",
+    "observacao_ms": 1500
+  },
+  "resumo": {
+    "cpu_30x": {
+      "menu_invisivel": 15,
+      "tentativas": 27,
+      "estados_quando_invisivel": [
+        [
+          "false",
+          "true"
+        ]
+      ],
+      "atrasos_com_falha_ms": [
+        300,
+        330,
+        360,
+        390,
+        420,
+        450
+      ]
+    },
+    "cpu_1x": {
+      "menu_invisivel": 1,
+      "tentativas": 27,
+      "estados_quando_invisivel": [
+        [
+          "false",
+          "true"
+        ]
+      ],
+      "atrasos_com_falha_ms": [
+        450
+      ]
+    }
+  },
+  "tentativas": [
+    {
+      "cpu": 30,
+      "atraso_ms": 300,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 300,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 300,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 330,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 330,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 330,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 360,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 360,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 360,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 390,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 390,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 390,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 420,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 420,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 420,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 450,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 450,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 450,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 30,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 300,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 300,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 300,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 330,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 330,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 330,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 360,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 360,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 360,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 390,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 390,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 390,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 420,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 420,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 420,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 450,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 450,
+      "menu_visivel": false,
+      "aria_hidden": "false",
+      "hidden": "true"
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 450,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 480,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 510,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    },
+    {
+      "cpu": 1,
+      "atraso_ms": 540,
+      "menu_visivel": true,
+      "aria_hidden": "false",
+      "hidden": null
+    }
+  ]
+}

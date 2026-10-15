@@ -35,7 +35,7 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 
 - **78 execuções de teste** a partir de 36 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
-- **22 bugs encontrados e documentados como testes**, em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md).
+- **23 bugs encontrados**, 22 deles documentados como testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md). O 23º, um bug de tempo, tem um script de reprodução controlada.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
 - **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; a suíte completa leva cerca de 25 s (medido localmente).
 - **Relatório HTML** com screenshot automático de cada falha.
@@ -159,7 +159,7 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 22 bugs confirmados (2 críticos, 3 altos, 11 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 23 bugs confirmados (2 críticos, 3 altos, 11 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques: o `visual_user` vê um preço no catálogo e paga outro; o `standard_user` consegue concluir
@@ -309,7 +309,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
 - **Confirmar que algo NÃO aconteceu, sem esperar um tempo fixo:** para provar um bug (o contador não mudou, o pedido não foi concluído), não adianta esperar o efeito, porque ele nunca vem. Em vez de aguardar um tempo fixo, o teste executa a ação, espera o navegador desenhar dois quadros (`wait_for_render`, com `requestAnimationFrame`) e lê o estado sem esperar mais. O navegador só desenha um quadro depois de processar o evento e a atualização de tela que ele dispara, então esse é o sinal concreto de que a ação já teve efeito, se fosse ter. A técnica foi validada no `standard_user`: em 175 repetições de 7 ações diferentes, o efeito sempre já estava na tela depois dos dois quadros. Onde há um sinal ainda mais direto (a página de pedido concluído apareceu, o contador sumiu), ele é usado.
 - **Exceções documentadas (esperas por sinal, não por tempo):**
-  - **Menu lateral:** o componente do menu (`react-burger-menu`) agenda um timer de 500 ms, ao carregar a página e ao fechar o menu, que esconde o menu fechado. Um clique antes desse timer, em máquina lenta, deixa o menu "aberto" mas invisível. A condição de corrida apareceu nas execuções em paralelo e foi reproduzida com a CPU 30x mais lenta. Antes de abrir o menu, o `Header` espera o atributo `hidden` aparecer no menu fechado, o sinal de que o timer já rodou (no máximo 500 ms depois da carga).
+  - **Menu lateral ([BUG-023](docs/relatorio-de-bugs.md#bug-023)):** o componente do menu (`react-burger-menu`) agenda um timer de 500 ms, ao carregar a página e ao fechar o menu, que esconde o menu fechado. Um clique antes desse timer, em máquina lenta, deixa o menu "aberto" mas invisível. A condição de corrida apareceu nas execuções em paralelo e foi reproduzida com a CPU 30x mais lenta. Antes de abrir o menu, o `Header` espera o atributo `hidden` aparecer no menu fechado, o sinal de que o timer já rodou (no máximo 500 ms depois da carga).
   - **Telemetria (BUG-006):** o teste espera até 10 s pela requisição ao Backtrace. A espera termina assim que ela sai; só chega ao limite se a telemetria tiver sido removida, e nesse caso o teste passa e o xfail avisa.
 - **Site indisponível não vira falha de teste:** uma checagem única no início da sessão (`pytest_sessionstart`) interrompe a execução se o site não responder. Não há retry: re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
 
