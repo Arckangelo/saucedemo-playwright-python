@@ -6,6 +6,7 @@ from playwright.sync_api import expect
 from data.constants import BUG_CHECK_TIMEOUT, PASSWORD, TOTAL_PRODUCTS, Products, Users
 from pages import InventoryPage, LoginPage
 from pages.base_page import parse_money
+from support.bug_checks import bug_check
 
 
 @pytest.mark.parametrize(
@@ -128,9 +129,7 @@ def test_reset_app_state_restaura_os_botoes(inventory_page: InventoryPage):
     expect(inventory_page.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
 
     for product in products:
-        try:
+        with bug_check(StaleCartButtonsError, f"Botão de '{product}' continua em 'Remove'"):
             expect(inventory_page.item_button(product)).to_have_text(
                 "Add to cart", timeout=BUG_CHECK_TIMEOUT
             )
-        except AssertionError:
-            raise StaleCartButtonsError(f"Botão de '{product}' continua em 'Remove'") from None

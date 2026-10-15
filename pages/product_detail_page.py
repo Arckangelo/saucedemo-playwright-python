@@ -1,3 +1,5 @@
+from urllib.parse import parse_qs, urlparse
+
 from playwright.sync_api import Page
 
 from pages.base_page import BasePage
@@ -18,9 +20,10 @@ class ProductDetailPage(BasePage):
         self.add_to_cart_button = page.get_by_test_id("add-to-cart")
         self.back_button = page.get_by_test_id("back-to-products")
 
-    def open_product(self, product_id: int | str) -> "ProductDetailPage":
+    def open_by_id(self, product_id: int | str) -> "ProductDetailPage":
+        """Abre o detalhe direto pela URL. Para abrir pelo nome, use InventoryPage.open_product()."""
         self.page.goto(f"{self.PATH}?id={product_id}")
         return self
 
-    def get_product_id(self) -> str:
-        return self.page.url.split("id=")[-1]
+    def get_product_id(self) -> str | None:
+        return parse_qs(urlparse(self.page.url).query).get("id", [None])[0]

@@ -1,9 +1,17 @@
-"""Saúde técnica da página: erros JavaScript, de console e respostas HTTP."""
+"""Saúde técnica da página: erros JavaScript, de console e respostas HTTP.
+
+Política para não depender de terceiros no CI: só são verificados as exceções
+JavaScript da própria página e o servidor do saucedemo. Erros de console e
+respostas de outros domínios (telemetria, fontes, CDNs) são coletados, mas
+ignorados, exceto no teste que documenta o BUG-006, que olha apenas o
+Backtrace e espera explicitamente pela resposta dele.
+"""
 
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Response, expect
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from data.constants import Messages, Products
 from pages import InventoryPage
@@ -15,6 +23,9 @@ class InternalRouteStatusError(AssertionError):
 
 class TelemetryError(AssertionError):
     """A telemetria do site gerou respostas HTTP de erro."""
+
+
+TELEMETRY_TIMEOUT = 10_000
 
 
 def test_compra_completa_sem_erros_de_javascript(browser_errors, inventory_page: InventoryPage):
@@ -50,11 +61,20 @@ def test_rotas_internas_respondem_http_200(page: Page):
     raises=TelemetryError,
     reason="BUG-006: a telemetria (Backtrace) usa credenciais de exemplo e recebe HTTP 401",
 )
-def test_telemetria_nao_gera_erros_http(browser_errors, inventory_page: InventoryPage):
-    # A telemetria é enviada em segundo plano; esperar a rede ficar ociosa
-    # garante que as respostas já chegaram antes de conferir.
-    inventory_page.page.wait_for_load_state("networkidle")
+def test_telemetria_nao_gera_erros_http(page: Page):
+    def is_telemetry(response: Response) -> bool:
+        return urlparse(response.url).netloc.endswith("backtrace.io")
 
-    telemetry = [r for r in browser_errors.failed_responses if "backtrace.io" in urlparse(r.split(" ", 1)[1]).netloc]
-    if telemetry:
-        raise TelemetryError(f"Respostas de erro da telemetria: {telemetry}")
+    # A telemetria sai uma única vez por sessão do navegador, na PRIMEIRA
+    # carga (recarregar ou navegar depois não envia de novo). Por isso a
+    # espera envolve a primeira navegação do contexto novo deste teste.
+    # expect_response espera a resposta de forma explícita, sem depender de a
+    # rede "ficar ociosa", o que pode acontecer antes de a telemetria sair.
+    try:
+        with page.expect_response(is_telemetry, timeout=TELEMETRY_TIMEOUT) as response_info:
+            page.goto("/")
+    except PlaywrightTimeoutError:
+        return  # nenhuma telemetria enviada: não há o que reportar
+    response = response_info.value
+    if response.status >= 400:
+        raise TelemetryError(f"Telemetria respondeu {response.status}: {response.url}")

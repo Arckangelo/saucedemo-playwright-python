@@ -115,7 +115,7 @@ flowchart TD
 | `localStorage` | `cart-contents` | Lista JSON de ids, ex.: `[4,0]` | Id inexistente (`[999]`, `[-1]`, `[6]`): o contador mostra 1, mas o carrinho fica vazio (BUG-004). Id repetido (`[4,4]`): o item aparece e é cobrado duas vezes (S-04). Texto que não é JSON: erro JavaScript não tratado, carrinho vazio (S-04). |
 | URL | `?id=N` | Id do produto no detalhe | Id inexistente: página "ITEM NOT FOUND" com "Add to cart" habilitado (BUG-004). |
 | HTTP | — | Aplicação de página única (SPA) | Rotas internas respondem **HTTP 404** e a página é montada pelo JavaScript (BUG-005). |
-| Telemetria | Backtrace | Envio de eventos com `UNIVERSE`/`TOKEN` literais | Erros 401 e CORS no console em todas as telas (BUG-006). |
+| Telemetria | Backtrace | Envio de eventos com `UNIVERSE`/`TOKEN` literais | Enviados na primeira carga de cada sessão do navegador; recebem 401 e geram erros no console (BUG-006). Os erros reportados pelo site (ex.: ordenação do `error_user`) causam erros de CORS. |
 
 ---
 

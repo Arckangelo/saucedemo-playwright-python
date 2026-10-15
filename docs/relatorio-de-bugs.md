@@ -201,11 +201,11 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 |---|---|---|---|
 | todos | Baixa | P4 | `tests/test_console_e_rede.py::test_telemetria_nao_gera_erros_http` |
 
-**Passos:** abrir qualquer tela com o console do navegador aberto.
+**Passos:** abrir o site em uma sessão nova do navegador, com o console aberto.
 
 **Esperado:** a telemetria (Backtrace) é enviada com sucesso ou fica desligada, sem erros.
 
-**Obtido:** as chamadas vão para `events.backtrace.io/...?universe=UNIVERSE&token=TOKEN` (valores literais de exemplo), recebem **401 Unauthorized** e poluem o console em todas as telas. Com o `error_user` e o `locked_out_user` há também erros de CORS em `submit.backtrace.io`. Os erros reportados pelo próprio site, como o do BUG-014, nunca chegam ao destino.
+**Obtido:** as chamadas vão para `events.backtrace.io/...?universe=UNIVERSE&token=TOKEN` (valores literais de exemplo), recebem **401 Unauthorized** e geram erros no console. Os eventos saem uma vez por sessão do navegador, na primeira carga. Com o `error_user` e o `locked_out_user` há também erros de CORS em `submit.backtrace.io`. Os erros reportados pelo próprio site, como o do BUG-014, nunca chegam ao destino.
 
 **Evidência:** [logs-rede-console-e-estado.json](evidencias/logs-rede-console-e-estado.json) (chave "BUG-006")
 

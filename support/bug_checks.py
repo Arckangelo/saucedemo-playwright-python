@@ -6,6 +6,9 @@ que não carregou) continua aparecendo como FAILED, em vez de se esconder
 atrás do xfail. É o mesmo padrão do BrokenProductImagesError.
 """
 
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+
 import pytest
 from playwright.sync_api import expect
 
@@ -29,6 +32,24 @@ class WrongProductDetailError(AssertionError):
     """O detalhe aberto não é o do produto clicado."""
 
 
+@contextmanager
+def bug_check(error: type[AssertionError], message: str | Callable[[], str]) -> Iterator[None]:
+    """Transforma a falha de um expect() na exceção específica do bug.
+
+    Uso:
+        with bug_check(AddToCartFailedError, "não entrou no carrinho"):
+            expect(badge).to_have_text("1", timeout=BUG_CHECK_TIMEOUT)
+
+    A falha original fica encadeada (`from cause`), então o relatório mostra
+    também o "esperado x obtido" do Playwright. `message` pode ser uma função,
+    para ler o estado da página só quando a verificação falha.
+    """
+    try:
+        yield
+    except AssertionError as cause:
+        raise error(message() if callable(message) else message) from cause
+
+
 def check_add_and_remove(inventory: InventoryPage, product: str):
     """Adiciona e remove um produto, conferindo o contador e o texto do botão."""
     button = inventory.item_button(product)
@@ -36,18 +57,14 @@ def check_add_and_remove(inventory: InventoryPage, product: str):
     expect(button).to_have_text("Add to cart")  # pré-condição: carrinho vazio
 
     button.click()
-    try:
+    with bug_check(AddToCartFailedError, f"'{product}' não entrou no carrinho"):
         expect(badge).to_have_text("1", timeout=BUG_CHECK_TIMEOUT)
         expect(button).to_have_text("Remove", timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        raise AddToCartFailedError(f"'{product}' não entrou no carrinho") from None
 
     button.click()
-    try:
+    with bug_check(RemoveFromCartFailedError, f"'{product}' não saiu do carrinho"):
         expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
         expect(button).to_have_text("Add to cart", timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        raise RemoveFromCartFailedError(f"'{product}' não saiu do carrinho") from None
 
 
 def add_remove_params(bug_id: str, username: str) -> list:

@@ -9,6 +9,7 @@ from playwright.sync_api import expect
 
 from data.constants import BUG_CHECK_TIMEOUT, TAX_RATE, Messages, Products
 from pages import CartPage, CheckoutInformationPage, InventoryPage
+from support.bug_checks import bug_check
 
 
 class EmptyCartOrderError(AssertionError):
@@ -109,12 +110,20 @@ def test_checkout_rejeita_campos_so_com_espacos(
     checkout.fill_information(first_name, last_name, postal_code)
     checkout.continue_button.click()
 
-    try:
+    with bug_check(
+        BlankFieldAcceptedError,
+        lambda: f"Campo {blank_field} só com espaços foi aceito; página atual: {checkout.page.url}",
+    ):
         expect(checkout.error_message).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
+
+
+def _blocked(locator) -> bool:
+    """True se o elemento não aparecer a tempo: a etapa foi bloqueada."""
+    try:
+        expect(locator).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
     except AssertionError:
-        raise BlankFieldAcceptedError(
-            f"Campo {blank_field} só com espaços foi aceito; página atual: {checkout.page.url}"
-        ) from None
+        return True
+    return False
 
 
 @pytest.mark.regression
@@ -127,15 +136,20 @@ def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     cart = inventory_page.go_to_cart()
     expect(cart.items).to_have_count(0)  # pré-condição: carrinho vazio
 
+    # A correção pode bloquear o pedido em qualquer etapa (botão Checkout
+    # escondido ou desabilitado, formulário que não avança, Finish que não
+    # conclui). Cada bloqueio conta como comportamento correto: o teste passa,
+    # e o xfail(strict=True) avisa que o bug foi corrigido.
+    if _blocked(cart.checkout_button) or not cart.checkout_button.is_enabled():
+        return
     information = cart.checkout()
     information.fill_information("Ana", "Souza", "72980-000")
     overview = information.continue_to_overview()
+    if _blocked(overview.finish_button):
+        return
     complete = overview.finish()
-
-    try:
-        expect(complete.complete_header).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        return  # o pedido não foi concluído: comportamento esperado
+    if _blocked(complete.complete_header):
+        return
     raise EmptyCartOrderError(f"Pedido vazio concluído: {complete.complete_header.inner_text()}")
 
 

@@ -56,7 +56,12 @@ def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
     expected = oracle.get_prices_by_name()
     shown = visual_inventory.get_prices_by_name()
 
-    divergent = {name: f"{shown[name]} (esperado {price})" for name, price in expected.items() if shown[name] != price}
+    # .get(): um produto ausente na tela aparece como None na divergência, em vez de KeyError.
+    divergent = {
+        name: f"{shown.get(name)} (esperado {price})"
+        for name, price in expected.items()
+        if shown.get(name) != price
+    }
     if divergent:
         raise PriceMismatchError(f"Preços divergentes: {divergent}")
 
@@ -70,7 +75,7 @@ def test_imagens_iguais_as_do_standard_user(visual_inventory, oracle):
     expected = oracle.get_images_by_name()
     shown = visual_inventory.get_images_by_name()
 
-    divergent = {name: shown[name] for name, src in expected.items() if shown[name] != src}
+    divergent = {name: shown.get(name) for name, src in expected.items() if shown.get(name) != src}
     if divergent:
         raise ImageMismatchError(f"Imagens divergentes: {divergent}")
 

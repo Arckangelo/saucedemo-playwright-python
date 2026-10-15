@@ -11,7 +11,7 @@ from playwright.sync_api import Page, expect
 
 from data.constants import BUG_CHECK_TIMEOUT, TOTAL_PRODUCTS, Messages, Products, Users
 from pages import CheckoutOverviewPage
-from support.bug_checks import add_remove_params, check_add_and_remove
+from support.bug_checks import add_remove_params, bug_check, check_add_and_remove
 
 pytestmark = pytest.mark.regression
 
@@ -48,10 +48,8 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
     expected = sorted(inventory.get_item_names(), reverse=True)
 
     inventory.sort_by("za")
-    try:
+    with bug_check(SortingBrokenError, lambda: f"Lista não ordenada; alertas: {alerts}"):
         expect(inventory.item_names).to_have_text(expected, timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        raise SortingBrokenError(f"Lista não ordenada; alertas: {alerts}") from None
     if alerts:
         raise SortingBrokenError(f"Alerta inesperado: {alerts}")
 
@@ -91,14 +89,11 @@ def test_checkout_exige_sobrenome(checkout_information):
     checkout_information.postal_code_input.fill("72980-000")
     checkout_information.continue_button.click()
 
-    try:
+    page = checkout_information.page
+    with bug_check(MissingLastNameAcceptedError, lambda: f"Sem erro de validação; página atual: {page.url}"):
         expect(checkout_information.error_message).to_have_text(
             Messages.LAST_NAME_REQUIRED, timeout=BUG_CHECK_TIMEOUT
         )
-    except AssertionError:
-        raise MissingLastNameAcceptedError(
-            f"Sem erro de validação; página atual: {checkout_information.page.url}"
-        ) from None
 
 
 @pytest.mark.xfail(
@@ -116,10 +111,9 @@ def test_finish_conclui_o_pedido(login_as, page: Page, browser_errors):
     expect(overview.item_names).to_have_text([Products.BACKPACK])
 
     complete = overview.finish()
-    try:
+    with bug_check(
+        FinishFailedError,
+        lambda: f"Continua em {page.url}; erros JavaScript: {browser_errors.page_errors}",
+    ):
         expect(page).to_have_url(re.compile(r"/checkout-complete\.html$"), timeout=BUG_CHECK_TIMEOUT)
         expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
-    except AssertionError:
-        raise FinishFailedError(
-            f"Continua em {page.url}; erros JavaScript: {browser_errors.page_errors}"
-        ) from None

@@ -14,6 +14,7 @@ from pages import CheckoutOverviewPage
 from support.bug_checks import (
     WrongProductDetailError,
     add_remove_params,
+    bug_check,
     check_add_and_remove,
     find_wrong_product_details,
 )
@@ -44,11 +45,9 @@ def test_ordenacao_por_nome_z_a(login_as):
     expected = sorted(inventory.get_item_names(), reverse=True)
 
     inventory.sort_by("za")
-    try:
+    with bug_check(SortNotAppliedError, lambda: f"Ordem exibida: {inventory.get_item_names()}"):
         expect(inventory.sort_select).to_have_value("za", timeout=BUG_CHECK_TIMEOUT)
         expect(inventory.item_names).to_have_text(expected, timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        raise SortNotAppliedError(f"Ordem exibida: {inventory.get_item_names()}") from None
 
 
 @pytest.mark.parametrize("product", add_remove_params("BUG-010", Users.PROBLEM))
@@ -100,8 +99,6 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(login_as, page: Page):
     complete = CheckoutOverviewPage(page).open().finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
-    try:
-        expect(complete.header.cart_badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        badge = complete.header.cart_badge.inner_text()
-        raise CartNotClearedError(f"Contador após o pedido: {badge}") from None
+    badge = complete.header.cart_badge
+    with bug_check(CartNotClearedError, lambda: f"Contador após o pedido: {badge.inner_text()}"):
+        expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)

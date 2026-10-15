@@ -20,6 +20,7 @@ Cypress 12+).
 
 import base64
 import re
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -48,34 +49,50 @@ def login_page(page: Page) -> LoginPage:
     return LoginPage(page).open()
 
 
+# O cookie de sessão do saucedemo expira 10 minutos após o login. Renovamos com
+# folga para um teste não receber um cookie que vence no meio da execução.
+COOKIE_REFRESH_MARGIN_S = 120
+
+
+def _expiring_soon(cookies: list) -> bool:
+    deadline = time.time() + COOKIE_REFRESH_MARGIN_S
+    # expires = -1 significa cookie de sessão do navegador (sem data de validade).
+    return any(0 < cookie.get("expires", -1) < deadline for cookie in cookies)
+
+
 @pytest.fixture(scope="session")
-def user_cookies(browser: Browser, base_url: str) -> Callable[[str], list]:
-    """Faz login pela interface UMA única vez por usuário e guarda os cookies.
+def user_cookies(browser: Browser, browser_context_args: dict) -> Callable[[str], list]:
+    """Faz login pela interface e guarda os cookies, reaproveitando-os por usuário.
 
     É o equivalente ao cy.session() do Cypress. O saucedemo guarda a sessão
     só em um cookie (`session-username`), então basta reaproveitá-lo.
     Como a fixture tem scope="session", ela não pode usar a fixture `page`
     (que é por teste), por isso criamos um contexto próprio e o fechamos.
+    `browser_context_args` são as mesmas opções (base_url, --device) que o
+    pytest-playwright usa no contexto de cada teste.
 
     Devolve uma função (padrão "factory as fixture"): o teste pede os cookies
-    do usuário de que precisa, e cada usuário loga no máximo uma vez.
+    do usuário de que precisa. Cada usuário loga uma vez, e de novo só quando
+    o cookie está para expirar.
     """
     cache: dict[str, list] = {}
 
     def get(username: str) -> list:
-        if username not in cache:
-            context = browser.new_context(base_url=base_url)
-            page = context.new_page()
-            LoginPage(page).open().login(username, PASSWORD)
-            expect(page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
-            cache[username] = context.cookies()
-            context.close()
+        if username not in cache or _expiring_soon(cache[username]):
+            context = browser.new_context(**browser_context_args)
+            try:
+                page = context.new_page()
+                LoginPage(page).open().login(username, PASSWORD)
+                expect(page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
+                cache[username] = context.cookies()
+            finally:
+                context.close()
         return cache[username]
 
     return get
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def standard_user_cookies(user_cookies) -> list:
     return user_cookies(Users.STANDARD)
 
@@ -107,17 +124,20 @@ def login_as(page: Page, context: BrowserContext, user_cookies) -> Callable[[str
 
 
 @pytest.fixture
-def oracle_inventory(browser: Browser, base_url: str, standard_user_cookies: list):
+def oracle_inventory(browser: Browser, browser_context_args: dict, standard_user_cookies: list):
     """Inventário do standard_user em um contexto SEPARADO, usado como oráculo.
 
     Testes de outros perfis comparam o que veem com o que o standard_user vê,
     em vez de fixar preços, imagens ou posições no código. O contexto é
-    próprio para não misturar cookies com o usuário sob teste.
+    próprio para não misturar cookies com o usuário sob teste, mas usa as
+    mesmas opções (viewport, --device) do contexto do teste, senão o layout
+    dos dois não seria comparável.
     """
-    context = browser.new_context(base_url=base_url)
-    inventory = _open_inventory(context.new_page(), context, standard_user_cookies)
-    yield inventory
-    context.close()
+    context = browser.new_context(**browser_context_args)
+    try:
+        yield _open_inventory(context.new_page(), context, standard_user_cookies)
+    finally:
+        context.close()
 
 
 @dataclass
@@ -129,13 +149,15 @@ class BrowserErrors:
     failed_responses: list[str] = field(default_factory=list)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def browser_errors(page: Page) -> BrowserErrors:
     """Registra exceções JavaScript, erros de console e respostas HTTP 4xx/5xx.
 
     page.on() inscreve uma função que o Playwright chama a cada evento
-    (≈ cy.on('uncaught:exception') e cy.intercept() juntos). Como a fixture
-    usa a mesma `page` do teste, os eventos são capturados desde o início.
+    (≈ cy.on('uncaught:exception') e cy.intercept() juntos). Com autouse, os
+    ouvintes são registrados antes de qualquer fixture que navegue, então
+    nada da primeira carga da página se perde, seja qual for a ordem dos
+    parâmetros do teste. Basta pedir `browser_errors` para ler os erros.
     """
     errors = BrowserErrors()
 
