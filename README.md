@@ -9,7 +9,9 @@
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
-Os testes simulam um usuário real no navegador: fazem login, navegam pelo catálogo, montam o carrinho e finalizam a compra, conferindo se cada etapa se comporta como esperado.
+Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e encontrou **23 bugs**, cada um com issue, evidências e, em 22 casos, um teste automatizado que avisa quando o bug for corrigido.
+
+<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 23 bugs encontrados por engenharia reversa no SauceDemo, sendo 2 críticos, 3 altos, 11 médios e 7 baixos; execuções de teste passaram de 24 para 78; 23 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-019 (visual_user, severidade alta): o cliente vê $48.99 no catálogo e paga $29.99 no carrinho."></p>
 
 > Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
 
@@ -35,9 +37,9 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 
 - **78 execuções de teste** a partir de 36 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
-- **23 bugs encontrados**, 22 deles documentados como testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md). O 23º, um bug de tempo, tem um script de reprodução controlada.
+- **23 bugs encontrados**, 22 deles documentados como testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O 23º, um bug de tempo, tem um script de reprodução controlada.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
-- **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; a suíte completa leva cerca de 25 s (medido localmente).
+- **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; no CI, cerca de 17 s a cada push e 33 s na suíte completa.
 - **Relatório HTML** com screenshot automático de cada falha.
 - **CI no GitHub Actions** a cada push e pull request.
 - **Pipeline com DevSecOps**: detecção de segredos, auditoria de dependências e análise estática a cada mudança.
@@ -142,7 +144,7 @@ O SauceDemo oferece usuários com comportamentos diferentes, e a suíte explora 
 
 | Usuário | Comportamento | Como é testado |
 |---|---|---|
-| `standard_user` | Funciona normalmente | Base de todos os fluxos e **oráculo** dos outros perfis |
+| `standard_user` | Funciona normalmente, mas compartilha os 7 bugs que afetam todos os usuários (ex.: pedido concluído com o carrinho vazio) | Base de todos os fluxos e **oráculo** dos outros perfis; 7 bugs registrados (6 como falhas conhecidas e 1 com script de reprodução) |
 | `locked_out_user` | Bloqueado no login | Verifica a mensagem de bloqueio, inclusive com cookie forjado |
 | `problem_user` | Defeitos de interface: imagens, ordenação, botões, detalhe errado e formulário | 7 bugs registrados como falhas conhecidas |
 | `performance_glitch_user` | ~5 s de atraso sempre que o inventário é renderizado | Usa um tempo de espera maior, sem pausas fixas; tempos medidos nos [requisitos](docs/requisitos-inferidos.md#tempos-do-performance_glitch_user) |
@@ -159,11 +161,15 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 23 bugs confirmados (2 críticos, 3 altos, 11 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 23 bugs confirmados (2 críticos, 3 altos, 11 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
+| [Issues dos bugs](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug) | Uma issue por bug confirmado, com severidade, passos para reproduzir, evidências e o teste que a cobre |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques: o `visual_user` vê um preço no catálogo e paga outro; o `standard_user` consegue concluir
-um pedido de $0.00 com o carrinho vazio; e o `error_user` não consegue finalizar a compra.
+um pedido de $0.00 com o carrinho vazio; e o `error_user` não consegue finalizar a compra. Além
+disso, o paralelismo da própria suíte revelou uma condição de corrida no menu do site
+([BUG-023](docs/relatorio-de-bugs.md#bug-023)): investigada a partir do trace do Playwright e
+reproduzida com a CPU 30x mais lenta, ela deixa o menu aberto porém invisível.
 
 ---
 
