@@ -156,7 +156,7 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) | 22 bugs confirmados (2 críticos, 3 altos, 11 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 22 bugs confirmados (2 críticos, 3 altos, 11 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques: o `visual_user` vê um preço no catálogo e paga outro; o `standard_user` consegue concluir
@@ -181,6 +181,7 @@ saucedemo-playwright-python/
 ├── docs/
 │   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
+│   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
 │   ├── sugestoes-de-melhoria.md  # Melhorias para a aplicação e para o projeto
 │   └── evidencias/               # Screenshots e logs citados no relatório
 ├── pages/                 # Page Objects (uma classe por tela)
@@ -191,6 +192,8 @@ saucedemo-playwright-python/
 │   ├── product_detail_page.py
 │   ├── cart_page.py
 │   └── checkout_page.py
+├── scripts/
+│   └── gerar_relatorio_pdf.py  # Gera docs/relatorio-de-bugs.pdf a partir do Markdown
 ├── support/
 │   └── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
 ├── tests/                 # Os testes, separados por área e por perfil
@@ -221,6 +224,14 @@ saucedemo-playwright-python/
   ```bash
   playwright show-trace test-results/<pasta-do-teste>/trace.zip
   ```
+
+- **Relatório de bugs em PDF:** [`docs/relatorio-de-bugs.pdf`](docs/relatorio-de-bugs.pdf) é gerado a partir do Markdown, com as screenshots das evidências incorporadas e links clicáveis. Depois de editar o relatório, regenere com:
+
+  ```bash
+  python scripts/gerar_relatorio_pdf.py
+  ```
+
+  O script usa o Chromium do Playwright e o GitHub CLI (`gh`, autenticado) para converter o Markdown, sem dependências extras no `requirements.txt`.
 
 ---
 
