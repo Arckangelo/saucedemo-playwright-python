@@ -47,9 +47,6 @@ class InventoryPage(BasePage):
     def remove_from_cart(self, product_name: str):
         self.item(product_name).get_by_role("button", name="Remove").click()
 
-    def item_price(self, product_name: str) -> Locator:
-        return self.item(product_name).get_by_test_id("inventory-item-price")
-
     def sort_by(self, option_value: str):
         # Valores do <select>: "az", "za", "lohi", "hilo" (≈ cy.select()).
         self.sort_select.select_option(option_value)

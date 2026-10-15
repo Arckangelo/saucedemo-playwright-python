@@ -15,9 +15,7 @@ class ProductDetailPage(BasePage):
         # Na tela de detalhe existe um único inventory-item, então os mesmos
         # data-test do inventário identificam o produto exibido.
         self.name = page.get_by_test_id("inventory-item-name")
-        self.price = page.get_by_test_id("inventory-item-price")
         self.add_to_cart_button = page.get_by_test_id("add-to-cart")
-        self.remove_button = page.get_by_test_id("remove")
         self.back_button = page.get_by_test_id("back-to-products")
 
     def open_product(self, product_id: int | str) -> "ProductDetailPage":

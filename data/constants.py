@@ -13,6 +13,10 @@ TOTAL_PRODUCTS = 6
 # O performance_glitch_user atrasa ~5 s toda renderização do inventário.
 SLOW_RENDER_TIMEOUT = 15_000
 
+# Tempo para confirmar que uma mudança esperada NÃO aconteceu (ex.: o contador
+# não atualizou). Menor que o padrão de 5 s para os bugs não deixarem a suíte lenta.
+BUG_CHECK_TIMEOUT = 2_000
+
 
 class Users:
     STANDARD = "standard_user"

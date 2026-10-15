@@ -13,7 +13,6 @@ class CartPage(BasePage):
         self.header = Header(page)
         self.items = page.get_by_test_id("inventory-item")
         self.item_names = page.get_by_test_id("inventory-item-name")
-        self.item_prices = page.get_by_test_id("inventory-item-price")
         self.checkout_button = page.get_by_test_id("checkout")
         self.continue_shopping_button = page.get_by_test_id("continue-shopping")
 
