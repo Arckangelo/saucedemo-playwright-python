@@ -40,7 +40,7 @@ e tem um script de reprodução controlada.
 | [BUG-004](#bug-004) | Produto inexistente entra no carrinho e é contado | todos | Média | P3 | [#5](https://github.com/Arckangelo/saucedemo-playwright-python/issues/5) |
 | [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 | [#6](https://github.com/Arckangelo/saucedemo-playwright-python/issues/6) |
 | [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 | [#7](https://github.com/Arckangelo/saucedemo-playwright-python/issues/7) |
-| [BUG-023](#bug-023) | Menu lateral abre invisível se clicado logo após a página carregar | todos | Baixa | P4 | (a criar) |
+| [BUG-023](#bug-023) | Menu lateral abre invisível se clicado logo após a página carregar | todos | Baixa | P4 | [#25](https://github.com/Arckangelo/saucedemo-playwright-python/issues/25) |
 | [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 | [#8](https://github.com/Arckangelo/saucedemo-playwright-python/issues/8) |
 | [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 | [#9](https://github.com/Arckangelo/saucedemo-playwright-python/issues/9) |
 | [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 | [#10](https://github.com/Arckangelo/saucedemo-playwright-python/issues/10) |
@@ -216,7 +216,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 | Usuário | Severidade | Prioridade | Teste |
 |---|---|---|---|
-| todos (`standard_user`) | Baixa | P4 | Sem teste automatizado (de propósito); reprodução em [`scripts/reproduzir_bug_023.py`](../scripts/reproduzir_bug_023.py) |
+| todos (`standard_user`) | Baixa | P4 | Sem teste automatizado (de propósito); reprodução em [`scripts/reproduzir_bug_023.py`](https://github.com/Arckangelo/saucedemo-playwright-python/blob/49c8a2924de60f1eb35a1b5ca4eff1201aa692df/scripts/reproduzir_bug_023.py) |
 
 **Sem teste automatizado, de propósito:** é um bug de tempo; um `xfail(strict=True)` passaria por acaso em parte das execuções e deixaria o CI instável.
 
@@ -245,7 +245,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Efeito na suíte e contorno:** como os testes de menu clicam logo depois de a página carregar, a falha aparecia sob carga. O `Header.open_menu()` agora espera o atributo `hidden` aparecer no menu fechado antes de clicar. Esse é o sinal de que o timer de 500 ms já rodou e o clique é seguro. Com o contorno, a suíte paralela passou em 10 de 10 execuções. O bug do site continua lá; a suíte só deixou de tropeçar nele.
 
-**Evidência:** [resultado da reprodução controlada](evidencias/bug-023-reproducao.json) · [script de reprodução](../scripts/reproduzir_bug_023.py)
+**Evidência:** [resultado da reprodução controlada](https://github.com/Arckangelo/saucedemo-playwright-python/blob/49c8a2924de60f1eb35a1b5ca4eff1201aa692df/docs/evidencias/bug-023-reproducao.json) · [script de reprodução](https://github.com/Arckangelo/saucedemo-playwright-python/blob/49c8a2924de60f1eb35a1b5ca4eff1201aa692df/scripts/reproduzir_bug_023.py)
 
 ---
 

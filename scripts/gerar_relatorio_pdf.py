@@ -64,6 +64,7 @@ SUMMARY_ROW = re.compile(
     r"^\| \[(BUG-\d{3})\]\(#bug-\d{3}\) \| .+? \| (\w+) \| \**(\w+)\** \| P\d \| \[#(\d+)\]\((\S+?)\) \|$", re.M
 )
 SEVERITIES = ["Crítica", "Alta", "Média", "Baixa"]
+NO_TEST_MARKER = "**Sem teste automatizado, de propósito:**"
 USERS = {
     "todos": "Todos (inclusive `standard_user`)",
     "problem": "`problem_user`",
@@ -99,12 +100,15 @@ def executive_summary(markdown: str, ref: str) -> str:
         top.group(1).strip(), flags=re.M,
     )
     date = re.search(r"^\| Data \| (.+?) \|$", markdown, re.M)
+    # Bugs sem teste na suíte trazem este marcador na própria seção do relatório.
+    tested = len(rows) - markdown.count(NO_TEST_MARKER)
     return "\n".join([
         "# Resumo executivo",
         "",
         f"**SauceDemo (Swag Labs)** · verificação em {date.group(1) if date else 's/d'} · "
-        f"**{len(rows)} bugs confirmados**, cada um com issue no GitHub e teste automatizado "
-        "(`xfail` que avisa quando o bug for corrigido).",
+        f"**{len(rows)} bugs confirmados**, cada um com issue no GitHub; {tested} com teste automatizado "
+        "(`xfail` que avisa quando o bug for corrigido)"
+        + (f" e {len(rows) - tested} sem teste, de propósito (bug de tempo, com script de reprodução)." if tested < len(rows) else "."),
         "",
         "### Bugs por usuário e severidade",
         "",
