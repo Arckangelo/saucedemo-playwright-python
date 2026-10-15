@@ -156,7 +156,7 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) | 22 bugs confirmados (2 críticos, 5 altos, 9 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) | 22 bugs confirmados (2 críticos, 3 altos, 11 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques: o `visual_user` vê um preço no catálogo e paga outro; o `standard_user` consegue concluir

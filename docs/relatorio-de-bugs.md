@@ -26,8 +26,8 @@ que falha somente pelo defeito descrito.
 | Severidade | Qtd. | | Usuário afetado | Qtd. |
 |---|:-:|---|---|:-:|
 | Crítica | 2 | | Todos (inclusive `standard_user`) | 6 |
-| Alta | 5 | | `problem_user` | 7 |
-| Média | 9 | | `error_user` | 5 |
+| Alta | 3 | | `problem_user` | 7 |
+| Média | 11 | | `error_user` | 5 |
 | Baixa | 6 | | `visual_user` | 4 |
 | **Total** | **22** | | `performance_glitch_user` e `locked_out_user` | 0 |
 
@@ -43,12 +43,12 @@ que falha somente pelo defeito descrito.
 | [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 |
 | [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 |
 | [BUG-010](#bug-010) | Adicionar falha em 3 produtos e remover falha nos outros 3 | problem | Alta | P1 |
-| [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Alta | P2 |
+| [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Média | P2 |
 | [BUG-012](#bug-012) | Link About aponta para uma página 404 | problem | Baixa | P3 |
 | [BUG-013](#bug-013) | Carrinho continua cheio depois do pedido | problem | Média | P2 |
 | [BUG-014](#bug-014) | Ordenação exibe "Sorting is broken!" e não ordena | error | Média | P2 |
 | [BUG-015](#bug-015) | Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript | error | Alta | P1 |
-| [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Alta | P2 |
+| [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Média | P2 |
 | [BUG-017](#bug-017) | Checkout avança sem sobrenome | error | Média | P2 |
 | [BUG-018](#bug-018) | Finish não conclui o pedido | error | **Crítica** | P1 |
 | [BUG-019](#bug-019) | Preços do inventário aleatórios e diferentes do cobrado | visual | Alta | P1 |
@@ -248,6 +248,8 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 |---|---|---|
 | **Crítica** | P1 | `tests/test_problem_user.py::test_sobrenome_fica_no_campo_de_sobrenome` |
 
+**Impacto (Crítica):** o `problem_user` não consegue concluir nenhuma compra, porque o formulário nunca aceita o sobrenome.
+
 **Pré-condições:** item no carrinho, no passo 1 do checkout.
 
 **Passos**
@@ -267,6 +269,8 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 |---|---|---|
 | Alta | P1 | `tests/test_problem_user.py::test_adicionar_e_remover_cada_produto` (6 casos) |
 
+**Impacto (Alta):** metade do catálogo não pode ser comprada, e o que entra no carrinho não sai, o que leva a compras indesejadas.
+
 **Passos:** para cada produto, clicar em **Add to cart** e depois em **Remove**, no inventário ou no detalhe.
 
 **Esperado:** o produto entra e sai do carrinho; contador e botão acompanham.
@@ -284,7 +288,9 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 | Severidade | Prioridade | Teste |
 |---|---|---|
-| Alta | P2 | `tests/test_problem_user.py::test_detalhe_mostra_o_produto_clicado` |
+| Média | P2 | `tests/test_problem_user.py::test_detalhe_mostra_o_produto_clicado` |
+
+**Severidade revisada (Alta → Média):** a tela exibe nome e preço coerentes com o produto aberto e nenhum valor errado é cobrado; é um erro de navegação, não de compra.
 
 **Passos:** no inventário, clicar no nome ou na imagem de um produto.
 
@@ -348,6 +354,8 @@ A falha é silenciosa, sem nenhuma mensagem.
 |---|---|---|
 | Alta | P1 | `tests/test_error_user.py::test_adicionar_e_remover_cada_produto` (6 casos) |
 
+**Impacto (Alta):** o mesmo do BUG-010: metade do catálogo não pode ser comprada e o que entra no carrinho não sai.
+
 **Passos e obtido:** os mesmos produtos do BUG-010 falham, mas aqui cada falha lança um erro JavaScript não tratado ("Failed to add item to the cart." / "Failed to remove item from cart."). O usuário não recebe nenhuma mensagem.
 
 **Evidência:** [botões](evidencias/bug-015-error-botoes-adicionar-remover.jpg) · [erros JavaScript](evidencias/logs-rede-console-e-estado.json) (chave "BUG-015")
@@ -357,7 +365,9 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 | Severidade | Prioridade | Teste |
 |---|---|---|
-| Alta | P2 | `tests/test_error_user.py::test_campo_sobrenome_aceita_texto` |
+| Média | P2 | `tests/test_error_user.py::test_campo_sobrenome_aceita_texto` |
+
+**Severidade revisada (Alta → Média):** o pedido segue sem sobrenome (dado incompleto), mas a compra não é bloqueada por isso; o bloqueio vem do BUG-018.
 
 **Passos:** no passo 1 do checkout, digitar "Souza" no sobrenome.
 
@@ -385,6 +395,8 @@ A falha é silenciosa, sem nenhuma mensagem.
 |---|---|---|
 | **Crítica** | P1 | `tests/test_error_user.py::test_finish_conclui_o_pedido` |
 
+**Impacto (Crítica):** o `error_user` não consegue concluir nenhuma compra; o último passo do fluxo não faz nada.
+
 **Pré-condições:** item no carrinho, no resumo (passo 2).
 
 **Passos:** clicar em **Finish**.
@@ -408,6 +420,8 @@ fontes web. Comparação: [inventário standard_user](evidencias/bug-019-a-022-i
 | Severidade | Prioridade | Teste |
 |---|---|---|
 | Alta | P1 | `tests/test_visual_user.py::test_precos_iguais_aos_do_standard_user` |
+
+**Impacto (Alta):** o preço anunciado difere do cobrado; numa loja real, é propaganda enganosa e expõe a empresa a reclamações e estornos.
 
 **Passos**
 1. Fazer login como `visual_user` e anotar o preço da Backpack.
