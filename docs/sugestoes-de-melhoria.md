@@ -54,17 +54,19 @@ A13 vêm de inspeção manual, fora do que a verificação automática cobre.
 
 ## Parte B: melhorias para este projeto
 
-Situação atual, medida em 15/10/2026 nesta máquina: **78 execuções, ~108 s em série**
-(42 passam e 36 são `xfail` de bugs conhecidos), só no Chromium.
+Situação na primeira entrega (15/10/2026): **78 execuções, ~108 s em série** (42 passam e 36
+são `xfail` de bugs conhecidos), só no Chromium. B2 e B6 já foram implementados, e a espera fixa
+de 2 s dos testes de bug foi trocada pela espera da renderização: hoje a suíte completa leva ~81 s
+em série e ~24 s em paralelo, medidos localmente com 8 núcleos.
 
 | # | Sugestão | Esforço | Impacto |
 |---|---|---|---|
 | B1 | **Matriz de navegadores no CI:** rodar Chromium, Firefox e WebKit em jobs paralelos (`strategy.matrix`) no `e2e-tests.yml`. | Baixo | Alto |
-| B2 | **Execução paralela com pytest-xdist** (`pytest -n auto`). | Baixo | Médio |
+| B2 | **Execução paralela com pytest-xdist** (`pytest -n auto`). **Implementado.** | Baixo | Médio |
 | B3 | **Checagem de acessibilidade no CI** com axe-core. | Médio | Alto |
 | B4 | **Testes visuais com screenshot de referência** só para componentes estáveis. | Médio | Médio |
 | B5 | **Relatório Allure.** | Médio | Médio |
-| B6 | **Execução agendada (nightly) contra produção.** | Baixo | Alto |
+| B6 | **Execução agendada (nightly) contra produção.** **Implementado.** | Baixo | Alto |
 | B7 | **Regressão por usuário como matriz única.** | Médio | Médio |
 | B8 | **Linter e formatação no CI** (ruff). | Baixo | Médio |
 | B9 | **Detecção de flakiness agendada.** | Baixo | Médio |
@@ -76,10 +78,12 @@ Situação atual, medida em 15/10/2026 nesta máquina: **78 execuções, ~108 s 
 layout e eventos (BUG-021, BUG-022, BUG-009), que podem variar entre motores. Com `strategy.matrix`
 os três navegadores rodam em paralelo; o tempo total do CI quase não muda, só o consumo de minutos.
 
-**B2. pytest-xdist.** A suíte já é independente por teste (contexto novo e carrinho vazio a cada
-teste), pré-requisito para paralelizar. Estimativa, não medida: 30 a 50 s com 4 workers, contra
-~108 s hoje. Cuidado: cada worker faz o próprio login de sessão (`user_cookies` tem escopo de
-sessão por processo), o que é aceitável aqui. Medir antes e depois ao adotar.
+**B2. pytest-xdist (implementado).** A suíte já era independente por teste (contexto novo e
+carrinho vazio a cada teste), pré-requisito para paralelizar. Medido localmente, 8 núcleos: suíte
+completa de ~81 s em série para ~24 s com `-n auto`; a execução do push (`-m "not known_bug"`)
+leva ~14 s. Cada worker faz o próprio login de sessão (`user_cookies` tem escopo de sessão por
+processo). O paralelismo expôs uma condição de corrida no menu do site, documentada nas decisões
+técnicas do README e contornada esperando um sinal concreto, sem retry.
 
 **B3. Acessibilidade no CI (com justificativa).** Nesta análise, o axe-core foi usado só na
 exploração, para não adicionar dependência. Vale levar para o CI porque:
@@ -103,9 +107,11 @@ próprio contêiner do CI e limitar a componentes estáveis (cabeçalho, card de
 **B5. Allure.** Agrupa os resultados por perfil, área e bug; mostra histórico entre execuções e
 anexa trace e screenshot. O pytest-html atual atende, mas não mostra tendência ao longo do tempo.
 
-**B6. Nightly contra produção.** O SauceDemo é um sistema de terceiros que muda sem aviso
-(o item "Dynamic Catalog" é um exemplo). Com `xfail(strict=True)`, uma execução diária detecta
-quando um bug some (XPASS) ou quando surge um comportamento novo, sem depender de push no repositório.
+**B6. Nightly contra produção (implementado).** O SauceDemo é um sistema de terceiros que muda sem
+aviso (o item "Dynamic Catalog" é um exemplo). Com `xfail(strict=True)`, a execução diária (09:00
+UTC) detecta quando um bug some (XPASS) ou quando surge um comportamento novo, sem depender de
+push no repositório. Em repositórios públicos, o GitHub desativa o agendamento após 60 dias sem
+atividade; é preciso reativá-lo pela aba Actions.
 
 **B7. Matriz de regressão por usuário.** Hoje cada perfil tem seu arquivo. Uma matriz única
 "funcionalidade × usuário", com o `standard_user` como oráculo, tornaria trivial incluir um perfil

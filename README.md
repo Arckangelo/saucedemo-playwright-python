@@ -37,7 +37,7 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
 - **22 bugs encontrados e documentados como testes**, em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md).
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
-- **Login feito uma única vez** por usuário e reaproveitado, o que deixa a suíte rápida (cerca de 2 minutos).
+- **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; a suíte completa leva cerca de 25 s (medido localmente).
 - **Relatório HTML** com screenshot automático de cada falha.
 - **CI no GitHub Actions** a cada push e pull request.
 - **Pipeline com DevSecOps**: detecção de segredos, auditoria de dependências e análise estática a cada mudança.
@@ -53,6 +53,7 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 | [pytest](https://docs.pytest.org/) | Executa os testes, com fixtures e parametrização |
 | [pytest-playwright](https://github.com/microsoft/playwright-pytest) | Integra o Playwright ao pytest |
 | [pytest-html](https://pytest-html.readthedocs.io/) | Gera o relatório HTML |
+| [pytest-xdist](https://pytest-xdist.readthedocs.io/) | Distribui os testes entre os núcleos da máquina (execução paralela) |
 | [GitHub Actions](https://docs.github.com/actions) | Roda a suíte automaticamente na nuvem |
 | gitleaks, pip-audit, Dependabot e CodeQL | Segurança do pipeline (ver [seção própria](#segurança-do-pipeline)) |
 
@@ -91,7 +92,9 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 | Comando | O que faz |
 |---|---|
-| `pytest` | Roda todos os testes, sem abrir o navegador |
+| `pytest` | Roda todos os testes, um por vez, sem abrir o navegador |
+| `pytest -n auto` | Roda em paralelo, um processo por núcleo (o mesmo que o CI usa) |
+| `pytest -n auto -m "not known_bug"` | Execução rápida do push: só o que deve passar, em paralelo |
 | `pytest --headed --slowmo 500` | Mostra o navegador e desacelera cada ação, útil para acompanhar |
 | `pytest -m smoke` | Roda só os fluxos críticos |
 | `pytest -m known_bug` | Roda só os testes que documentam bugs conhecidos |
@@ -237,13 +240,22 @@ saucedemo-playwright-python/
 
 ## Integração contínua
 
-O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) roda a cada push, pull request ou manualmente pela aba **Actions**. Ele:
+O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
 
-1. Prepara o Python 3.13;
-2. Cria um ambiente virtual (`venv`) e instala as dependências com `pip`;
-3. Instala o Chromium;
-4. Executa a suíte;
-5. Publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
+O que roda depende do gatilho:
+
+| Gatilho | O que executa | Para quê |
+|---|---|---|
+| Push em qualquer branch | `pytest -n auto -m "not known_bug"`: só os testes que devem passar | Feedback rápido a cada mudança |
+| Pull request | `pytest -n auto`: suíte completa, com os testes de bugs conhecidos | Garantir, antes do merge, que os bugs documentados continuam se comportando como registrado |
+| Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
+| Manual (aba **Actions**) | Suíte completa | Rodar sob demanda |
+
+Os testes de bugs conhecidos ficam fora do push porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
+
+> **Atenção ao agendamento:** o GitHub só agenda workflows a partir da branch padrão (`main`) e, em repositórios públicos como este, **desativa automaticamente os workflows agendados após 60 dias sem atividade** no repositório (sem commits, por exemplo). Para voltar a ter a execução diária, basta reativar o workflow na aba **Actions**.
+
+Antes de qualquer teste, o `conftest.py` confere se o saucedemo.com responde com a página do Swag Labs. Se não responder, a execução é interrompida com a mensagem `SITE INDISPONÍVEL`, em vez de gerar dezenas de falhas que pareceriam bugs.
 
 ---
 
@@ -294,8 +306,12 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Resultados calculados, não decorados:** a ordenação é comparada com a lista ordenada a partir da própria tela, e no checkout subtotal, imposto e total são recalculados a partir dos preços exibidos.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
 - **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. O `conftest.py` aplica o marker `known_bug` a todo xfail com "BUG-", então basta seguir a convenção.
-- **Confirmar que algo NÃO aconteceu, sem `sleep`:** para provar um bug (o contador não mudou, o pedido não foi concluído), a verificação usa `expect` com um tempo limite curto (`BUG_CHECK_TIMEOUT`, 2 s), para a suíte não ficar lenta esperando o padrão de 5 s.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
+- **Confirmar que algo NÃO aconteceu, sem esperar um tempo fixo:** para provar um bug (o contador não mudou, o pedido não foi concluído), não adianta esperar o efeito, porque ele nunca vem. Em vez de aguardar um tempo fixo, o teste executa a ação, espera o navegador desenhar dois quadros (`wait_for_render`, com `requestAnimationFrame`) e lê o estado sem esperar mais. O navegador só desenha um quadro depois de processar o evento e a atualização de tela que ele dispara, então esse é o sinal concreto de que a ação já teve efeito, se fosse ter. A técnica foi validada no `standard_user`: em 175 repetições de 7 ações diferentes, o efeito sempre já estava na tela depois dos dois quadros. Onde há um sinal ainda mais direto (a página de pedido concluído apareceu, o contador sumiu), ele é usado.
+- **Exceções documentadas (esperas por sinal, não por tempo):**
+  - **Menu lateral:** o componente do menu (`react-burger-menu`) agenda um timer de 500 ms, ao carregar a página e ao fechar o menu, que esconde o menu fechado. Um clique antes desse timer, em máquina lenta, deixa o menu "aberto" mas invisível. A condição de corrida apareceu nas execuções em paralelo e foi reproduzida com a CPU 30x mais lenta. Antes de abrir o menu, o `Header` espera o atributo `hidden` aparecer no menu fechado, o sinal de que o timer já rodou (no máximo 500 ms depois da carga).
+  - **Telemetria (BUG-006):** o teste espera até 10 s pela requisição ao Backtrace. A espera termina assim que ela sai; só chega ao limite se a telemetria tiver sido removida, e nesse caso o teste passa e o xfail avisa.
+- **Site indisponível não vira falha de teste:** uma checagem única no início da sessão (`pytest_sessionstart`) interrompe a execução se o site não responder. Não há retry: re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
 
 </details>
 
@@ -306,7 +322,6 @@ Os dois bugs do `problem_user` listados aqui antes (ordenação e sobrenome) ago
 
 - rodar a suíte em Chromium, Firefox e WebKit no CI (matriz de navegadores);
 - levar a checagem de acessibilidade com axe-core para o CI, falhando só em violações sérias e críticas;
-- paralelizar com pytest-xdist e agendar uma execução diária contra o site, para detectar quando um bug some ou surge;
 - adicionar ruff ao CI e ao `pre-commit`;
 - avaliar as 4 [suspeitas](docs/relatorio-de-bugs.md#suspeitas) do relatório, como o pedido que pode ser finalizado de novo pelo botão Voltar.
 
