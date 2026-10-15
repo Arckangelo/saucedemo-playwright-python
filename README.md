@@ -228,7 +228,7 @@ saucedemo-playwright-python/
   playwright show-trace test-results/<pasta-do-teste>/trace.zip
   ```
 
-- **Relatório de bugs em PDF:** [`docs/relatorio-de-bugs.pdf`](docs/relatorio-de-bugs.pdf) é gerado a partir do Markdown, com as screenshots das evidências incorporadas e links clicáveis. Depois de editar o relatório, regenere com:
+- **Relatório de bugs em PDF:** [`docs/relatorio-de-bugs.pdf`](docs/relatorio-de-bugs.pdf) é gerado a partir do Markdown: começa com uma página de resumo executivo (totais por usuário e severidade, os 3 bugs mais relevantes e links para as issues), seguida do relatório completo com as screenshots das evidências incorporadas e links clicáveis. Depois de editar o relatório, regenere com:
 
   ```bash
   python scripts/gerar_relatorio_pdf.py

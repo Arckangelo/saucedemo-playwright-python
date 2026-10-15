@@ -9,15 +9,20 @@ Não adiciona dependências ao requirements.txt:
   é o mesmo renderizador do site do GitHub; requer o GitHub CLI autenticado;
 - o PDF é impresso pelo Chromium do Playwright, que a suíte já usa.
 
-As screenshots citadas como evidência são incorporadas ao PDF (data URI), e
-links relativos viram links absolutos para o GitHub, para continuarem
-clicáveis fora do repositório.
+A primeira página é um resumo executivo montado a partir da tabela-resumo do
+próprio relatório (totais por usuário e severidade, os 3 bugs mais relevantes
+e links); o .md não é alterado. As screenshots citadas como evidência são
+incorporadas ao PDF (data URI), e links relativos viram links absolutos para o
+GitHub, para continuarem clicáveis fora do repositório.
 """
 
 import base64
 import html
+import os
 import re
 import subprocess
+import tempfile
+from collections import Counter
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -42,11 +47,81 @@ def published_ref() -> str:
         return git("rev-parse", "HEAD")
 
 
-def markdown_to_html(markdown_path: Path) -> str:
-    return subprocess.run(
-        ["gh", "api", "markdown", "-f", "mode=gfm", "-F", f"text=@{markdown_path}"],
-        check=True, capture_output=True, text=True,
-    ).stdout
+def markdown_to_html(markdown: str) -> str:
+    with tempfile.NamedTemporaryFile("w", suffix=".md", encoding="utf-8", delete=False) as file:
+        file.write(markdown)
+    try:
+        return subprocess.run(
+            ["gh", "api", "markdown", "-f", "mode=gfm", "-F", f"text=@{file.name}"],
+            check=True, capture_output=True, text=True,
+        ).stdout
+    finally:
+        os.unlink(file.name)
+
+
+# Linha da tabela-resumo: | [BUG-019](#bug-019) | Título | visual | Alta | P1 | [#20](url) |
+SUMMARY_ROW = re.compile(
+    r"^\| \[(BUG-\d{3})\]\(#bug-\d{3}\) \| .+? \| (\w+) \| \**(\w+)\** \| P\d \| \[#(\d+)\]\((\S+?)\) \|$", re.M
+)
+SEVERITIES = ["Crítica", "Alta", "Média", "Baixa"]
+USERS = {
+    "todos": "Todos (inclusive `standard_user`)",
+    "problem": "`problem_user`",
+    "error": "`error_user`",
+    "visual": "`visual_user`",
+}
+
+
+def executive_summary(markdown: str, ref: str) -> str:
+    """Página 1 do PDF, montada a partir das tabelas do relatório (nunca diverge dele)."""
+    rows = SUMMARY_ROW.findall(markdown)
+    if not rows:
+        raise SystemExit("Tabela-resumo do relatório não encontrada; confira o formato das linhas.")
+    issues = {bug: (number, url) for bug, _, _, number, url in rows}
+    counts = Counter((user, severity) for _, user, severity, _, _ in rows)
+    unknown = {user for _, user, _, _, _ in rows} - set(USERS) | {s for _, _, s, _, _ in rows} - set(SEVERITIES)
+    if unknown:
+        raise SystemExit(f"Valores fora do esperado na tabela-resumo: {unknown}")
+
+    table = ["| Usuário | " + " | ".join(SEVERITIES) + " | Total |", "|---|" + ":-:|" * (len(SEVERITIES) + 1)]
+    for key, label in USERS.items():
+        cells = [counts[(key, sev)] for sev in SEVERITIES]
+        table.append(f"| {label} | " + " | ".join(str(c or "–") for c in cells) + f" | **{sum(cells)}** |")
+    totals = [sum(counts[(u, sev)] for u in USERS) for sev in SEVERITIES]
+    table.append("| **Total** | " + " | ".join(f"**{t}**" for t in totals) + f" | **{len(rows)}** |")
+
+    top = re.search(r"\*\*Os 3 mais relevantes:\*\*\n\n((?:\d\. .+\n?)+)", markdown)
+    if not top:
+        raise SystemExit("Lista 'Os 3 mais relevantes' não encontrada no relatório.")
+    top3 = re.sub(
+        r"^(\d\. \*\*(BUG-\d{3}):\*\*)",
+        lambda m: f"{m.group(1)} ([issue #{issues[m.group(2)][0]}]({issues[m.group(2)][1]}))",
+        top.group(1).strip(), flags=re.M,
+    )
+    date = re.search(r"^\| Data \| (.+?) \|$", markdown, re.M)
+    return "\n".join([
+        "# Resumo executivo",
+        "",
+        f"**SauceDemo (Swag Labs)** · verificação em {date.group(1) if date else 's/d'} · "
+        f"**{len(rows)} bugs confirmados**, cada um com issue no GitHub e teste automatizado "
+        "(`xfail` que avisa quando o bug for corrigido).",
+        "",
+        "### Bugs por usuário e severidade",
+        "",
+        *table,
+        "",
+        "### Os 3 mais relevantes",
+        "",
+        top3,
+        "",
+        "### Onde encontrar",
+        "",
+        f"- **Relatório completo:** nas páginas seguintes deste PDF e [no GitHub]({REPO_URL}/blob/{ref}/docs/relatorio-de-bugs.md), "
+        "com passos para reproduzir e evidências de cada bug.",
+        f"- **Issues:** [todos os bugs com a label `bug`]({REPO_URL}/issues?q=is%3Aissue+label%3Abug); "
+        "cada linha da tabela-resumo do relatório também aponta para a sua issue.",
+        "- **Testes:** `pytest -m known_bug` roda só os testes que documentam estes bugs.",
+    ])
 
 
 def add_heading_ids(body: str) -> str:
@@ -142,12 +217,19 @@ figure { margin: 6pt 0 10pt; break-inside: avoid; text-align: center; }
 figure img { max-width: 100%; max-height: 105mm; border: 1px solid #d0d7de; }
 figcaption { font-size: 8pt; color: #59636e; margin-top: 2pt; }
 .anchor, .octicon { display: none; }
+.executive { break-after: page; }
+.executive h1 { font-size: 22pt; }
+.executive table { font-size: 10pt; }
+.executive td:not(:first-child), .executive th:not(:first-child) { text-align: center; }
 """
 
 
 def main():
     ref = published_ref()
-    body = embed_evidence(fix_links(add_heading_ids(markdown_to_html(SOURCE)), ref))
+    markdown = SOURCE.read_text(encoding="utf-8")
+    summary_html = markdown_to_html(executive_summary(markdown, ref))
+    combined = f'<section class="executive">{summary_html}</section>{markdown_to_html(markdown)}'
+    body = embed_evidence(fix_links(add_heading_ids(combined), ref))
     document = (
         f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">'
         f"<title>Relatório de bugs: SauceDemo</title><style>{CSS}</style></head>"
