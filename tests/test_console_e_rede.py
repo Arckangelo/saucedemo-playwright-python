@@ -27,6 +27,7 @@ class TelemetryError(AssertionError):
 
 
 TELEMETRY_TIMEOUT = 10_000
+TELEMETRY_HOST = "backtrace.io"
 
 
 def test_compra_completa_sem_erros_de_javascript(browser_errors, inventory_page: InventoryPage):
@@ -64,7 +65,9 @@ def test_rotas_internas_respondem_http_200(page: Page):
 )
 def test_telemetria_nao_gera_erros_http(page: Page):
     def is_telemetry(request: Request) -> bool:
-        return urlparse(request.url).netloc.endswith("backtrace.io")
+        # Compara o host exato (ou subdomínio): endswith("backtrace.io") aceitaria "evilbacktrace.io".
+        host = urlparse(request.url).hostname or ""
+        return host == TELEMETRY_HOST or host.endswith("." + TELEMETRY_HOST)
 
     # A telemetria sai uma única vez por sessão do navegador, na PRIMEIRA
     # carga (recarregar ou navegar depois não envia de novo). Por isso a
