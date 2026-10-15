@@ -31,30 +31,30 @@ que falha somente pelo defeito descrito.
 | Baixa | 6 | | `visual_user` | 4 |
 | **Total** | **22** | | `performance_glitch_user` e `locked_out_user` | 0 |
 
-| ID | Título | Usuário | Severidade | Prioridade |
-|---|---|---|---|---|
-| [BUG-001](#bug-001) | Pedido é concluído com o carrinho vazio | todos | Média | P2 |
-| [BUG-002](#bug-002) | Checkout aceita campos preenchidos só com espaços | todos | Média | P2 |
-| [BUG-003](#bug-003) | Reset App State deixa os botões em "Remove" | todos | Baixa | P3 |
-| [BUG-004](#bug-004) | Produto inexistente entra no carrinho e é contado | todos | Média | P3 |
-| [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 |
-| [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 |
-| [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 |
-| [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 |
-| [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 |
-| [BUG-010](#bug-010) | Adicionar falha em 3 produtos e remover falha nos outros 3 | problem | Alta | P1 |
-| [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Média | P2 |
-| [BUG-012](#bug-012) | Link About aponta para uma página 404 | problem | Baixa | P3 |
-| [BUG-013](#bug-013) | Carrinho continua cheio depois do pedido | problem | Média | P2 |
-| [BUG-014](#bug-014) | Ordenação exibe "Sorting is broken!" e não ordena | error | Média | P2 |
-| [BUG-015](#bug-015) | Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript | error | Alta | P1 |
-| [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Média | P2 |
-| [BUG-017](#bug-017) | Checkout avança sem sobrenome | error | Média | P2 |
-| [BUG-018](#bug-018) | Finish não conclui o pedido | error | **Crítica** | P1 |
-| [BUG-019](#bug-019) | Preços do inventário aleatórios e diferentes do cobrado | visual | Alta | P1 |
-| [BUG-020](#bug-020) | Backpack exibe a imagem de erro | visual | Baixa | P3 |
-| [BUG-021](#bug-021) | Ícone do carrinho deslocado sobre a ordenação | visual | Média | P3 |
-| [BUG-022](#bug-022) | Botão do último produto desalinhado | visual | Baixa | P4 |
+| ID | Título | Usuário | Severidade | Prioridade | Issue |
+|---|---|---|---|---|:-:|
+| [BUG-001](#bug-001) | Pedido é concluído com o carrinho vazio | todos | Média | P2 | [#2](https://github.com/Arckangelo/saucedemo-playwright-python/issues/2) |
+| [BUG-002](#bug-002) | Checkout aceita campos preenchidos só com espaços | todos | Média | P2 | [#3](https://github.com/Arckangelo/saucedemo-playwright-python/issues/3) |
+| [BUG-003](#bug-003) | Reset App State deixa os botões em "Remove" | todos | Baixa | P3 | [#4](https://github.com/Arckangelo/saucedemo-playwright-python/issues/4) |
+| [BUG-004](#bug-004) | Produto inexistente entra no carrinho e é contado | todos | Média | P3 | [#5](https://github.com/Arckangelo/saucedemo-playwright-python/issues/5) |
+| [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 | [#6](https://github.com/Arckangelo/saucedemo-playwright-python/issues/6) |
+| [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 | [#7](https://github.com/Arckangelo/saucedemo-playwright-python/issues/7) |
+| [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 | [#8](https://github.com/Arckangelo/saucedemo-playwright-python/issues/8) |
+| [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 | [#9](https://github.com/Arckangelo/saucedemo-playwright-python/issues/9) |
+| [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 | [#10](https://github.com/Arckangelo/saucedemo-playwright-python/issues/10) |
+| [BUG-010](#bug-010) | Adicionar falha em 3 produtos e remover falha nos outros 3 | problem | Alta | P1 | [#11](https://github.com/Arckangelo/saucedemo-playwright-python/issues/11) |
+| [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Média | P2 | [#12](https://github.com/Arckangelo/saucedemo-playwright-python/issues/12) |
+| [BUG-012](#bug-012) | Link About aponta para uma página 404 | problem | Baixa | P3 | [#13](https://github.com/Arckangelo/saucedemo-playwright-python/issues/13) |
+| [BUG-013](#bug-013) | Carrinho continua cheio depois do pedido | problem | Média | P2 | [#14](https://github.com/Arckangelo/saucedemo-playwright-python/issues/14) |
+| [BUG-014](#bug-014) | Ordenação exibe "Sorting is broken!" e não ordena | error | Média | P2 | [#15](https://github.com/Arckangelo/saucedemo-playwright-python/issues/15) |
+| [BUG-015](#bug-015) | Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript | error | Alta | P1 | [#16](https://github.com/Arckangelo/saucedemo-playwright-python/issues/16) |
+| [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Média | P2 | [#17](https://github.com/Arckangelo/saucedemo-playwright-python/issues/17) |
+| [BUG-017](#bug-017) | Checkout avança sem sobrenome | error | Média | P2 | [#18](https://github.com/Arckangelo/saucedemo-playwright-python/issues/18) |
+| [BUG-018](#bug-018) | Finish não conclui o pedido | error | **Crítica** | P1 | [#19](https://github.com/Arckangelo/saucedemo-playwright-python/issues/19) |
+| [BUG-019](#bug-019) | Preços do inventário aleatórios e diferentes do cobrado | visual | Alta | P1 | [#20](https://github.com/Arckangelo/saucedemo-playwright-python/issues/20) |
+| [BUG-020](#bug-020) | Backpack exibe a imagem de erro | visual | Baixa | P3 | [#21](https://github.com/Arckangelo/saucedemo-playwright-python/issues/21) |
+| [BUG-021](#bug-021) | Ícone do carrinho deslocado sobre a ordenação | visual | Média | P3 | [#22](https://github.com/Arckangelo/saucedemo-playwright-python/issues/22) |
+| [BUG-022](#bug-022) | Botão do último produto desalinhado | visual | Baixa | P4 | [#23](https://github.com/Arckangelo/saucedemo-playwright-python/issues/23) |
 
 **Os 3 mais relevantes:**
 
@@ -116,7 +116,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** o resumo mostra "Item total: $0" e "Total: $0.00", e o pedido é concluído com "Thank you for your order!".
 
-**Evidência:** [resumo vazio](evidencias/bug-001-resumo-carrinho-vazio.jpg) · [pedido concluído](evidencias/bug-001-pedido-vazio-concluido.jpg)
+**Evidência:** [resumo vazio](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-001-resumo-carrinho-vazio.jpg) · [pedido concluído](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-001-pedido-vazio-concluido.jpg)
 
 <a id="bug-002"></a>
 ### BUG-002: Checkout aceita campos preenchidos só com espaços
@@ -135,7 +135,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** o formulário avança para o resumo nos três casos; a validação não ignora espaços.
 
-**Evidência:** [os três campos com espaços, aceitos](evidencias/bug-002-campos-so-com-espacos-aceitos.jpg)
+**Evidência:** [os três campos com espaços, aceitos](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-002-campos-so-com-espacos-aceitos.jpg)
 
 <a id="bug-003"></a>
 ### BUG-003: Reset App State deixa os botões em "Remove"
@@ -154,7 +154,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** o contador some e o `localStorage` é limpo, mas os botões continuam em "Remove" até recarregar a página. A tela mostra um estado que não existe mais.
 
-**Evidência:** [botões em Remove sem contador](evidencias/bug-003-reset-app-state-botoes-remove.jpg)
+**Evidência:** [botões em Remove sem contador](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-003-reset-app-state-botoes-remove.jpg)
 
 <a id="bug-004"></a>
 ### BUG-004: Produto inexistente entra no carrinho e é contado
@@ -177,7 +177,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** o contador mostra **1**, mas o carrinho fica vazio; o checkout segue até um resumo sem subtotal, imposto nem total.
 
-**Evidência:** [produto inexistente adicionado](evidencias/bug-004-produto-inexistente-no-carrinho.jpg) · [contador 1 com carrinho vazio](evidencias/bug-004-contador-1-carrinho-vazio.jpg)
+**Evidência:** [produto inexistente adicionado](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-004-produto-inexistente-no-carrinho.jpg) · [contador 1 com carrinho vazio](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-004-contador-1-carrinho-vazio.jpg)
 
 <a id="bug-005"></a>
 ### BUG-005: Rotas internas respondem HTTP 404
@@ -192,7 +192,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** HTTP **404** em todas; só `/` responde 200. A página aparece porque o JavaScript a monta mesmo assim, mas monitoramento, buscadores, ferramentas de link-check e navegadores sem JavaScript tratam as rotas como inexistentes.
 
-**Evidência:** [logs-rede-console-e-estado.json](evidencias/logs-rede-console-e-estado.json) (chave "BUG-005")
+**Evidência:** [logs-rede-console-e-estado.json](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-005")
 
 <a id="bug-006"></a>
 ### BUG-006: Telemetria com credenciais de exemplo gera erros 401
@@ -207,7 +207,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** as chamadas vão para `events.backtrace.io/...?universe=UNIVERSE&token=TOKEN` (valores literais de exemplo), recebem **401 Unauthorized** e geram erros no console. Os eventos saem uma vez por sessão do navegador, na primeira carga. Com o `error_user` e o `locked_out_user` há também erros de CORS em `submit.backtrace.io`. Os erros reportados pelo próprio site, como o do BUG-014, nunca chegam ao destino.
 
-**Evidência:** [logs-rede-console-e-estado.json](evidencias/logs-rede-console-e-estado.json) (chave "BUG-006")
+**Evidência:** [logs-rede-console-e-estado.json](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-006")
 
 ---
 
@@ -224,7 +224,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Esperado:** cada produto com a sua imagem. **Obtido:** os 6 produtos exibem a mesma imagem `sl-404` (um cachorro).
 
-**Evidência:** [inventário do problem_user](evidencias/bug-007-problem-imagens-sl-404.jpg)
+**Evidência:** [inventário do problem_user](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-007-problem-imagens-sl-404.jpg)
 
 <a id="bug-008"></a>
 ### BUG-008: Ordenação não muda a lista
@@ -239,7 +239,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** a lista não muda e o seletor volta para "Name (A to Z)".
 
-**Evidência:** [lista ainda em A–Z](evidencias/bug-008-problem-ordenacao-z-a-sem-efeito.jpg)
+**Evidência:** [lista ainda em A–Z](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-008-problem-ordenacao-z-a-sem-efeito.jpg)
 
 <a id="bug-009"></a>
 ### BUG-009: Sobrenome digitado vai para o campo de nome
@@ -260,7 +260,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Obtido:** o texto do sobrenome substitui o nome ("Souza" no campo de nome) e o sobrenome fica vazio. Digitando tecla a tecla, cada letra substitui a anterior no campo de nome (fica só "a"). O erro "Last Name is required" **impede concluir a compra**.
 
-**Evidência:** [nome com "Souza" e sobrenome vazio](evidencias/bug-009-problem-sobrenome-no-campo-nome.jpg)
+**Evidência:** [nome com "Souza" e sobrenome vazio](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-009-problem-sobrenome-no-campo-nome.jpg)
 
 <a id="bug-010"></a>
 ### BUG-010: Adicionar falha em 3 produtos e remover falha nos outros 3
@@ -281,7 +281,7 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 A falha é silenciosa, sem nenhuma mensagem.
 
-**Evidência:** [Bolt sem entrar; Backpack sem sair](evidencias/bug-010-problem-botoes-adicionar-remover.jpg)
+**Evidência:** [Bolt sem entrar; Backpack sem sair](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-010-problem-botoes-adicionar-remover.jpg)
 
 <a id="bug-011"></a>
 ### BUG-011: Detalhe abre o produto seguinte ao clicado
@@ -298,7 +298,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Obtido:** o link usa o id seguinte: Backpack abre o Fleece Jacket (id 5), Bike Light abre o Bolt T-Shirt (id 1), e assim por diante. O Fleece Jacket abre o id 6, que não existe ("ITEM NOT FOUND").
 
-**Evidência:** [clicou na Backpack e abriu o Fleece Jacket](evidencias/bug-011-problem-clicou-backpack-abriu-fleece.jpg) · [clicou no Fleece Jacket e abriu ITEM NOT FOUND](evidencias/bug-011-problem-clicou-fleece-item-not-found.jpg)
+**Evidência:** [clicou na Backpack e abriu o Fleece Jacket](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-011-problem-clicou-backpack-abriu-fleece.jpg) · [clicou no Fleece Jacket e abriu ITEM NOT FOUND](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-011-problem-clicou-fleece-item-not-found.jpg)
 
 <a id="bug-012"></a>
 ### BUG-012: Link About aponta para uma página 404
@@ -311,7 +311,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Esperado:** `https://saucelabs.com/`, como no `standard_user`. **Obtido:** `https://saucelabs.com/error/404`, que responde HTTP 404.
 
-**Evidência:** [logs-rede-console-e-estado.json](evidencias/logs-rede-console-e-estado.json) (chave "BUG-012")
+**Evidência:** [logs-rede-console-e-estado.json](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-012")
 
 <a id="bug-013"></a>
 ### BUG-013: Carrinho continua cheio depois do pedido
@@ -326,7 +326,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Esperado:** pedido concluído e carrinho vazio (RN-19). **Obtido:** pedido concluído, mas o contador continua em 1 e o item fica no `localStorage`.
 
-**Evidência:** [pedido concluído com contador 1](evidencias/bug-013-problem-carrinho-cheio-apos-pedido.jpg)
+**Evidência:** [pedido concluído com contador 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-013-problem-carrinho-cheio-apos-pedido.jpg)
 
 ---
 
@@ -345,7 +345,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Obtido:** aparece um alerta nativo "Sorting is broken! This error has been reported to Backtrace.", a lista não muda e o seletor volta para A–Z. O erro também não chega ao Backtrace (BUG-006).
 
-**Evidência:** [lista inalterada](evidencias/bug-014-error-ordenacao-sem-efeito.jpg) · [texto do alerta](evidencias/logs-rede-console-e-estado.json) (chave "BUG-014")
+**Evidência:** [lista inalterada](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-014-error-ordenacao-sem-efeito.jpg) · [texto do alerta](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-014")
 
 <a id="bug-015"></a>
 ### BUG-015: Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript
@@ -358,7 +358,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Passos e obtido:** os mesmos produtos do BUG-010 falham, mas aqui cada falha lança um erro JavaScript não tratado ("Failed to add item to the cart." / "Failed to remove item from cart."). O usuário não recebe nenhuma mensagem.
 
-**Evidência:** [botões](evidencias/bug-015-error-botoes-adicionar-remover.jpg) · [erros JavaScript](evidencias/logs-rede-console-e-estado.json) (chave "BUG-015")
+**Evidência:** [botões](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-015-error-botoes-adicionar-remover.jpg) · [erros JavaScript](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-015")
 
 <a id="bug-016"></a>
 ### BUG-016: Campo de sobrenome não aceita texto
@@ -373,7 +373,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Esperado:** o campo exibe "Souza". **Obtido:** o campo continua vazio, tanto com preenchimento direto quanto tecla a tecla.
 
-**Evidência:** [sobrenome vazio após digitar](evidencias/bug-016-error-sobrenome-vazio-apos-digitar.jpg)
+**Evidência:** [sobrenome vazio após digitar](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-016-error-sobrenome-vazio-apos-digitar.jpg)
 
 <a id="bug-017"></a>
 ### BUG-017: Checkout avança sem sobrenome
@@ -386,7 +386,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Esperado:** "Error: Last Name is required" (RN-15), como no `standard_user`. **Obtido:** avança para o resumo sem sobrenome. Combinado ao BUG-016, o pedido segue sem esse dado.
 
-**Evidência:** [resumo sem sobrenome](evidencias/bug-017-error-avancou-sem-sobrenome.jpg)
+**Evidência:** [resumo sem sobrenome](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-017-error-avancou-sem-sobrenome.jpg)
 
 <a id="bug-018"></a>
 ### BUG-018: Finish não conclui o pedido
@@ -403,7 +403,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Esperado:** página "Thank you for your order!". **Obtido:** nada acontece na tela; o usuário continua no resumo, sem mensagem. O clique lança o erro JavaScript "La.cesetRart is not a function". **A compra não pode ser concluída.**
 
-**Evidência:** [continua no resumo](evidencias/bug-018-error-finish-sem-efeito.jpg) · [erros JavaScript](evidencias/logs-rede-console-e-estado.json) (chave "BUG-018")
+**Evidência:** [continua no resumo](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-018-error-finish-sem-efeito.jpg) · [erros JavaScript](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-018")
 
 ---
 
@@ -411,8 +411,8 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 Os testes deste perfil usam o `standard_user` como **oráculo**: os valores esperados são lidos dele
 durante o teste. Posição e tamanho dos elementos usam tolerância de 5 px, após o carregamento das
-fontes web. Comparação: [inventário standard_user](evidencias/bug-019-a-022-inventario-standard_user.jpg) ·
-[inventário visual_user](evidencias/bug-019-a-022-inventario-visual_user.jpg).
+fontes web. Comparação: [inventário standard_user](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-019-a-022-inventario-standard_user.jpg) ·
+[inventário visual_user](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-019-a-022-inventario-visual_user.jpg).
 
 <a id="bug-019"></a>
 ### BUG-019: Preços do inventário aleatórios e diferentes do cobrado
@@ -437,7 +437,7 @@ fontes web. Comparação: [inventário standard_user](evidencias/bug-019-a-022-i
 - O carrinho, o detalhe e o resumo mostram o preço real, $29.99, que é o valor cobrado.
 - A ordenação por preço parece errada, porque usa os valores reais e não os exibidos.
 
-**Evidência:** [preços em 3 carregamentos seguidos](evidencias/bug-019-precos-3-carregamentos.json) · [carrinho com $29.99](evidencias/bug-019-visual-carrinho-preco-real.jpg) · [preço do inventário x carrinho](evidencias/logs-rede-console-e-estado.json) (chave "BUG-019")
+**Evidência:** [preços em 3 carregamentos seguidos](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-019-precos-3-carregamentos.json) · [carrinho com $29.99](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-019-visual-carrinho-preco-real.jpg) · [preço do inventário x carrinho](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-019")
 
 <a id="bug-020"></a>
 ### BUG-020: Backpack exibe a imagem de erro

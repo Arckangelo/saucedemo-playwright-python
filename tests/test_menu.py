@@ -31,7 +31,7 @@ def test_all_items_volta_para_o_inventario(inventory_page: InventoryPage):
             marks=pytest.mark.xfail(
                 strict=True,
                 raises=BrokenAboutLinkError,
-                reason="BUG-012: o About do problem_user aponta para saucelabs.com/error/404",
+                reason="BUG-012 (#13): o About do problem_user aponta para saucelabs.com/error/404",
             ),
         ),
     ],

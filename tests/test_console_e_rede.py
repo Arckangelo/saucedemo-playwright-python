@@ -43,7 +43,7 @@ def test_compra_completa_sem_erros_de_javascript(browser_errors, inventory_page:
 @pytest.mark.xfail(
     strict=True,
     raises=InternalRouteStatusError,
-    reason="BUG-005: rotas internas respondem HTTP 404 e dependem do JavaScript para abrir",
+    reason="BUG-005 (#6): rotas internas respondem HTTP 404 e dependem do JavaScript para abrir",
 )
 def test_rotas_internas_respondem_http_200(page: Page):
     paths = ["/", "/inventory.html", "/cart.html", "/checkout-step-one.html", "/inventory-item.html?id=4"]
@@ -60,7 +60,7 @@ def test_rotas_internas_respondem_http_200(page: Page):
 @pytest.mark.xfail(
     strict=True,
     raises=TelemetryError,
-    reason="BUG-006: a telemetria (Backtrace) usa credenciais de exemplo e recebe HTTP 401",
+    reason="BUG-006 (#7): a telemetria (Backtrace) usa credenciais de exemplo e recebe HTTP 401",
 )
 def test_telemetria_nao_gera_erros_http(page: Page):
     def is_telemetry(request: Request) -> bool:

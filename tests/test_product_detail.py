@@ -29,7 +29,7 @@ def test_url_do_detalhe_abre_o_produto_pelo_id(inventory_page: InventoryPage, pr
 @pytest.mark.xfail(
     strict=True,
     raises=PhantomCartItemError,
-    reason="BUG-004: produto inexistente pode ser adicionado e conta no carrinho",
+    reason="BUG-004 (#5): produto inexistente pode ser adicionado e conta no carrinho",
 )
 def test_produto_inexistente_nao_entra_no_carrinho(inventory_page: InventoryPage, invalid_id: str):
     detail = ProductDetailPage(inventory_page.page).open_by_id(invalid_id)
@@ -46,7 +46,7 @@ def test_produto_inexistente_nao_entra_no_carrinho(inventory_page: InventoryPage
 @pytest.mark.xfail(
     strict=True,
     raises=PhantomCartItemError,
-    reason="BUG-004: o carrinho conta ids inexistentes vindos do localStorage",
+    reason="BUG-004 (#5): o carrinho conta ids inexistentes vindos do localStorage",
 )
 def test_carrinho_ignora_ids_inexistentes_no_localstorage(inventory_page: InventoryPage):
     page = inventory_page.page

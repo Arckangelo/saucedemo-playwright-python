@@ -97,7 +97,7 @@ def test_checkout_exige_campos_obrigatorios(
 @pytest.mark.xfail(
     strict=True,
     raises=BlankFieldAcceptedError,
-    reason="BUG-002: o checkout aceita campos preenchidos só com espaços",
+    reason="BUG-002 (#3): o checkout aceita campos preenchidos só com espaços",
 )
 def test_checkout_rejeita_campos_so_com_espacos(
     checkout_information_page: CheckoutInformationPage,
@@ -130,7 +130,7 @@ def _blocked(locator) -> bool:
 @pytest.mark.xfail(
     strict=True,
     raises=EmptyCartOrderError,
-    reason="BUG-001: é possível concluir um pedido com o carrinho vazio",
+    reason="BUG-001 (#2): é possível concluir um pedido com o carrinho vazio",
 )
 def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     cart = inventory_page.go_to_cart()

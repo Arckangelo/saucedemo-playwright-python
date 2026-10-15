@@ -35,7 +35,7 @@ class FinishFailedError(AssertionError):
 @pytest.mark.xfail(
     strict=True,
     raises=SortingBrokenError,
-    reason="BUG-014: a ordenação do error_user exibe 'Sorting is broken!' e não ordena",
+    reason="BUG-014 (#15): a ordenação do error_user exibe 'Sorting is broken!' e não ordena",
 )
 def test_ordenacao_por_nome_z_a(login_as, page: Page):
     # Sem um handler, o Playwright fecha os alertas sozinho e não saberíamos
@@ -54,7 +54,7 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
         raise SortingBrokenError(f"Alerta inesperado: {alerts}")
 
 
-@pytest.mark.parametrize("product", add_remove_params("BUG-015", Users.ERROR))
+@pytest.mark.parametrize("product", add_remove_params("BUG-015 (#16)", Users.ERROR))
 def test_adicionar_e_remover_cada_produto(login_as, product: str):
     check_add_and_remove(login_as(Users.ERROR), product)
 
@@ -69,7 +69,7 @@ def checkout_information(login_as):
 @pytest.mark.xfail(
     strict=True,
     raises=LastNameInputIgnoredError,
-    reason="BUG-016: o campo de sobrenome do error_user não aceita texto",
+    reason="BUG-016 (#17): o campo de sobrenome do error_user não aceita texto",
 )
 def test_campo_sobrenome_aceita_texto(checkout_information):
     checkout_information.fill_information("Ana", "Souza", "72980-000")
@@ -82,7 +82,7 @@ def test_campo_sobrenome_aceita_texto(checkout_information):
 @pytest.mark.xfail(
     strict=True,
     raises=MissingLastNameAcceptedError,
-    reason="BUG-017: o error_user avança no checkout sem sobrenome",
+    reason="BUG-017 (#18): o error_user avança no checkout sem sobrenome",
 )
 def test_checkout_exige_sobrenome(checkout_information):
     checkout_information.first_name_input.fill("Ana")
@@ -99,7 +99,7 @@ def test_checkout_exige_sobrenome(checkout_information):
 @pytest.mark.xfail(
     strict=True,
     raises=FinishFailedError,
-    reason="BUG-018: o Finish do error_user não conclui o pedido (erro JavaScript)",
+    reason="BUG-018 (#19): o Finish do error_user não conclui o pedido (erro JavaScript)",
 )
 def test_finish_conclui_o_pedido(login_as, page: Page, browser_errors):
     inventory = login_as(Users.ERROR)

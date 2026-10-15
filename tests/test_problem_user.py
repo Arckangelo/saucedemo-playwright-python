@@ -37,7 +37,7 @@ class CartNotClearedError(AssertionError):
 @pytest.mark.xfail(
     strict=True,
     raises=SortNotAppliedError,
-    reason="BUG-008: a ordenação do problem_user não muda a lista e volta para A-Z",
+    reason="BUG-008 (#9): a ordenação do problem_user não muda a lista e volta para A-Z",
 )
 def test_ordenacao_por_nome_z_a(login_as):
     inventory = login_as(Users.PROBLEM)
@@ -50,7 +50,7 @@ def test_ordenacao_por_nome_z_a(login_as):
         expect(inventory.item_names).to_have_text(expected, timeout=BUG_CHECK_TIMEOUT)
 
 
-@pytest.mark.parametrize("product", add_remove_params("BUG-010", Users.PROBLEM))
+@pytest.mark.parametrize("product", add_remove_params("BUG-010 (#11)", Users.PROBLEM))
 def test_adicionar_e_remover_cada_produto(login_as, product: str):
     check_add_and_remove(login_as(Users.PROBLEM), product)
 
@@ -58,7 +58,7 @@ def test_adicionar_e_remover_cada_produto(login_as, product: str):
 @pytest.mark.xfail(
     strict=True,
     raises=WrongProductDetailError,
-    reason="BUG-011: o problem_user abre o detalhe do produto seguinte (id + 1)",
+    reason="BUG-011 (#12): o problem_user abre o detalhe do produto seguinte (id + 1)",
 )
 def test_detalhe_mostra_o_produto_clicado(login_as):
     inventory = login_as(Users.PROBLEM)
@@ -70,7 +70,7 @@ def test_detalhe_mostra_o_produto_clicado(login_as):
 @pytest.mark.xfail(
     strict=True,
     raises=LastNameFieldError,
-    reason="BUG-009: no problem_user o sobrenome digitado vai para o campo de nome",
+    reason="BUG-009 (#10): no problem_user o sobrenome digitado vai para o campo de nome",
 )
 def test_sobrenome_fica_no_campo_de_sobrenome(login_as):
     inventory = login_as(Users.PROBLEM)
@@ -87,7 +87,7 @@ def test_sobrenome_fica_no_campo_de_sobrenome(login_as):
 @pytest.mark.xfail(
     strict=True,
     raises=CartNotClearedError,
-    reason="BUG-013: no problem_user o carrinho continua cheio depois de concluir o pedido",
+    reason="BUG-013 (#14): no problem_user o carrinho continua cheio depois de concluir o pedido",
 )
 def test_carrinho_esvazia_apos_concluir_o_pedido(login_as, page: Page):
     inventory = login_as(Users.PROBLEM)

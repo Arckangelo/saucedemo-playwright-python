@@ -50,7 +50,7 @@ def oracle(oracle_inventory) -> InventoryPage:
 @pytest.mark.xfail(
     strict=True,
     raises=PriceMismatchError,
-    reason="BUG-019: o visual_user vê preços aleatórios, diferentes dos cobrados",
+    reason="BUG-019 (#20): o visual_user vê preços aleatórios, diferentes dos cobrados",
 )
 def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
     expected = oracle.get_prices_by_name()
@@ -75,7 +75,7 @@ def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
 @pytest.mark.xfail(
     strict=True,
     raises=ImageMismatchError,
-    reason="BUG-020: o visual_user vê a imagem de erro (sl-404) na Backpack",
+    reason="BUG-020 (#21): o visual_user vê a imagem de erro (sl-404) na Backpack",
 )
 def test_imagens_iguais_as_do_standard_user(visual_inventory, oracle):
     expected = oracle.get_images_by_name()
@@ -96,8 +96,8 @@ ELEMENTS: dict[str, Callable[[InventoryPage], Locator]] = {
 }
 
 KNOWN_LAYOUT_BUGS = {
-    "icone-do-carrinho": "BUG-021: o ícone do carrinho do visual_user fica deslocado sobre a ordenação",
-    "botao-do-ultimo-produto": "BUG-022: o botão do último produto do visual_user fica desalinhado",
+    "icone-do-carrinho": "BUG-021 (#22): o ícone do carrinho do visual_user fica deslocado sobre a ordenação",
+    "botao-do-ultimo-produto": "BUG-022 (#23): o botão do último produto do visual_user fica desalinhado",
 }
 
 

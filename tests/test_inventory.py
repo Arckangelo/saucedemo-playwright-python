@@ -72,7 +72,7 @@ class BrokenProductImagesError(AssertionError):
             marks=pytest.mark.xfail(
                 strict=True,
                 raises=BrokenProductImagesError,
-                reason="BUG-007: problem_user exibe a mesma imagem (sl-404) em todos os produtos",
+                reason="BUG-007 (#8): problem_user exibe a mesma imagem (sl-404) em todos os produtos",
             ),
         ),
     ],
@@ -117,7 +117,7 @@ class StaleCartButtonsError(AssertionError):
 @pytest.mark.xfail(
     strict=True,
     raises=StaleCartButtonsError,
-    reason="BUG-003: Reset App State esvazia o carrinho, mas os botões continuam em 'Remove'",
+    reason="BUG-003 (#4): Reset App State esvazia o carrinho, mas os botões continuam em 'Remove'",
 )
 def test_reset_app_state_restaura_os_botoes(inventory_page: InventoryPage):
     products = [Products.BACKPACK, Products.BIKE_LIGHT]
