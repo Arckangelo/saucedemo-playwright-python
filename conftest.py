@@ -20,12 +20,14 @@ Cypress 12+).
 
 import base64
 import re
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, expect
+from playwright.sync_api import Browser, BrowserContext, Page, Response, expect
 from pytest_html import extras
 
-from data.constants import PASSWORD, Users
+from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
 
 
@@ -47,22 +49,42 @@ def login_page(page: Page) -> LoginPage:
 
 
 @pytest.fixture(scope="session")
-def standard_user_cookies(browser: Browser, base_url: str) -> list:
-    """Faz login pela interface UMA única vez por execução e guarda os cookies.
+def user_cookies(browser: Browser, base_url: str) -> Callable[[str], list]:
+    """Faz login pela interface UMA única vez por usuário e guarda os cookies.
 
     É o equivalente ao cy.session() do Cypress. O saucedemo guarda a sessão
     só em um cookie (`session-username`), então basta reaproveitá-lo.
     Como a fixture tem scope="session", ela não pode usar a fixture `page`
     (que é por teste), por isso criamos um contexto próprio e o fechamos.
+
+    Devolve uma função (padrão "factory as fixture"): o teste pede os cookies
+    do usuário de que precisa, e cada usuário loga no máximo uma vez.
     """
-    context = browser.new_context(base_url=base_url)
-    page = context.new_page()
-    login = LoginPage(page).open()
-    login.login(Users.STANDARD, PASSWORD)
-    expect(page).to_have_url(re.compile(r"/inventory\.html$"))
-    cookies = context.cookies()
-    context.close()
-    return cookies
+    cache: dict[str, list] = {}
+
+    def get(username: str) -> list:
+        if username not in cache:
+            context = browser.new_context(base_url=base_url)
+            page = context.new_page()
+            LoginPage(page).open().login(username, PASSWORD)
+            expect(page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
+            cache[username] = context.cookies()
+            context.close()
+        return cache[username]
+
+    return get
+
+
+@pytest.fixture(scope="session")
+def standard_user_cookies(user_cookies) -> list:
+    return user_cookies(Users.STANDARD)
+
+
+def _open_inventory(page: Page, context: BrowserContext, cookies: list) -> InventoryPage:
+    context.add_cookies(cookies)
+    inventory = InventoryPage(page).open()
+    expect(inventory.header.title).to_have_text("Products", timeout=SLOW_RENDER_TIMEOUT)
+    return inventory
 
 
 @pytest.fixture
@@ -75,10 +97,74 @@ def inventory_page(
     reaproveitado, mas o carrinho (localStorage) começa vazio — cada teste
     continua independente dos outros.
     """
-    context.add_cookies(standard_user_cookies)
-    inventory = InventoryPage(page).open()
-    expect(inventory.header.title).to_have_text("Products")
-    return inventory
+    return _open_inventory(page, context, standard_user_cookies)
+
+
+@pytest.fixture
+def login_as(page: Page, context: BrowserContext, user_cookies) -> Callable[[str], InventoryPage]:
+    """Abre o inventário já autenticado com o usuário pedido: login_as(Users.PROBLEM)."""
+    return lambda username: _open_inventory(page, context, user_cookies(username))
+
+
+@pytest.fixture
+def oracle_inventory(browser: Browser, base_url: str, standard_user_cookies: list):
+    """Inventário do standard_user em um contexto SEPARADO, usado como oráculo.
+
+    Testes de outros perfis comparam o que veem com o que o standard_user vê,
+    em vez de fixar preços, imagens ou posições no código. O contexto é
+    próprio para não misturar cookies com o usuário sob teste.
+    """
+    context = browser.new_context(base_url=base_url)
+    inventory = _open_inventory(context.new_page(), context, standard_user_cookies)
+    yield inventory
+    context.close()
+
+
+@dataclass
+class BrowserErrors:
+    """Erros observados na página durante o teste."""
+
+    page_errors: list[str] = field(default_factory=list)
+    console_errors: list[str] = field(default_factory=list)
+    failed_responses: list[str] = field(default_factory=list)
+
+
+@pytest.fixture
+def browser_errors(page: Page) -> BrowserErrors:
+    """Registra exceções JavaScript, erros de console e respostas HTTP 4xx/5xx.
+
+    page.on() inscreve uma função que o Playwright chama a cada evento
+    (≈ cy.on('uncaught:exception') e cy.intercept() juntos). Como a fixture
+    usa a mesma `page` do teste, os eventos são capturados desde o início.
+    """
+    errors = BrowserErrors()
+
+    def on_response(response: Response):
+        if response.status >= 400:
+            errors.failed_responses.append(f"{response.status} {response.url}")
+
+    page.on("pageerror", lambda error: errors.page_errors.append(str(error)))
+    page.on(
+        "console",
+        lambda message: message.type == "error" and errors.console_errors.append(message.text),
+    )
+    page.on("response", on_response)
+    return errors
+
+
+# --- Marcadores -------------------------------------------------------------
+
+def pytest_collection_modifyitems(items):
+    """Marca como `known_bug` todo xfail cujo motivo comece com "BUG-".
+
+    Assim a convenção fica num lugar só: basta escrever o xfail com o ID do
+    bug para o teste entrar em `pytest -m known_bug`.
+    """
+    for item in items:
+        for mark in item.iter_markers("xfail"):
+            if str(mark.kwargs.get("reason", "")).startswith("BUG-"):
+                item.add_marker(pytest.mark.known_bug)
+                break
 
 
 # --- Relatório ------------------------------------------------------------

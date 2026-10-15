@@ -31,6 +31,14 @@ class CheckoutInformationPage(BasePage):
         self.last_name_input.fill(last_name)
         self.postal_code_input.fill(postal_code)
 
+    def get_values(self) -> dict[str, str]:
+        """O que ficou de fato em cada campo, que pode diferir do que foi digitado."""
+        return {
+            "first_name": self.first_name_input.input_value(),
+            "last_name": self.last_name_input.input_value(),
+            "postal_code": self.postal_code_input.input_value(),
+        }
+
     def continue_to_overview(self) -> "CheckoutOverviewPage":
         self.continue_button.click()
         return CheckoutOverviewPage(self.page)
