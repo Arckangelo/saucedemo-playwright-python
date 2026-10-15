@@ -21,9 +21,21 @@ class Header:
         self.about_link = page.get_by_test_id("about-sidebar-link")
         self.logout_link = page.get_by_test_id("logout-sidebar-link")
         self.reset_app_state_link = page.get_by_test_id("reset-sidebar-link")
+        # O menu fechado e "assentado" recebe o atributo hidden.
+        self._settled_closed_menu = page.locator(".bm-menu-wrap[hidden]")
+
+    def open_menu(self):
+        # O componente do menu (react-burger-menu) agenda um timer de 500 ms, ao
+        # carregar a página e ao fechar o menu, que esconde o menu se ele estiver
+        # fechado. Um clique antes desse timer, numa máquina lenta, deixa o menu
+        # "aberto" mas invisível (condição de corrida do site, reproduzida com a
+        # CPU 30x mais lenta). Esperar o atributo hidden aparecer é o sinal
+        # concreto de que o timer já rodou e o clique é seguro.
+        self._settled_closed_menu.wait_for(state="attached")
+        self.menu_button.click()
 
     def _click_menu_item(self, link):
-        self.menu_button.click()
+        self.open_menu()
         # O menu abre com animação. Não precisamos de sleep: antes de clicar,
         # o Playwright espera o elemento estar visível, estável (sem animar),
         # habilitado e recebendo eventos — as "actionability checks".
@@ -43,5 +55,5 @@ class Header:
     def get_about_url(self) -> str:
         # Só lemos o destino do link: seguir para o site da Sauce Labs testaria
         # um sistema de terceiros, fora do escopo desta suíte.
-        self.menu_button.click()
+        self.open_menu()
         return self.about_link.get_attribute("href") or ""
