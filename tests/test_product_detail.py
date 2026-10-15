@@ -3,9 +3,9 @@
 import pytest
 from playwright.sync_api import expect
 
-from data.constants import BUG_CHECK_TIMEOUT, PRODUCT_IDS, TOTAL_PRODUCTS, Messages, Products
+from data.constants import PRODUCT_IDS, TOTAL_PRODUCTS, Messages, Products
 from pages import InventoryPage, ProductDetailPage
-from support.bug_checks import bug_check, find_wrong_product_details
+from support.bug_checks import bug_check, find_wrong_product_details, wait_for_render
 
 
 class PhantomCartItemError(AssertionError):
@@ -37,9 +37,10 @@ def test_produto_inexistente_nao_entra_no_carrinho(inventory_page: InventoryPage
 
     if detail.add_to_cart_button.is_visible():
         detail.add_to_cart_button.click()
+    wait_for_render(detail.page)
     badge = detail.header.cart_badge
-    with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.inner_text()} para o id {invalid_id}"):
-        expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
+    with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.all_inner_texts()} para o id {invalid_id}"):
+        assert badge.all_inner_texts() == []
 
 
 @pytest.mark.regression
@@ -54,6 +55,9 @@ def test_carrinho_ignora_ids_inexistentes_no_localstorage(inventory_page: Invent
     page.reload()
     expect(inventory_page.items).to_have_count(TOTAL_PRODUCTS)
 
+    # A lista e o cabeçalho são desenhados juntos; os 6 itens na tela são o sinal
+    # de que o contador também já foi calculado a partir do localStorage.
+    wait_for_render(page)
     badge = inventory_page.header.cart_badge
-    with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.inner_text()} com o carrinho vazio"):
-        expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
+    with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.all_inner_texts()} com o carrinho vazio"):
+        assert badge.all_inner_texts() == []

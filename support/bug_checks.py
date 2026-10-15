@@ -10,9 +10,9 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
 import pytest
-from playwright.sync_api import expect
+from playwright.sync_api import Page, expect
 
-from data.constants import BUG_CHECK_TIMEOUT, Products
+from data.constants import Products
 from pages import InventoryPage
 
 # problem_user e error_user falham nos MESMOS produtos: não conseguem adicionar
@@ -32,17 +32,34 @@ class WrongProductDetailError(AssertionError):
     """O detalhe aberto não é o do produto clicado."""
 
 
+_TWO_FRAMES = "() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(true))))"
+
+
+def wait_for_render(page: Page):
+    """Espera o navegador desenhar dois quadros depois da última ação.
+
+    É o sinal concreto de que a ação foi processada: o navegador só desenha um
+    quadro depois de executar o evento (clique, troca de opção) e a
+    atualização de tela que ele dispara. Depois disso, ler o estado SEM
+    esperar responde "o efeito aconteceu?" em milissegundos, em vez de
+    aguardar um tempo fixo por algo que não vai acontecer.
+    """
+    page.evaluate(_TWO_FRAMES)
+
+
 @contextmanager
 def bug_check(error: type[AssertionError], message: str | Callable[[], str]) -> Iterator[None]:
-    """Transforma a falha de um expect() na exceção específica do bug.
+    """Transforma a falha de uma verificação na exceção específica do bug.
 
     Uso:
+        button.click()
+        wait_for_render(page)
         with bug_check(AddToCartFailedError, "não entrou no carrinho"):
-            expect(badge).to_have_text("1", timeout=BUG_CHECK_TIMEOUT)
+            assert badge.all_inner_texts() == ["1"]
 
     A falha original fica encadeada (`from cause`), então o relatório mostra
-    também o "esperado x obtido" do Playwright. `message` pode ser uma função,
-    para ler o estado da página só quando a verificação falha.
+    também o que foi lido. `message` pode ser uma função, para ler o estado da
+    página só quando a verificação falha.
     """
     try:
         yield
@@ -56,15 +73,19 @@ def check_add_and_remove(inventory: InventoryPage, product: str):
     badge = inventory.header.cart_badge
     expect(button).to_have_text("Add to cart")  # pré-condição: carrinho vazio
 
+    # all_inner_texts() e inner_text() de um elemento que existe não esperam:
+    # leem o estado já renderizado.
     button.click()
+    wait_for_render(inventory.page)
     with bug_check(AddToCartFailedError, f"'{product}' não entrou no carrinho"):
-        expect(badge).to_have_text("1", timeout=BUG_CHECK_TIMEOUT)
-        expect(button).to_have_text("Remove", timeout=BUG_CHECK_TIMEOUT)
+        assert badge.all_inner_texts() == ["1"], f"contador: {badge.all_inner_texts()}"
+        assert button.inner_text() == "Remove", f"botão: {button.inner_text()}"
 
     button.click()
+    wait_for_render(inventory.page)
     with bug_check(RemoveFromCartFailedError, f"'{product}' não saiu do carrinho"):
-        expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
-        expect(button).to_have_text("Add to cart", timeout=BUG_CHECK_TIMEOUT)
+        assert badge.all_inner_texts() == [], f"contador: {badge.all_inner_texts()}"
+        assert button.inner_text() == "Add to cart", f"botão: {button.inner_text()}"
 
 
 def add_remove_params(bug_id: str, username: str) -> list:

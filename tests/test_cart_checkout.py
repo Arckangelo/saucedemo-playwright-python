@@ -7,9 +7,9 @@ from decimal import ROUND_HALF_UP, Decimal
 import pytest
 from playwright.sync_api import expect
 
-from data.constants import BUG_CHECK_TIMEOUT, TAX_RATE, Messages, Products
+from data.constants import TAX_RATE, Messages, Products
 from pages import CartPage, CheckoutInformationPage, InventoryPage
-from support.bug_checks import bug_check
+from support.bug_checks import bug_check, wait_for_render
 
 
 class EmptyCartOrderError(AssertionError):
@@ -109,21 +109,19 @@ def test_checkout_rejeita_campos_so_com_espacos(
     checkout = checkout_information_page
     checkout.fill_information(first_name, last_name, postal_code)
     checkout.continue_button.click()
+    wait_for_render(checkout.page)
 
     with bug_check(
         BlankFieldAcceptedError,
         lambda: f"Campo {blank_field} só com espaços foi aceito; página atual: {checkout.page.url}",
     ):
-        expect(checkout.error_message).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
+        assert checkout.error_message.is_visible()
 
 
 def _blocked(locator) -> bool:
-    """True se o elemento não aparecer a tempo: a etapa foi bloqueada."""
-    try:
-        expect(locator).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
-    except AssertionError:
-        return True
-    return False
+    """True se, depois de a tela ser renderizada, o elemento não estiver lá: a etapa foi bloqueada."""
+    wait_for_render(locator.page)
+    return not locator.is_visible()
 
 
 @pytest.mark.regression

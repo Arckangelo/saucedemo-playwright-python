@@ -3,10 +3,10 @@
 import pytest
 from playwright.sync_api import expect
 
-from data.constants import BUG_CHECK_TIMEOUT, PASSWORD, TOTAL_PRODUCTS, Products, Users
+from data.constants import PASSWORD, TOTAL_PRODUCTS, Products, Users
 from pages import InventoryPage, LoginPage
 from pages.base_page import parse_money
-from support.bug_checks import bug_check
+from support.bug_checks import bug_check, wait_for_render
 
 
 @pytest.mark.parametrize(
@@ -128,8 +128,9 @@ def test_reset_app_state_restaura_os_botoes(inventory_page: InventoryPage):
     inventory_page.header.reset_app_state()
     expect(inventory_page.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
 
+    # O contador sumiu (sinal acima): a tela já reagiu ao reset.
+    wait_for_render(inventory_page.page)
     for product in products:
+        button = inventory_page.item_button(product)
         with bug_check(StaleCartButtonsError, f"Botão de '{product}' continua em 'Remove'"):
-            expect(inventory_page.item_button(product)).to_have_text(
-                "Add to cart", timeout=BUG_CHECK_TIMEOUT
-            )
+            assert button.inner_text() == "Add to cart"

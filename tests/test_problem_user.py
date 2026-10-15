@@ -9,7 +9,7 @@ Detalhes de cada bug em docs/relatorio-de-bugs.md.
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import BUG_CHECK_TIMEOUT, TOTAL_PRODUCTS, Messages, Products, Users
+from data.constants import TOTAL_PRODUCTS, Messages, Products, Users
 from pages import CheckoutOverviewPage
 from support.bug_checks import (
     WrongProductDetailError,
@@ -17,6 +17,7 @@ from support.bug_checks import (
     bug_check,
     check_add_and_remove,
     find_wrong_product_details,
+    wait_for_render,
 )
 
 pytestmark = pytest.mark.regression
@@ -45,9 +46,10 @@ def test_ordenacao_por_nome_z_a(login_as):
     expected = sorted(inventory.get_item_names(), reverse=True)
 
     inventory.sort_by("za")
+    wait_for_render(inventory.page)
     with bug_check(SortNotAppliedError, lambda: f"Ordem exibida: {inventory.get_item_names()}"):
-        expect(inventory.sort_select).to_have_value("za", timeout=BUG_CHECK_TIMEOUT)
-        expect(inventory.item_names).to_have_text(expected, timeout=BUG_CHECK_TIMEOUT)
+        assert inventory.sort_select.input_value() == "za"
+        assert inventory.get_item_names() == expected
 
 
 @pytest.mark.parametrize("product", add_remove_params("BUG-010 (#11)", Users.PROBLEM))
@@ -99,6 +101,9 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(login_as, page: Page):
     complete = CheckoutOverviewPage(page).open().finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
+    # A página de pedido concluído já está na tela (sinal acima); o contador
+    # é desenhado junto com ela.
+    wait_for_render(page)
     badge = complete.header.cart_badge
-    with bug_check(CartNotClearedError, lambda: f"Contador após o pedido: {badge.inner_text()}"):
-        expect(badge).to_be_hidden(timeout=BUG_CHECK_TIMEOUT)
+    with bug_check(CartNotClearedError, lambda: f"Contador após o pedido: {badge.all_inner_texts()}"):
+        assert badge.all_inner_texts() == []

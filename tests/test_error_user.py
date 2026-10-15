@@ -9,9 +9,9 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import BUG_CHECK_TIMEOUT, TOTAL_PRODUCTS, Messages, Products, Users
+from data.constants import TOTAL_PRODUCTS, Messages, Products, Users
 from pages import CheckoutOverviewPage
-from support.bug_checks import add_remove_params, bug_check, check_add_and_remove
+from support.bug_checks import add_remove_params, bug_check, check_add_and_remove, wait_for_render
 
 pytestmark = pytest.mark.regression
 
@@ -48,8 +48,9 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
     expected = sorted(inventory.get_item_names(), reverse=True)
 
     inventory.sort_by("za")
+    wait_for_render(page)
     with bug_check(SortingBrokenError, lambda: f"Lista não ordenada; alertas: {alerts}"):
-        expect(inventory.item_names).to_have_text(expected, timeout=BUG_CHECK_TIMEOUT)
+        assert inventory.get_item_names() == expected
     if alerts:
         raise SortingBrokenError(f"Alerta inesperado: {alerts}")
 
@@ -90,10 +91,10 @@ def test_checkout_exige_sobrenome(checkout_information):
     checkout_information.continue_button.click()
 
     page = checkout_information.page
+    wait_for_render(page)
+    error = checkout_information.error_message
     with bug_check(MissingLastNameAcceptedError, lambda: f"Sem erro de validação; página atual: {page.url}"):
-        expect(checkout_information.error_message).to_have_text(
-            Messages.LAST_NAME_REQUIRED, timeout=BUG_CHECK_TIMEOUT
-        )
+        assert error.all_inner_texts() == [Messages.LAST_NAME_REQUIRED]
 
 
 @pytest.mark.xfail(
@@ -111,9 +112,10 @@ def test_finish_conclui_o_pedido(login_as, page: Page, browser_errors):
     expect(overview.item_names).to_have_text([Products.BACKPACK])
 
     complete = overview.finish()
+    wait_for_render(page)
     with bug_check(
         FinishFailedError,
         lambda: f"Continua em {page.url}; erros JavaScript: {browser_errors.page_errors}",
     ):
-        expect(page).to_have_url(re.compile(r"/checkout-complete\.html$"), timeout=BUG_CHECK_TIMEOUT)
-        expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
+        assert re.search(r"/checkout-complete\.html$", page.url)
+        assert complete.complete_header.all_inner_texts() == [Messages.ORDER_COMPLETE]
