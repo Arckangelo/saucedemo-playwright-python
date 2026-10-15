@@ -21,6 +21,8 @@ Cypress 12+).
 import base64
 import re
 import time
+import urllib.error
+import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -30,6 +32,45 @@ from pytest_html import extras
 
 from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
+
+
+SITE_CHECK_TIMEOUT_S = 15
+
+
+def _site_unavailable_reason(base_url: str) -> str | None:
+    """Motivo pelo qual o site não está utilizável, ou None se estiver."""
+    request = urllib.request.Request(base_url, headers={"User-Agent": "saucedemo-e2e-healthcheck"})
+    try:
+        with urllib.request.urlopen(request, timeout=SITE_CHECK_TIMEOUT_S) as response:
+            body = response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as error:
+        return f"respondeu HTTP {error.code}"
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        return f"não respondeu ({getattr(error, 'reason', error)})"
+    # Uma página de erro ou de desafio (ex.: Cloudflare) também responde 200.
+    if "Swag Labs" not in body:
+        return "respondeu, mas não com a página do Swag Labs"
+    return None
+
+
+def pytest_sessionstart(session):
+    """Encerra a execução logo no início se o saucedemo.com estiver fora do ar.
+
+    Sem isso, uma queda do site vira dezenas de falhas de teste que parecem
+    bugs. Não é um retry: a checagem roda uma vez e, se falhar, a execução para
+    com uma mensagem clara. Com pytest-xdist, roda só no processo principal.
+    """
+    config = session.config
+    if hasattr(config, "workerinput") or config.option.collectonly:
+        return
+    base_url = config.getoption("base_url") or config.getini("base_url")
+    reason = _site_unavailable_reason(base_url)
+    if reason:
+        pytest.exit(
+            f"SITE INDISPONÍVEL: {base_url} {reason}. Nenhum teste foi executado; "
+            "tente novamente quando o site voltar.",
+            returncode=pytest.ExitCode.INTERRUPTED,
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
