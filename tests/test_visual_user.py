@@ -55,8 +55,14 @@ def oracle(oracle_inventory) -> InventoryPage:
 def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
     expected = oracle.get_prices_by_name()
     shown = visual_inventory.get_prices_by_name()
+    # Pré-condição: os 6 produtos lidos dos dois lados. É um assert comum (não
+    # PriceMismatchError), então uma leitura incompleta aparece como FAILED,
+    # nunca como XFAIL. Com os 6 comparados, um XPASS por coincidência exigiria
+    # que todos os preços aleatórios batessem com os reais ao mesmo tempo.
+    assert set(expected) == set(shown) and len(expected) == TOTAL_PRODUCTS, (
+        f"Produtos lidos: oráculo {sorted(expected)}, visual_user {sorted(shown)}"
+    )
 
-    # .get(): um produto ausente na tela aparece como None na divergência, em vez de KeyError.
     divergent = {
         name: f"{shown.get(name)} (esperado {price})"
         for name, price in expected.items()

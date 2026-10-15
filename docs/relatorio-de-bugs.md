@@ -58,7 +58,7 @@ que falha somente pelo defeito descrito.
 
 **Os 3 mais relevantes:**
 
-1. **BUG-019:** o `visual_user` vê um preço e paga outro (Backpack a $48.99 no inventário e $29.99 no carrinho). É um defeito que não aparece em testes funcionais comuns e só foi detectado comparando com o `standard_user` como oráculo.
+1. **BUG-019:** o `visual_user` vê um preço e paga outro: os 6 preços do inventário mudam a cada carregamento e nenhum coincide com o cobrado. É um defeito que não aparece em testes funcionais comuns e só foi detectado comparando com o `standard_user` como oráculo.
 2. **BUG-001:** até o `standard_user` conclui um pedido de $0.00 com o carrinho vazio. Afeta o fluxo principal de todos os usuários.
 3. **BUG-018:** o `error_user` não consegue finalizar a compra; o clique em Finish gera um erro JavaScript e nada acontece.
 
@@ -421,18 +421,23 @@ fontes web. Comparação: [inventário standard_user](evidencias/bug-019-a-022-i
 |---|---|---|
 | Alta | P1 | `tests/test_visual_user.py::test_precos_iguais_aos_do_standard_user` |
 
-**Impacto (Alta):** o preço anunciado difere do cobrado; numa loja real, é propaganda enganosa e expõe a empresa a reclamações e estornos.
+**Impacto (Alta):** o cliente decide a compra vendo um preço e paga outro, o que gera reclamações e estornos.
 
 **Passos**
 1. Fazer login como `visual_user` e anotar o preço da Backpack.
-2. Recarregar a página.
-3. Adicionar a Backpack e abrir o carrinho.
+2. Recarregar a página e comparar o preço.
+3. Clicar em **Add to cart** na Backpack.
+4. Abrir o carrinho.
+5. Comparar o preço do carrinho com o anotado no passo 1.
 
-**Esperado:** $29.99 em todas as telas.
+**Esperado:** $29.99 em todas as telas, como para o `standard_user`.
 
-**Obtido:** o inventário mostra um preço diferente a cada carregamento (ex.: $48.99). O carrinho, o detalhe e o resumo mostram o preço real, $29.99, que é o valor cobrado. Na ordenação por preço, a lista é ordenada pelos valores reais, não pelos exibidos.
+**Obtido:**
+- O inventário mostra um preço diferente a cada carregamento para **todos os 6 produtos**, e nenhum coincide com o catálogo (em 3 carregamentos seguidos, a Backpack apareceu a $21.45, $98.47 e $67.68). Alguns valores perdem o zero final ($0.5, $66.2).
+- O carrinho, o detalhe e o resumo mostram o preço real, $29.99, que é o valor cobrado.
+- A ordenação por preço parece errada, porque usa os valores reais e não os exibidos.
 
-**Evidência:** [carrinho com $29.99](evidencias/bug-019-visual-carrinho-preco-real.jpg) · [preço do inventário x carrinho](evidencias/logs-rede-console-e-estado.json) (chave "BUG-019")
+**Evidência:** [preços em 3 carregamentos seguidos](evidencias/bug-019-precos-3-carregamentos.json) · [carrinho com $29.99](evidencias/bug-019-visual-carrinho-preco-real.jpg) · [preço do inventário x carrinho](evidencias/logs-rede-console-e-estado.json) (chave "BUG-019")
 
 <a id="bug-020"></a>
 ### BUG-020: Backpack exibe a imagem de erro
