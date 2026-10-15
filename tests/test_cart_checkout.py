@@ -7,8 +7,16 @@ from decimal import ROUND_HALF_UP, Decimal
 import pytest
 from playwright.sync_api import expect
 
-from data.constants import TAX_RATE, Messages, Products
+from data.constants import BUG_CHECK_TIMEOUT, TAX_RATE, Messages, Products
 from pages import CartPage, CheckoutInformationPage, InventoryPage
+
+
+class EmptyCartOrderError(AssertionError):
+    """Um pedido sem nenhum item foi concluído."""
+
+
+class BlankFieldAcceptedError(AssertionError):
+    """Um campo preenchido só com espaços foi aceito como válido."""
 
 
 @pytest.fixture
@@ -74,6 +82,62 @@ def test_checkout_exige_campos_obrigatorios(
     expect(checkout.error_message).to_have_text(expected_error)
     # Continua no passo 1: o formulário inválido não pode avançar.
     expect(checkout.page).to_have_url(re.compile(re.escape(checkout.PATH) + "$"))
+
+
+@pytest.mark.regression
+@pytest.mark.parametrize(
+    "first_name, last_name, postal_code, blank_field",
+    [
+        pytest.param("   ", "Souza", "72980-000", "nome", id="nome-so-espacos"),
+        pytest.param("Ana", "   ", "72980-000", "sobrenome", id="sobrenome-so-espacos"),
+        pytest.param("Ana", "Souza", "   ", "CEP", id="cep-so-espacos"),
+    ],
+)
+@pytest.mark.xfail(
+    strict=True,
+    raises=BlankFieldAcceptedError,
+    reason="BUG-002: o checkout aceita campos preenchidos só com espaços",
+)
+def test_checkout_rejeita_campos_so_com_espacos(
+    checkout_information_page: CheckoutInformationPage,
+    first_name: str,
+    last_name: str,
+    postal_code: str,
+    blank_field: str,
+):
+    checkout = checkout_information_page
+    checkout.fill_information(first_name, last_name, postal_code)
+    checkout.continue_button.click()
+
+    try:
+        expect(checkout.error_message).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
+    except AssertionError:
+        raise BlankFieldAcceptedError(
+            f"Campo {blank_field} só com espaços foi aceito; página atual: {checkout.page.url}"
+        ) from None
+
+
+@pytest.mark.regression
+@pytest.mark.xfail(
+    strict=True,
+    raises=EmptyCartOrderError,
+    reason="BUG-001: é possível concluir um pedido com o carrinho vazio",
+)
+def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
+    cart = inventory_page.go_to_cart()
+    expect(cart.items).to_have_count(0)  # pré-condição: carrinho vazio
+
+    information = cart.checkout()
+    information.fill_information("Ana", "Souza", "72980-000")
+    overview = information.continue_to_overview()
+    complete = overview.finish()
+
+    try:
+        expect(complete.complete_header).to_be_visible(timeout=BUG_CHECK_TIMEOUT)
+    except AssertionError:
+        return  # o pedido não foi concluído: comportamento esperado
+    raise EmptyCartOrderError(f"Pedido vazio concluído: {complete.complete_header.inner_text()}")
+
 
 def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPage):
     inventory_page.add_to_cart(Products.BACKPACK)
