@@ -5,6 +5,7 @@ from playwright.sync_api import Locator, Page
 from pages.base_page import BasePage, parse_money
 from pages.cart_page import CartPage
 from pages.header import Header
+from pages.product_detail_page import ProductDetailPage
 
 
 class InventoryPage(BasePage):
@@ -66,6 +67,13 @@ class InventoryPage(BasePage):
         # um TypeError mais adiante e mantém o retorno sempre como list[str].
         return [img.get_attribute("src") or "" for img in self.item_images.all()]
 
+    # Indexar pelo nome deixa a comparação independente da ordem na tela.
+    def get_prices_by_name(self) -> dict[str, Decimal]:
+        return dict(zip(self.get_item_names(), self.get_item_prices()))
+
+    def get_images_by_name(self) -> dict[str, str]:
+        return dict(zip(self.get_item_names(), self.get_image_sources()))
+
     # --- Navegação ----------------------------------------------------------
     # Métodos que levam a outra página devolvem o Page Object da próxima tela.
     # Assim o teste "lê" como o fluxo do usuário: inventory.go_to_cart().checkout()
@@ -73,3 +81,7 @@ class InventoryPage(BasePage):
     def go_to_cart(self) -> CartPage:
         self.header.cart_link.click()
         return CartPage(self.page)
+
+    def open_product(self, product_name: str) -> ProductDetailPage:
+        self.item(product_name).get_by_test_id("inventory-item-name").click()
+        return ProductDetailPage(self.page)

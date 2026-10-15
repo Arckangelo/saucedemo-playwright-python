@@ -6,6 +6,7 @@ from playwright.sync_api import expect
 from data.constants import PASSWORD, TOTAL_PRODUCTS, Products, Users
 from pages import InventoryPage, LoginPage
 from pages.base_page import parse_money
+from support.bug_checks import bug_check, wait_for_render
 
 
 @pytest.mark.parametrize(
@@ -71,7 +72,7 @@ class BrokenProductImagesError(AssertionError):
             marks=pytest.mark.xfail(
                 strict=True,
                 raises=BrokenProductImagesError,
-                reason="Bug conhecido: problem_user exibe a mesma imagem (sl-404) em todos os produtos",
+                reason="BUG-007 (#8): problem_user exibe a mesma imagem (sl-404) em todos os produtos",
             ),
         ),
     ],
@@ -106,3 +107,30 @@ def test_adicionar_e_remover_produtos_atualiza_o_carrinho(inventory_page: Invent
     inventory_page.remove_from_cart(Products.BIKE_LIGHT)
     # Com o carrinho vazio, o contador some da tela.
     expect(badge).to_be_hidden()
+
+
+class StaleCartButtonsError(AssertionError):
+    """Depois do Reset App State, os botões continuam como se os itens estivessem no carrinho."""
+
+
+@pytest.mark.regression
+@pytest.mark.xfail(
+    strict=True,
+    raises=StaleCartButtonsError,
+    reason="BUG-003 (#4): Reset App State esvazia o carrinho, mas os botões continuam em 'Remove'",
+)
+def test_reset_app_state_restaura_os_botoes(inventory_page: InventoryPage):
+    products = [Products.BACKPACK, Products.BIKE_LIGHT]
+    for product in products:
+        inventory_page.add_to_cart(product)
+    expect(inventory_page.header.cart_badge).to_have_text("2")
+
+    inventory_page.header.reset_app_state()
+    expect(inventory_page.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
+
+    # O contador sumiu (sinal acima): a tela já reagiu ao reset.
+    wait_for_render(inventory_page.page)
+    for product in products:
+        button = inventory_page.item_button(product)
+        with bug_check(StaleCartButtonsError, f"Botão de '{product}' continua em 'Remove'"):
+            assert button.inner_text() == "Add to cart"

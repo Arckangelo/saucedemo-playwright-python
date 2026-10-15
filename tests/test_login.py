@@ -3,9 +3,9 @@
 import re
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import BrowserContext, Page, expect
 
-from data.constants import PASSWORD, TOTAL_PRODUCTS, Messages, Users
+from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, TOTAL_PRODUCTS, Messages, Users
 from pages import InventoryPage, LoginPage
 
 
@@ -16,6 +16,8 @@ from pages import InventoryPage, LoginPage
         pytest.param(Users.STANDARD, id="standard_user"),
         pytest.param(Users.PROBLEM, id="problem_user"),
         pytest.param(Users.PERFORMANCE_GLITCH, id="performance_glitch_user"),
+        pytest.param(Users.ERROR, id="error_user"),
+        pytest.param(Users.VISUAL, id="visual_user"),
     ],
 )
 def test_usuarios_validos_acessam_o_inventario(login_page: LoginPage, username: str):
@@ -26,9 +28,9 @@ def test_usuarios_validos_acessam_o_inventario(login_page: LoginPage, username: 
     # estourar o timeout (padrão: 5s), igual ao .should() do Cypress.
     # O performance_glitch_user trava a renderização do inventário por ~5s
     # de propósito, então aqui aumentamos o timeout só para estas asserções.
-    expect(login_page.page).to_have_url(re.compile(r"/inventory\.html$"), timeout=15_000)
-    expect(inventory.header.title).to_have_text("Products", timeout=15_000)
-    expect(inventory.items).to_have_count(6)
+    expect(login_page.page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
+    expect(inventory.header.title).to_have_text("Products", timeout=SLOW_RENDER_TIMEOUT)
+    expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
 
 
 @pytest.mark.parametrize(
@@ -61,6 +63,28 @@ def test_rotas_protegidas_exigem_login(page: Page, protected_path: str):
     # Sem sessão, o site redireciona para o login e explica o motivo.
     expect(login.login_button).to_be_visible()
     expect(login.error_message).to_have_text(Messages.not_logged_in(protected_path))
+
+
+@pytest.mark.regression
+@pytest.mark.parametrize(
+    "cookie_value",
+    [
+        pytest.param("usuario_falso", id="usuario-inexistente"),
+        pytest.param(Users.LOCKED_OUT, id="usuario-bloqueado"),
+        pytest.param(Users.STANDARD.upper(), id="maiusculas"),
+    ],
+)
+def test_cookie_de_sessao_adulterado_nao_da_acesso(
+    page: Page, context: BrowserContext, base_url: str, cookie_value: str
+):
+    # A sessão do saucedemo é só o nome do usuário em um cookie. Um valor
+    # forjado não pode abrir a loja, nem para um usuário bloqueado.
+    context.add_cookies([{"name": "session-username", "value": cookie_value, "url": base_url}])
+    page.goto(InventoryPage.PATH)
+
+    login = LoginPage(page)
+    expect(login.login_button).to_be_visible()
+    expect(login.error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))
 
 
 def test_logout_encerra_a_sessao(inventory_page: InventoryPage):

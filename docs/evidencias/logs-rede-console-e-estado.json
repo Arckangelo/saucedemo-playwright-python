@@ -1,0 +1,42 @@
+{
+  "BUG-005 status HTTP por rota": {
+    "/": 200,
+    "/inventory.html": 404,
+    "/cart.html": 404,
+    "/checkout-step-one.html": 404,
+    "/inventory-item.html?id=4": 404
+  },
+  "BUG-006 respostas da telemetria": [
+    "401 POST https://events.backtrace.io/api/summed-events/submit?universe=UNIVERSE&token=TOKEN",
+    "401 POST https://events.backtrace.io/api/unique-events/submit?universe=UNIVERSE&token=TOKEN"
+  ],
+  "BUG-006 erros de console no inventário": [
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+    "Failed to load resource: the server responded with a status of 401 (Unauthorized)"
+  ],
+  "BUG-010 problem_user após: Add Bolt; Add Backpack; Remove Backpack": {
+    "badge": [
+      "1"
+    ],
+    "botao_bolt": "Add to cart",
+    "botao_backpack": "Remove"
+  },
+  "BUG-012 href do About (problem_user)": "https://saucelabs.com/error/404",
+  "BUG-014 alertas do error_user ao ordenar": [
+    "Sorting is broken! This error has been reported to Backtrace."
+  ],
+  "BUG-015 erros JavaScript do error_user (Add Bolt; Add/Remove Backpack)": [
+    "Failed to add item to the cart.",
+    "Failed to remove item from cart."
+  ],
+  "BUG-018 erros JavaScript da sessão: preencher o formulário e clicar em Finish (error_user)": [
+    "Cannot read properties of undefined (reading 'value')",
+    "La.cesetRart is not a function"
+  ],
+  "BUG-018 URL após Finish": "https://www.saucedemo.com/checkout-step-two.html",
+  "BUG-019 Backpack: preço no inventário x carrinho (visual_user)": {
+    "inventario": "$48.99",
+    "carrinho": "$29.99"
+  }
+}

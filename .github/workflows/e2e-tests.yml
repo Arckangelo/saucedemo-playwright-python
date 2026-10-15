@@ -1,8 +1,17 @@
 name: E2E Tests
 
+# Divisão das execuções (detalhes no README, seção "Integração contínua"):
+# - push: só os testes que devem passar (-m "not known_bug"), para feedback rápido;
+# - pull_request, agendamento diário e execução manual: suíte completa,
+#   incluindo os testes que documentam bugs conhecidos (xfail).
 on:
   push:
   pull_request:
+  schedule:
+    # Todo dia às 09:00 UTC (06:00 em Brasília). O GitHub só agenda a partir da
+    # branch padrão e, em repositórios públicos, desativa o agendamento após 60 dias
+    # sem atividade no repositório.
+    - cron: "0 9 * * *"
   workflow_dispatch: # permite rodar manualmente pela aba Actions
 
 # só leitura do código; o upload de artefatos não precisa de permissão extra
@@ -45,7 +54,19 @@ jobs:
         run: playwright install --with-deps chromium
 
       - name: Executar testes
-        run: pytest
+        # O tipo de evento chega por variável de ambiente, não interpolado no
+        # script, para evitar injeção de expressões no shell.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # -n auto: pytest-xdist distribui os testes entre os núcleos do runner.
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "Execução rápida (push): sem os testes de bugs conhecidos"
+            pytest -n auto -m "not known_bug"
+          else
+            echo "Execução completa ($EVENT_NAME): inclui os testes de bugs conhecidos"
+            pytest -n auto
+          fi
 
       - name: Publicar relatório HTML e traces
         if: always() # publica mesmo (e principalmente) quando algum teste falha
