@@ -1,16 +1,17 @@
 """Saúde técnica da página: erros JavaScript, de console e respostas HTTP.
 
-Política para não depender de terceiros no CI: só são verificados as exceções
-JavaScript da própria página e o servidor do saucedemo. Erros de console e
-respostas de outros domínios (telemetria, fontes, CDNs) são coletados, mas
-ignorados, exceto no teste que documenta o BUG-006, que olha apenas o
-Backtrace e espera explicitamente pela resposta dele.
+Política para não depender de terceiros no CI: só são verificadas as exceções
+JavaScript da página (todos os scripts vêm de www.saucedemo.com) e as
+respostas do servidor do saucedemo. Erros de console e respostas de outros
+domínios (Backtrace, Google Fonts) são coletados, mas ignorados. A exceção é
+o teste que documenta o BUG-006, que olha apenas o Backtrace; se ele não
+responder, o resultado é inconclusivo (skip), nunca um falso "corrigido".
 """
 
 from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import Page, Response, expect
+from playwright.sync_api import Page, Request, expect
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from data.constants import Messages, Products
@@ -62,19 +63,24 @@ def test_rotas_internas_respondem_http_200(page: Page):
     reason="BUG-006: a telemetria (Backtrace) usa credenciais de exemplo e recebe HTTP 401",
 )
 def test_telemetria_nao_gera_erros_http(page: Page):
-    def is_telemetry(response: Response) -> bool:
-        return urlparse(response.url).netloc.endswith("backtrace.io")
+    def is_telemetry(request: Request) -> bool:
+        return urlparse(request.url).netloc.endswith("backtrace.io")
 
     # A telemetria sai uma única vez por sessão do navegador, na PRIMEIRA
     # carga (recarregar ou navegar depois não envia de novo). Por isso a
-    # espera envolve a primeira navegação do contexto novo deste teste.
-    # expect_response espera a resposta de forma explícita, sem depender de a
-    # rede "ficar ociosa", o que pode acontecer antes de a telemetria sair.
+    # espera envolve a primeira navegação do contexto novo deste teste,
+    # sem depender de a rede "ficar ociosa", o que pode acontecer antes.
     try:
-        with page.expect_response(is_telemetry, timeout=TELEMETRY_TIMEOUT) as response_info:
+        with page.expect_request(is_telemetry, timeout=TELEMETRY_TIMEOUT) as request_info:
             page.goto("/")
     except PlaywrightTimeoutError:
-        return  # nenhuma telemetria enviada: não há o que reportar
-    response = response_info.value
+        return  # nenhuma telemetria enviada (ex.: foi removida): não há o que reportar
+
+    # response() espera a resposta; devolve None se a requisição falhou na rede.
+    response = request_info.value.response()
+    if response is None:
+        # Backtrace fora do ar ou rede instável no CI: é um problema de terceiro,
+        # não prova nem descarta o bug. Pular evita um XPASS falso.
+        pytest.skip("Telemetria enviada, mas o Backtrace não respondeu: resultado inconclusivo")
     if response.status >= 400:
         raise TelemetryError(f"Telemetria respondeu {response.status}: {response.url}")
