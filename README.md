@@ -21,6 +21,7 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 - [Tecnologias](#tecnologias)
 - [Como executar](#como-executar)
 - [O que é testado](#o-que-é-testado)
+- [Engenharia reversa e bugs encontrados](#engenharia-reversa-e-bugs-encontrados)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Relatórios e depuração](#relatórios-e-depuração)
 - [Integração contínua](#integração-contínua)
@@ -32,10 +33,11 @@ Os testes simulam um usuário real no navegador: fazem login, navegam pelo catá
 
 ## Destaques
 
-- **24 execuções de teste** a partir de 10 cenários, usando parametrização.
+- **78 execuções de teste** a partir de 36 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
+- **22 bugs encontrados e documentados como testes**, em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md).
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
-- **Login feito uma única vez** por execução e reaproveitado, o que deixa a suíte rápida (menos de 1 minuto).
-- **Bugs conhecidos documentados como testes**, em vez de ignorados.
+- **Login feito uma única vez** por usuário e reaproveitado, o que deixa a suíte rápida (cerca de 2 minutos).
 - **Relatório HTML** com screenshot automático de cada falha.
 - **CI no GitHub Actions** a cada push e pull request.
 - **Pipeline com DevSecOps**: detecção de segredos, auditoria de dependências e análise estática a cada mudança.
@@ -92,6 +94,9 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | `pytest` | Roda todos os testes, sem abrir o navegador |
 | `pytest --headed --slowmo 500` | Mostra o navegador e desacelera cada ação, útil para acompanhar |
 | `pytest -m smoke` | Roda só os fluxos críticos |
+| `pytest -m known_bug` | Roda só os testes que documentam bugs conhecidos |
+| `pytest -m "not known_bug"` | Roda só o que deve passar (sem os bugs conhecidos) |
+| `pytest -m regression` | Roda a regressão por perfil de usuário e os cenários de borda |
 | `pytest tests/test_login.py` | Roda um único arquivo |
 | `pytest -k ordenacao` | Roda os testes cujo nome contém o termo |
 | `pytest --browser firefox` | Roda no Firefox (requer `playwright install firefox`) |
@@ -102,17 +107,31 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 | Área | Cenário | Execuções |
 |---|---|:---:|
-| **Login** | Usuários válidos acessam a loja (`standard`, `problem`, `performance_glitch`) | 3 |
+| **Login** | Usuários válidos acessam a loja (`standard`, `problem`, `performance_glitch`, `error`, `visual`) | 5 |
 | | Login inválido mostra a mensagem certa (bloqueado, senha errada, usuário inexistente, campos vazios) | 5 |
 | | Páginas internas exigem login (`/inventory`, `/cart`, `/checkout`) | 3 |
+| | Cookie de sessão adulterado não dá acesso (usuário inexistente, bloqueado, maiúsculas) | 3 |
 | | Logout encerra a sessão de verdade | 1 |
 | **Catálogo** | Ordenação por nome (A–Z, Z–A) e por preço (menor e maior) | 4 |
 | | Cada produto exibe a própria imagem | 2 |
 | | Adicionar e remover produtos atualiza o contador do carrinho | 1 |
+| | Reset App State volta os botões para "Add to cart" | 1 |
+| **Detalhe do produto** | Clicar no produto abre o detalhe dele | 1 |
+| | A URL `?id=N` abre o produto certo | 6 |
+| | Produto inexistente não entra no carrinho (pela URL e pelo `localStorage`) | 3 |
+| **Menu** | All Items volta ao inventário; About aponta para a Sauce Labs | 3 |
 | **Carrinho e checkout** | Compra completa, conferindo subtotal, imposto de 8% e total | 1 |
 | | Formulário exige nome, sobrenome e CEP | 3 |
+| | Formulário rejeita campos só com espaços | 3 |
+| | Não conclui pedido com o carrinho vazio | 1 |
 | | Carrinho continua salvo após recarregar a página | 1 |
-| | **Total** | **24** |
+| **Saúde técnica** | Compra sem erros JavaScript; rotas respondem HTTP 200; telemetria sem erros | 3 |
+| **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome e carrinho após o pedido | 10 |
+| **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
+| **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
+| | **Total** | **78** |
+
+Das 78 execuções, 42 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
 
 ### Perfis de usuário
 
@@ -120,10 +139,28 @@ O SauceDemo oferece usuários com comportamentos diferentes, e a suíte explora 
 
 | Usuário | Comportamento | Como é testado |
 |---|---|---|
-| `standard_user` | Funciona normalmente | Base de todos os fluxos de compra |
-| `locked_out_user` | Bloqueado no login | Verifica a mensagem de bloqueio |
-| `problem_user` | Tem defeitos de interface | Consegue logar, e o bug das imagens fica registrado como falha conhecida |
-| `performance_glitch_user` | Carrega devagar (~5 s) | Usa um tempo de espera maior, sem pausas fixas |
+| `standard_user` | Funciona normalmente | Base de todos os fluxos e **oráculo** dos outros perfis |
+| `locked_out_user` | Bloqueado no login | Verifica a mensagem de bloqueio, inclusive com cookie forjado |
+| `problem_user` | Defeitos de interface: imagens, ordenação, botões, detalhe errado e formulário | 7 bugs registrados como falhas conhecidas |
+| `performance_glitch_user` | ~5 s de atraso sempre que o inventário é renderizado | Usa um tempo de espera maior, sem pausas fixas; tempos medidos nos [requisitos](docs/requisitos-inferidos.md#tempos-do-performance_glitch_user) |
+| `error_user` | Falhas funcionais com erros JavaScript: ordenação, botões, sobrenome e Finish | 5 bugs registrados como falhas conhecidas |
+| `visual_user` | Diferenças visuais: preços aleatórios, imagem trocada e elementos fora do lugar | Comparado com o `standard_user` em tempo de execução; 4 bugs registrados |
+
+---
+
+## Engenharia reversa e bugs encontrados
+
+Sem acesso a especificação, os requisitos do site foram deduzidos do comportamento observado, e
+cada perfil foi comparado com o `standard_user`.
+
+| Documento | Conteúdo |
+|---|---|
+| [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) | 22 bugs confirmados (2 críticos, 5 altos, 9 médios, 6 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste que cobre cada um |
+| [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
+
+Destaques: o `visual_user` vê um preço no catálogo e paga outro; o `standard_user` consegue concluir
+um pedido de $0.00 com o carrinho vazio; e o `error_user` não consegue finalizar a compra.
 
 ---
 
@@ -140,19 +177,33 @@ saucedemo-playwright-python/
 │       ├── security.yml   # Segredos (gitleaks) e dependências vulneráveis (pip-audit)
 │       └── codeql.yml     # Análise estática do Python e dos workflows
 ├── data/
-│   └── constants.py       # Usuários, produtos e mensagens esperadas
+│   └── constants.py       # Usuários, produtos, ids e mensagens esperadas
+├── docs/
+│   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
+│   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
+│   ├── sugestoes-de-melhoria.md  # Melhorias para a aplicação e para o projeto
+│   └── evidencias/               # Screenshots e logs citados no relatório
 ├── pages/                 # Page Objects (uma classe por tela)
 │   ├── base_page.py
-│   ├── header.py          # Cabeçalho comum (carrinho e menu)
+│   ├── header.py          # Cabeçalho comum (carrinho e menu lateral)
 │   ├── login_page.py
 │   ├── inventory_page.py
+│   ├── product_detail_page.py
 │   ├── cart_page.py
 │   └── checkout_page.py
-├── tests/                 # Os testes, separados por área
+├── support/
+│   └── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
+├── tests/                 # Os testes, separados por área e por perfil
 │   ├── test_login.py
 │   ├── test_inventory.py
-│   └── test_cart_checkout.py
-├── conftest.py            # Preparação compartilhada (login, relatório)
+│   ├── test_product_detail.py
+│   ├── test_menu.py
+│   ├── test_cart_checkout.py
+│   ├── test_console_e_rede.py
+│   ├── test_problem_user.py
+│   ├── test_error_user.py
+│   └── test_visual_user.py
+├── conftest.py            # Preparação compartilhada (login por usuário, oráculo, erros, relatório)
 ├── pytest.ini             # Configuração do pytest
 ├── requirements.txt       # Dependências com versões fixas
 ├── .gitleaks.toml         # Regras do gitleaks (exceções devem ser específicas e comentadas)
@@ -227,20 +278,26 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 <summary><b>Clique para ver os detalhes</b></summary>
 
 - **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. As exceções são o botão do menu, encontrado pelo papel acessível (como um leitor de tela o enxerga), e as imagens dos produtos, encontradas pela classe CSS.
-- **Login reaproveitado:** o login é feito uma única vez e o cookie de sessão é reutilizado. Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
+- **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixture `login_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
+- **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
 - **Resultados calculados, não decorados:** a ordenação é comparada com a lista ordenada a partir da própria tela, e no checkout subtotal, imposto e total são recalculados a partir dos preços exibidos.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
-- **Bugs conhecidos com `xfail(strict=True)`:** o bug de imagens do `problem_user` fica marcado como falha esperada. A marcação aceita apenas a falha específica desse bug: se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida.
+- **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório no motivo (`reason="BUG-010: ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. O `conftest.py` aplica o marker `known_bug` a todo xfail com "BUG-", então basta seguir a convenção.
+- **Confirmar que algo NÃO aconteceu, sem `sleep`:** para provar um bug (o contador não mudou, o pedido não foi concluído), a verificação usa `expect` com um tempo limite curto (`BUG_CHECK_TIMEOUT`, 2 s), para a suíte não ficar lenta esperando o padrão de 5 s.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
 
 </details>
 
 ### Próximos passos
 
-Bugs já observados no `problem_user` que podem virar novos testes:
+Os dois bugs do `problem_user` listados aqui antes (ordenação e sobrenome) agora são testes
+(BUG-008 e BUG-009). Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-melhoria.md#parte-b-melhorias-para-este-projeto):
 
-- a ordenação de produtos não funciona;
-- no checkout, o texto digitado no campo de sobrenome vai para o campo de nome, e o sobrenome fica vazio, o que impede a compra.
+- rodar a suíte em Chromium, Firefox e WebKit no CI (matriz de navegadores);
+- levar a checagem de acessibilidade com axe-core para o CI, falhando só em violações sérias e críticas;
+- paralelizar com pytest-xdist e agendar uma execução diária contra o site, para detectar quando um bug some ou surge;
+- adicionar ruff ao CI e ao `pre-commit`;
+- avaliar as 4 [suspeitas](docs/relatorio-de-bugs.md#suspeitas) do relatório, como o pedido que pode ser finalizado de novo pelo botão Voltar.
 
 ---
 
