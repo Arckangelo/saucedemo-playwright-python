@@ -100,7 +100,6 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | `pytest --headed --slowmo 500` | Mostra o navegador e desacelera cada ação, útil para acompanhar |
 | `pytest -m smoke` | Roda só os fluxos críticos |
 | `pytest -m known_bug` | Roda só os testes que documentam bugs conhecidos |
-| `pytest -m "not known_bug"` | Roda só o que deve passar (sem os bugs conhecidos) |
 | `pytest -m regression` | Roda a regressão por perfil de usuário e os cenários de borda |
 | `pytest tests/test_login.py` | Roda um único arquivo |
 | `pytest -k ordenacao` | Roda os testes cujo nome contém o termo |
@@ -193,7 +192,8 @@ saucedemo-playwright-python/
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
 │   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
 │   ├── sugestoes-de-melhoria.md  # Melhorias para a aplicação e para o projeto
-│   └── evidencias/               # Screenshots e logs citados no relatório
+│   ├── evidencias/               # Screenshots e logs citados no relatório
+│   └── img/                      # Imagem-resumo exibida no topo deste README
 ├── pages/                 # Page Objects (uma classe por tela)
 │   ├── base_page.py
 │   ├── header.py          # Cabeçalho comum (carrinho e menu lateral)
@@ -203,7 +203,8 @@ saucedemo-playwright-python/
 │   ├── cart_page.py
 │   └── checkout_page.py
 ├── scripts/
-│   └── gerar_relatorio_pdf.py  # Gera docs/relatorio-de-bugs.pdf a partir do Markdown
+│   ├── gerar_relatorio_pdf.py  # Gera docs/relatorio-de-bugs.pdf a partir do Markdown
+│   └── reproduzir_bug_023.py   # Reproduz a condição de corrida do menu (BUG-023) com a CPU mais lenta
 ├── support/
 │   └── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
 ├── tests/                 # Os testes, separados por área e por perfil
@@ -307,7 +308,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 <details>
 <summary><b>Clique para ver os detalhes</b></summary>
 
-- **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. As exceções são o botão do menu, encontrado pelo papel acessível (como um leitor de tela o enxerga), e as imagens dos produtos, encontradas pela classe CSS.
+- **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. Os botões Open Menu, Close Menu, Add to cart e Remove são encontrados pelo papel acessível e pelo nome (como um leitor de tela os enxerga). Seletores CSS ficam restritos às imagens dos produtos, à tag `<button>` dentro do card do produto (usada para ler o botão sem saber se ele diz Add to cart ou Remove; os links do card também têm papel de botão, o que tornaria a busca por papel ambígua) e ao sinal de que o menu fechado já foi escondido (`.bm-menu-wrap[hidden]`, ver [BUG-023](docs/relatorio-de-bugs.md#bug-023)).
 - **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixture `login_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
 - **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
 - **Resultados calculados, não decorados:** a ordenação é comparada com a lista ordenada a partir da própria tela, e no checkout subtotal, imposto e total são recalculados a partir dos preços exibidos.
@@ -324,8 +325,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 
 ### Próximos passos
 
-Os dois bugs do `problem_user` listados aqui antes (ordenação e sobrenome) agora são testes
-(BUG-008 e BUG-009). Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-melhoria.md#parte-b-melhorias-para-este-projeto):
+Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-melhoria.md#parte-b-melhorias-para-este-projeto):
 
 - rodar a suíte em Chromium, Firefox e WebKit no CI (matriz de navegadores);
 - levar a checagem de acessibilidade com axe-core para o CI, falhando só em violações sérias e críticas;
