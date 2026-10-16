@@ -19,7 +19,10 @@ As sugestões de melhoria estão em [sugestoes-de-melhoria.md](sugestoes-de-melh
 
 ## Resumo
 
-**23 bugs confirmados**: 22 novos e 1 que a suíte já cobria (BUG-007). Cada um foi reproduzido
+**23 bugs confirmados**: 22 novos e 1 que a suíte já cobria (BUG-007). **7 afetam todos os
+usuários**, inclusive o `standard_user` (BUG-001 a BUG-006 e BUG-023); os **16 restantes são os
+defeitos de treino** que o SauceDemo injeta de propósito no `problem_user`, no `error_user` e no
+`visual_user` (veja "Classificação" em [Ambiente e critérios](#ambiente-e-critérios)). Cada um foi reproduzido
 em pelo menos duas execuções independentes. 22 viraram um teste automatizado `xfail(strict=True)`,
 que falha somente pelo defeito descrito; o BUG-023, um bug de tempo, ficou sem teste de propósito
 e tem um script de reprodução controlada.
@@ -60,9 +63,9 @@ e tem um script de reprodução controlada.
 
 **Os 3 mais relevantes:**
 
-1. **BUG-019:** o `visual_user` vê um preço e paga outro: os 6 preços do inventário mudam a cada carregamento e nenhum coincide com o cobrado. É um defeito que não aparece em testes funcionais comuns e só foi detectado comparando com o `standard_user` como oráculo.
-2. **BUG-001:** até o `standard_user` conclui um pedido de $0.00 com o carrinho vazio. Afeta o fluxo principal de todos os usuários.
-3. **BUG-018:** o `error_user` não consegue finalizar a compra; o clique em Finish gera um erro JavaScript e nada acontece.
+1. **BUG-019**, defeito de treino do `visual_user`: o cliente vê um preço e paga outro: os 6 preços do inventário mudam a cada carregamento e nenhum coincide com o cobrado. É um defeito que não aparece em testes funcionais comuns e só foi detectado comparando com o `standard_user` como oráculo.
+2. **BUG-001**, afeta todos os usuários: até o `standard_user` conclui um pedido de $0.00 com o carrinho vazio. Afeta o fluxo principal de todos os usuários.
+3. **BUG-018**, defeito de treino do `error_user`: o `error_user` não consegue finalizar a compra; o clique em Finish gera um erro JavaScript e nada acontece.
 
 ---
 

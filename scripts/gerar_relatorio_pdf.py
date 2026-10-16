@@ -95,18 +95,21 @@ def executive_summary(markdown: str, ref: str) -> str:
     if not top:
         raise SystemExit("Lista 'Os 3 mais relevantes' não encontrada no relatório.")
     top3 = re.sub(
-        r"^(\d\. \*\*(BUG-\d{3}):\*\*)",
+        r"^(\d\. \*\*(BUG-\d{3}):?\*\*)",
         lambda m: f"{m.group(1)} ([issue #{issues[m.group(2)][0]}]({issues[m.group(2)][1]}))",
         top.group(1).strip(), flags=re.M,
     )
     date = re.search(r"^\| Data \| (.+?) \|$", markdown, re.M)
     # Bugs sem teste na suíte trazem este marcador na própria seção do relatório.
     tested = len(rows) - markdown.count(NO_TEST_MARKER)
+    everyone = sum(1 for _, user, _, _, _ in rows if user == "todos")
     return "\n".join([
         "# Resumo executivo",
         "",
         f"**SauceDemo (Swag Labs)** · verificação em {date.group(1) if date else 's/d'} · "
-        f"**{len(rows)} bugs confirmados**, cada um com issue no GitHub; {tested} com teste automatizado "
+        f"**{len(rows)} bugs confirmados** ({everyone} afetam todos os usuários e {len(rows) - everyone} são "
+        "defeitos de treino dos perfis especiais), cada um com issue no GitHub; "
+        f"{tested} com teste automatizado "
         "(`xfail` que avisa quando o bug for corrigido)"
         + (f" e {len(rows) - tested} sem teste, de propósito (bug de tempo, com script de reprodução)." if tested < len(rows) else "."),
         "",
