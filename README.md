@@ -11,7 +11,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 
 Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e documentou **23 defeitos**: **7 afetam todos os usuários**, inclusive o padrão (como um pedido de $0.00 concluído com o carrinho vazio), e **16 são os defeitos de treino** que o SauceDemo injeta de propósito nos perfis especiais. Cada um tem issue e evidências e, em 22 casos, um teste automatizado que avisa quando o bug for corrigido.
 
-<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 23 bugs encontrados por engenharia reversa no SauceDemo, sendo 2 críticos, 3 altos, 11 médios e 7 baixos; execuções de teste passaram de 24 para 78; 23 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-019 (visual_user, severidade alta): o cliente vê $48.99 no catálogo e paga $29.99 no carrinho."></p>
+<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 7 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 16 defeitos de treino que o site injeta de propósito nos perfis especiais (7 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 78, cobrindo os 6 perfis de usuário; 23 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
 > Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
 
