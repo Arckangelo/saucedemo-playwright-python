@@ -5,6 +5,8 @@ espalhadas pelos testes: se o site mudar um texto, ajustamos em um lugar só.
 (No Cypress, o equivalente seria um arquivo em cypress/fixtures/*.json.)
 """
 
+from decimal import Decimal
+
 PASSWORD = "secret_sauce"
 
 # Quantidade de produtos do catálogo (evita o "número mágico" 6 espalhado nos testes).
@@ -34,18 +36,35 @@ class Products:
     ALL = [BACKPACK, BIKE_LIGHT, BOLT_TSHIRT, FLEECE_JACKET, ONESIE, RED_TSHIRT]
 
 
-# Id de cada produto na URL do detalhe (/inventory-item.html?id=N) e no
-# localStorage do carrinho. Ids fora desta lista não existem no catálogo.
-PRODUCT_IDS = {
-    Products.BIKE_LIGHT: 0,
-    Products.BOLT_TSHIRT: 1,
-    Products.ONESIE: 2,
-    Products.RED_TSHIRT: 3,
-    Products.BACKPACK: 4,
-    Products.FLEECE_JACKET: 5,
+# Tabela de referência do catálogo: id -> nome e preço. É a fonte de verdade
+# dos testes, independente do que a tela mostrar (no Cypress, os preços vinham
+# da API). Valores conferidos uma única vez no site, como standard_user, em
+# 27/10/2026. Não gere esta tabela a partir da tela: o teste passaria a
+# comparar a tela com ela mesma. Preço em Decimal, como no resto da suíte.
+PRODUCT_PRICES = {
+    0: {"name": Products.BIKE_LIGHT, "price": Decimal("9.99")},
+    1: {"name": Products.BOLT_TSHIRT, "price": Decimal("15.99")},
+    2: {"name": Products.ONESIE, "price": Decimal("7.99")},
+    3: {"name": Products.RED_TSHIRT, "price": Decimal("15.99")},
+    4: {"name": Products.BACKPACK, "price": Decimal("29.99")},
+    5: {"name": Products.FLEECE_JACKET, "price": Decimal("49.99")},
 }
 
+# Id de cada produto na URL do detalhe (/inventory-item.html?id=N) e no
+# localStorage do carrinho. Ids fora desta lista não existem no catálogo.
+# Derivado da tabela acima, para a relação id <-> nome existir num lugar só.
+PRODUCT_IDS = {product["name"]: product_id for product_id, product in PRODUCT_PRICES.items()}
+
 ABOUT_URL = "https://saucelabs.com/"
+
+# Dados válidos do passo 1 do checkout. As chaves são os parâmetros de
+# fill_information(), então dá para usar fill_information(**CHECKOUT_INFO).
+# (No Cypress, o equivalente seria o cypress/fixtures/apiData.json.)
+CHECKOUT_INFO = {
+    "first_name": "Ana",
+    "last_name": "Souza",
+    "postal_code": "72980-000",
+}
 
 
 class Messages:

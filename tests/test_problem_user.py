@@ -9,8 +9,8 @@ Detalhes de cada bug em docs/relatorio-de-bugs.md.
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import TOTAL_PRODUCTS, Messages, Products, Users
-from pages import CheckoutOverviewPage
+from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Messages, Products, Users
+from pages import CheckoutInformationPage, CheckoutOverviewPage
 from support.bug_checks import (
     WrongProductDetailError,
     add_remove_params,
@@ -43,7 +43,7 @@ class CartNotClearedError(AssertionError):
 def test_ordenacao_por_nome_z_a(login_as):
     inventory = login_as(Users.PROBLEM)
     expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
-    expected = sorted(inventory.get_item_names(), reverse=True)
+    expected = sorted((product["name"] for product in PRODUCT_PRICES.values()), reverse=True)
 
     inventory.sort_by("za")
     wait_for_render(inventory.page)
@@ -74,15 +74,17 @@ def test_detalhe_mostra_o_produto_clicado(login_as):
     raises=LastNameFieldError,
     reason="BUG-009 (#10): no problem_user o sobrenome digitado vai para o campo de nome",
 )
-def test_sobrenome_fica_no_campo_de_sobrenome(login_as):
-    inventory = login_as(Users.PROBLEM)
-    inventory.add_to_cart(Products.BACKPACK)
-    information = inventory.go_to_cart().checkout()
+def test_sobrenome_fica_no_campo_de_sobrenome(page: Page, session_as, cart_with):
+    # Carrinho montado pelo localStorage: o teste não depende do Add to cart (BUG-010).
+    session_as(Users.PROBLEM)
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
+    information = CheckoutInformationPage(page).open()
 
-    information.last_name_input.fill("Souza")
+    last_name = CHECKOUT_INFO["last_name"]
+    information.last_name_input.fill(last_name)
 
     values = information.get_values()
-    if values != {"first_name": "", "last_name": "Souza", "postal_code": ""}:
+    if values != {"first_name": "", "last_name": last_name, "postal_code": ""}:
         raise LastNameFieldError(f"Campos após digitar só o sobrenome: {values}")
 
 
@@ -91,14 +93,16 @@ def test_sobrenome_fica_no_campo_de_sobrenome(login_as):
     raises=CartNotClearedError,
     reason="BUG-013 (#14): no problem_user o carrinho continua cheio depois de concluir o pedido",
 )
-def test_carrinho_esvazia_apos_concluir_o_pedido(login_as, page: Page):
-    inventory = login_as(Users.PROBLEM)
-    inventory.add_to_cart(Products.BACKPACK)  # este produto o problem_user consegue adicionar
-    expect(inventory.header.cart_badge).to_have_text("1")
+def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_with):
+    # Carrinho montado pelo localStorage: o teste não depende do Add to cart (BUG-010).
+    session_as(Users.PROBLEM)
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
 
     # O formulário do passo 1 está quebrado para este perfil (BUG-009), então
     # vamos direto ao resumo para isolar o comportamento do Finish.
-    complete = CheckoutOverviewPage(page).open().finish()
+    overview = CheckoutOverviewPage(page).open()
+    expect(overview.header.cart_badge).to_have_text("1")  # pré-condição: o carrinho foi montado
+    complete = overview.finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
     # A página de pedido concluído já está na tela (sinal acima); o contador

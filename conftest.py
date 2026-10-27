@@ -19,18 +19,20 @@ Cypress 12+).
 """
 
 import base64
+import json
 import re
 import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from urllib.parse import urlparse
 
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page, Response, expect
 from pytest_html import extras
 
-from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, Users
+from data.constants import PASSWORD, PRODUCT_PRICES, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
 
 
@@ -136,6 +138,61 @@ def user_cookies(browser: Browser, browser_context_args: dict) -> Callable[[str]
 @pytest.fixture
 def standard_user_cookies(user_cookies) -> list:
     return user_cookies(Users.STANDARD)
+
+
+@pytest.fixture
+def session_as(context: BrowserContext, user_cookies) -> Callable[[str], None]:
+    """Autentica o contexto com o usuário pedido, sem abrir nenhuma página: session_as(Users.PROBLEM).
+
+    Use junto com cart_with() e abra direto a tela do teste (carrinho, checkout),
+    em vez de passar pelo inventário.
+    """
+    return lambda username: context.add_cookies(user_cookies(username))
+
+
+@pytest.fixture
+def standard_session(session_as) -> None:
+    """Contexto autenticado como standard_user, sem abrir nenhuma página."""
+    session_as(Users.STANDARD)
+
+
+# Roda antes dos scripts do site em toda carga de página do contexto, inclusive
+# em reload. Por isso grava uma única vez por aba (marca no sessionStorage):
+# sem isso, um item removido "voltaria" a cada reload. E só na origem do site,
+# para não escrever no localStorage de about:blank ou de outros domínios.
+_CART_SEED_SCRIPT = """
+if (location.origin === %(origin)s && !sessionStorage.getItem('cart-seeded')) {
+    localStorage.setItem('cart-contents', JSON.stringify(%(ids)s));
+    sessionStorage.setItem('cart-seeded', '1');
+}
+"""
+
+
+@pytest.fixture
+def cart_with(context: BrowserContext, base_url: str) -> Callable[..., None]:
+    """Monta o carrinho direto no localStorage, sem passar pela tela: cart_with(4, 5).
+
+    É o equivalente do cy.request do Cypress (o saucedemo não tem API: o
+    carrinho mora no localStorage, como lista de ids). Deve ser chamada antes
+    de a página do teste carregar. Só aceita ids do catálogo, sem repetição:
+    um carrinho que a tela não consegue produzir (RN-11) testaria outra coisa.
+    """
+    origin = "{0.scheme}://{0.netloc}".format(urlparse(base_url))
+    seeded = False
+
+    def seed(*product_ids: int):
+        nonlocal seeded
+        if seeded:
+            raise RuntimeError("cart_with() só pode ser chamada uma vez por teste")
+        unknown = set(product_ids) - PRODUCT_PRICES.keys()
+        if unknown or len(set(product_ids)) != len(product_ids):
+            raise ValueError(f"Ids fora do catálogo ou repetidos: {list(product_ids)}")
+        context.add_init_script(
+            _CART_SEED_SCRIPT % {"origin": json.dumps(origin), "ids": json.dumps(list(product_ids))}
+        )
+        seeded = True
+
+    return seed
 
 
 def _open_inventory(page: Page, context: BrowserContext, cookies: list) -> InventoryPage:

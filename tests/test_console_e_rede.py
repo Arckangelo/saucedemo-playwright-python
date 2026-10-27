@@ -14,7 +14,7 @@ import pytest
 from playwright.sync_api import Page, Request, expect
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
-from data.constants import Messages, Products
+from data.constants import CHECKOUT_INFO, Messages, Products
 from pages import InventoryPage
 
 
@@ -33,7 +33,7 @@ TELEMETRY_HOST = "backtrace.io"
 def test_compra_completa_sem_erros_de_javascript(browser_errors, inventory_page: InventoryPage):
     inventory_page.add_to_cart(Products.BACKPACK)
     information = inventory_page.go_to_cart().checkout()
-    information.fill_information("Ana", "Souza", "72980-000")
+    information.fill_information(**CHECKOUT_INFO)
     complete = information.continue_to_overview().finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
