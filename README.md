@@ -11,7 +11,15 @@
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
-Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e documentou **25 defeitos**: **8 afetam todos os usuários**, inclusive o padrão (como um pedido de $0.00 concluído com o carrinho vazio), e **17 são os defeitos de treino** que o SauceDemo injeta de propósito nos perfis especiais. Cada um tem issue e evidências e, em 24 casos, um teste automatizado que avisa quando o bug for corrigido.
+### Em resumo
+
+- **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
+- **Tamanho:** **87 execuções** de teste: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos.
+- **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
+- **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
+- **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
+- **CI:** GitHub Actions a cada push e pull request, execução diária e [relatório publicado](https://arckangelo.github.io/saucedemo-playwright-python/).
+- **Para rodar:** `pip install -r requirements.txt && playwright install chromium && pytest` (detalhes em [Como executar](#como-executar)).
 
 <p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 17 defeitos de treino que o site injeta de propósito nos perfis especiais (8 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 87, cobrindo os 6 perfis de usuário; 25 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
