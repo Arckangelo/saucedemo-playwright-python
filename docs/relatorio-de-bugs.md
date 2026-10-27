@@ -287,7 +287,7 @@ responder dentro do limite.
 - `test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` (BUG-013);
 - `test_error_user.py::test_finish_conclui_o_pedido` (BUG-018).
 
-**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg) · [recibo sem dados de entrega](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-recibo-sem-dados-de-entrega.pdf) · [recibo normal, para comparação](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-recibo-normal-para-comparacao.pdf)
+**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg) · [recibo sem dados de entrega](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-sem-dados-de-entrega.pdf) · [recibo normal, para comparação](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-normal-para-comparacao.pdf)
 
 ---
 
