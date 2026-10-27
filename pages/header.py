@@ -13,16 +13,21 @@ class Header:
         self.title = page.get_by_test_id("title")
         self.cart_link = page.get_by_test_id("shopping-cart-link")
         self.cart_badge = page.get_by_test_id("shopping-cart-badge")
-        # Seletor por papel acessível + nome: é como um usuário (ou leitor de tela)
-        # enxerga o botão. Equivale ao cy.findByRole da Testing Library.
-        self.menu_button = page.get_by_role("button", name="Open Menu")
-        self.close_menu_button = page.get_by_role("button", name="Close Menu")
+        # Os botões do menu são localizados pelo ID. O data-test="open-menu" (e
+        # "close-menu") está na imagem do ícone, que fica POR BAIXO do botão: o
+        # clique cai no botão, e clicar na imagem faria o Playwright acusar que
+        # outro elemento intercepta o clique.
+        self.menu_button = page.locator("#react-burger-menu-btn")
+        self.close_menu_button = page.locator("#react-burger-cross-btn")
         self.all_items_link = page.get_by_test_id("inventory-sidebar-link")
         self.about_link = page.get_by_test_id("about-sidebar-link")
         self.logout_link = page.get_by_test_id("logout-sidebar-link")
         self.reset_app_state_link = page.get_by_test_id("reset-sidebar-link")
-        # O menu fechado e "assentado" recebe o atributo hidden.
-        self._settled_closed_menu = page.locator(".bm-menu-wrap[hidden]")
+        # O menu fechado e "assentado" recebe o atributo hidden. O contêiner não
+        # tem data-test nem ID; ele é encontrado como "o elemento [hidden] que
+        # contém o link All Items", ancorado num data-test, e não pela classe
+        # interna da biblioteca de menu.
+        self._settled_closed_menu = page.locator("[hidden]").filter(has=self.all_items_link)
 
     def open_menu(self):
         # O componente do menu (react-burger-menu) agenda um timer de 500 ms, ao

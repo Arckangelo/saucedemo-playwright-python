@@ -1,8 +1,9 @@
+import re
 from decimal import Decimal
 
 from playwright.sync_api import Locator, Page
 
-from pages.base_page import BasePage, parse_money
+from pages.base_page import ADD_TO_CART_BUTTON, CART_BUTTON, REMOVE_BUTTON, BasePage, parse_money
 from pages.cart_page import CartPage
 from pages.header import Header
 from pages.product_detail_page import ProductDetailPage
@@ -17,7 +18,7 @@ class InventoryPage(BasePage):
         self.items = page.get_by_test_id("inventory-item")
         self.item_names = page.get_by_test_id("inventory-item-name")
         self.item_prices = page.get_by_test_id("inventory-item-price")
-        self.item_images = page.locator("img.inventory_item_img")
+        self.item_images = page.get_by_test_id(re.compile(r"^inventory-item-.+-img$"))
         self.sort_select = page.get_by_test_id("product-sort-container")
 
     def item(self, product_name: str) -> Locator:
@@ -34,18 +35,16 @@ class InventoryPage(BasePage):
         )
 
     def item_button(self, product_name: str) -> Locator:
-        # Busca o botão DENTRO do card do produto (escopo encadeado).
-        # Não usamos get_by_role("button") aqui porque os links da imagem e do
-        # título também têm role="button" no saucedemo: o locator acharia 3
-        # elementos e o Playwright falharia com "strict mode violation" — ele
-        # se recusa a agir quando um locator é ambíguo. Por isso, a tag <button>.
-        return self.item(product_name).locator("button")
+        # O botão do card, esteja ele em "Add to cart" ou em "Remove": o
+        # data-test muda de add-to-cart-<produto> para remove-<produto>, então
+        # o prefixo localiza os dois estados sem depender do texto exibido.
+        return self.item(product_name).get_by_test_id(CART_BUTTON)
 
     def add_to_cart(self, product_name: str):
-        self.item(product_name).get_by_role("button", name="Add to cart").click()
+        self.item(product_name).get_by_test_id(ADD_TO_CART_BUTTON).click()
 
     def remove_from_cart(self, product_name: str):
-        self.item(product_name).get_by_role("button", name="Remove").click()
+        self.item(product_name).get_by_test_id(REMOVE_BUTTON).click()
 
     def sort_by(self, option_value: str):
         # Valores do <select>: "az", "za", "lohi", "hilo" (≈ cy.select()).

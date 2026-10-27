@@ -92,13 +92,14 @@ def test_cada_produto_exibe_sua_propria_imagem(login_page: LoginPage, username: 
 
 def test_adicionar_atualiza_contador_e_botao(inventory_page: InventoryPage):
     # Clica na tela de propósito: é este teste que garante o botão Add to cart.
-    # Dois produtos, para o contador provar que conta (e não mostra sempre 1).
-    products = [Products.BACKPACK, Products.BIKE_LIGHT]
-    for product in products:
+    # Todos os produtos: a análise de mutação mostrou que, só com Backpack e
+    # Bike Light, o teste passava com o problem_user e o error_user, que não
+    # conseguem adicionar os outros 3 (BUG-010 e BUG-015).
+    for product in Products.ALL:
         inventory_page.add_to_cart(product)
 
-    expect(inventory_page.header.cart_badge).to_have_text("2")
-    for product in products:
+    expect(inventory_page.header.cart_badge).to_have_text(str(len(Products.ALL)))
+    for product in Products.ALL:
         expect(inventory_page.item_button(product)).to_have_text("Remove")
 
 

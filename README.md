@@ -4,14 +4,24 @@
 [![Security](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-1.63-2EAD33?logo=playwright&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)
+
+📊 [Relatório HTML da última execução na `main`](https://arckangelo.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf)
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
-Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e documentou **24 defeitos**: **8 afetam todos os usuários**, inclusive o padrão (como um pedido de $0.00 concluído com o carrinho vazio), e **16 são os defeitos de treino** que o SauceDemo injeta de propósito nos perfis especiais. Cada um tem issue e evidências e, em 23 casos, um teste automatizado que avisa quando o bug for corrigido.
+### Em resumo
 
-<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 16 defeitos de treino que o site injeta de propósito nos perfis especiais (7 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 86, cobrindo os 6 perfis de usuário; 24 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
+- **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
+- **Tamanho:** **87 execuções** de teste: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos.
+- **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
+- **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
+- **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
+- **CI:** GitHub Actions a cada push e pull request, execução diária e [relatório publicado](https://arckangelo.github.io/saucedemo-playwright-python/).
+- **Para rodar:** `pip install -r requirements.txt && playwright install chromium && pytest` (detalhes em [Como executar](#como-executar)).
+
+<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 17 defeitos de treino que o site injeta de propósito nos perfis especiais (8 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 87, cobrindo os 6 perfis de usuário; 25 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
 > Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
 
@@ -24,6 +34,7 @@ Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia 
 - [Como executar](#como-executar)
 - [O que é testado](#o-que-é-testado)
 - [Engenharia reversa e bugs encontrados](#engenharia-reversa-e-bugs-encontrados)
+- [Análise de mutação](#análise-de-mutação)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Relatórios e depuração](#relatórios-e-depuração)
 - [Integração contínua](#integração-contínua)
@@ -35,9 +46,10 @@ Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia 
 
 ## Destaques
 
-- **86 execuções de teste** a partir de 41 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **87 execuções de teste** a partir de 42 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
-- **24 defeitos documentados** (8 que afetam todos os usuários e 16 de treino dos perfis especiais), 23 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada.
+- **25 defeitos documentados** (8 que afetam todos os usuários e 17 de treino dos perfis especiais), 24 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada. Resumo rápido em [BUGS.md](BUGS.md).
+- **Análise de mutação com os próprios perfis do site:** os testes do `standard_user` rodam com o `problem_user` e o `error_user` (`--base-user`). Nenhum teste sobrevive numa funcionalidade que o perfil quebra (na versão anterior, 2 sobreviviam), e a análise revelou o [BUG-025](docs/relatorio-de-bugs.md#bug-025). Ver [Análise de mutação](#análise-de-mutação).
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
 - **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; no CI, cerca de 17 s a cada push e 33 s na suíte completa.
 - **Relatório HTML** com screenshot automático de cada falha.
@@ -101,6 +113,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | `pytest -m smoke` | Roda só os fluxos críticos |
 | `pytest -m known_bug` | Roda só os testes que documentam bugs conhecidos |
 | `pytest -m regression` | Roda a regressão por perfil de usuário e os cenários de borda |
+| `pytest -m "not known_bug" --base-user problem_user` | Análise de mutação: roda os testes do `standard_user` com um perfil defeituoso |
 | `pytest tests/test_login.py` | Roda um único arquivo |
 | `pytest -k ordenacao` | Roda os testes cujo nome contém o termo |
 | `pytest --browser firefox` | Roda no Firefox (requer `playwright install firefox`) |
@@ -136,12 +149,12 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | | Carrinho mostra nome, preço e quantidade 1 de cada produto | 1 |
 | | Remover do carrinho mantém os demais itens após recarregar | 1 |
 | **Saúde técnica** | Rotas respondem HTTP 200; telemetria sem erros (erros JavaScript são conferidos em todos os testes) | 2 |
-| **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome e carrinho após o pedido | 10 |
+| **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome, subtotal do resumo e carrinho após o pedido | 11 |
 | **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
 | **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
-| | **Total** | **86** |
+| | **Total** | **87** |
 
-Das 86 execuções, 49 passam e 37 documentam bugs conhecidos como falha esperada (`xfail`).
+Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
 ### Perfis de usuário
 
@@ -151,7 +164,7 @@ O SauceDemo oferece usuários com comportamentos diferentes. Os defeitos do `pro
 |---|---|---|
 | `standard_user` | Funciona normalmente, mas compartilha os 8 bugs que afetam todos os usuários (ex.: pedido concluído com o carrinho vazio) | Base de todos os fluxos e **oráculo** dos outros perfis; 8 bugs registrados (7 como falhas conhecidas e 1 com script de reprodução) |
 | `locked_out_user` | Bloqueado no login | Verifica a mensagem de bloqueio, inclusive com cookie forjado |
-| `problem_user` | Defeitos de interface: imagens, ordenação, botões, detalhe errado e formulário | 7 bugs registrados como falhas conhecidas |
+| `problem_user` | Defeitos de interface: imagens, ordenação, botões, detalhe errado, formulário e subtotal em dobro | 8 bugs registrados como falhas conhecidas |
 | `performance_glitch_user` | ~5 s de atraso sempre que o inventário é renderizado | Usa um tempo de espera maior, sem pausas fixas; tempos medidos nos [requisitos](docs/requisitos-inferidos.md#tempos-do-performance_glitch_user) |
 | `error_user` | Falhas funcionais com erros JavaScript: ordenação, botões, sobrenome e Finish | 5 bugs registrados como falhas conhecidas |
 | `visual_user` | Diferenças visuais: preços aleatórios, imagem trocada e elementos fora do lugar | Comparado com o `standard_user` em tempo de execução; 4 bugs registrados |
@@ -166,7 +179,7 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 24 bugs confirmados (8 que afetam todos os usuários e 16 de treino dos perfis especiais; 2 críticos, 3 altos, 12 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 25 bugs confirmados (8 que afetam todos os usuários e 17 de treino dos perfis especiais; 2 críticos, 4 altos, 12 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
 | [Issues dos bugs](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug) | Uma issue por bug confirmado, com severidade, passos para reproduzir, evidências e o teste que a cobre |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
@@ -177,6 +190,30 @@ corrida no menu do site ([BUG-023](docs/relatorio-de-bugs.md#bug-023)): investig
 trace do Playwright e reproduzida com a CPU 30x mais lenta, ela deixa o menu aberto porém
 invisível. Entre os defeitos de treino, o `visual_user` vê um preço no catálogo e paga outro, e o
 `error_user` não consegue finalizar a compra.
+
+---
+
+## Análise de mutação
+
+O `problem_user`, o `error_user` e o `visual_user` são o mesmo site com defeitos injetados: são
+"mutantes" prontos. Rodar os testes do `standard_user` com eles mostra quais asserções são fracas:
+um teste que continua passando numa funcionalidade que o perfil quebra não a protege.
+
+```bash
+pytest -m "not known_bug" --base-user problem_user
+```
+
+| | Antes da revisão da suíte | Agora |
+|---|:-:|:-:|
+| Testes que usam o usuário base | 20 | 24 |
+| Pegos com `problem_user` | 11 (55%) | 14 (58%) |
+| Pegos com `error_user` | 9 (45%) | 13 (54%) |
+| **Sobreviventes numa funcionalidade quebrada** | **2** | **0** |
+
+A análise reforçou um teste que só adicionava os produtos que esses perfis conseguem adicionar e
+revelou o [BUG-025](docs/relatorio-de-bugs.md#bug-025) (subtotal em dobro no `problem_user`). Os
+sobreviventes restantes estão em funcionalidades que o perfil não quebra, cada um justificado na
+[tabela completa](docs/analise-de-mutacao.md).
 
 ---
 
@@ -195,6 +232,7 @@ saucedemo-playwright-python/
 ├── data/
 │   └── constants.py       # Usuários, produtos, ids e mensagens esperadas
 ├── docs/
+│   ├── analise-de-mutacao.md     # Testes do standard_user rodados com os perfis defeituosos
 │   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
 │   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
@@ -227,6 +265,7 @@ saucedemo-playwright-python/
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
 │   └── test_visual_user.py
+├── BUGS.md                # Resumo dos bugs: ID, severidade, área, teste e issue
 ├── conftest.py            # Preparação compartilhada (login por usuário, oráculo, erros, relatório)
 ├── pytest.ini             # Configuração do pytest
 ├── requirements.txt       # Dependências com versões fixas
@@ -258,18 +297,21 @@ saucedemo-playwright-python/
 
 ## Integração contínua
 
-O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
+O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha. Na `main`, o job **Publicar relatório no GitHub Pages** coloca o relatório HTML no ar em [https://arckangelo.github.io/saucedemo-playwright-python/](https://arckangelo.github.io/saucedemo-playwright-python/) (só o relatório; os traces ficam no artefato).
 
 O que roda depende do gatilho:
 
 | Gatilho | O que executa | Para quê |
 |---|---|---|
-| Push em qualquer branch | `pytest -n auto -m "not known_bug"`: só os testes que devem passar | Feedback rápido a cada mudança |
+| Push fora da `main` | `pytest -n auto -m "not known_bug"`: só os testes que devem passar | Feedback rápido a cada mudança |
+| Push na `main` (merge) | Suíte completa e publicação no GitHub Pages | Manter no ar o relatório do que está na `main`, com os bugs conhecidos |
 | Pull request | `pytest -n auto`: suíte completa, com os testes de bugs conhecidos | Garantir, antes do merge, que os bugs documentados continuam se comportando como registrado |
-| Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
-| Manual (aba **Actions**) | Suíte completa | Rodar sob demanda |
+| Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa e publicação no GitHub Pages | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
+| Manual (aba **Actions**) | Suíte completa (e publicação, se rodado na `main`) | Rodar sob demanda |
 
-Os testes de bugs conhecidos ficam fora do push porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
+Ao final de cada execução, a página do workflow mostra um **resumo** com a contagem de testes que passaram, de **XFAIL** (bug conhecido que continua reproduzindo) e de **XPASS** (bug conhecido que deixou de reproduzir), além de falhas, erros e pulados. Um XPASS aparece com o teste e o bug: é o sinal para confirmar a correção no site e tirar o `xfail` do teste. O resumo é escrito pelo `conftest.py` (hook `pytest_terminal_summary`) no `$GITHUB_STEP_SUMMARY`; fora do CI, nada é escrito.
+
+Os testes de bugs conhecidos ficam fora do push nas outras branches porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
 
 > **Atenção ao agendamento:** o GitHub só agenda workflows a partir da branch padrão (`main`) e, em repositórios públicos como este, **desativa automaticamente os workflows agendados após 60 dias sem atividade** no repositório (sem commits, por exemplo). Para voltar a ter a execução diária, basta reativar o workflow na aba **Actions**.
 
@@ -291,7 +333,7 @@ Além dos testes, o CI aplica práticas de DevSecOps para proteger o próprio re
 **Endurecimento dos workflows**
 
 - `permissions: contents: read` no topo de cada workflow; permissões extras só no job que precisa
-  (`security-events: write` no CodeQL e no gitleaks).
+  (`security-events: write` no CodeQL e no gitleaks; `pages` e `id-token` no deploy do GitHub Pages).
 - Todas as actions fixadas pelo **SHA completo do commit**, com a versão em comentário. Uma tag
   pode ser movida para código malicioso; um SHA não. O Dependabot mantém esses SHAs atualizados.
 - O gitleaks roda pelo binário oficial com versão e checksum SHA-256 fixos.
@@ -318,7 +360,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 <details>
 <summary><b>Clique para ver os detalhes</b></summary>
 
-- **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. Os botões Open Menu, Close Menu, Add to cart e Remove são encontrados pelo papel acessível e pelo nome (como um leitor de tela os enxerga). Seletores CSS ficam restritos às imagens dos produtos, à tag `<button>` dentro do card do produto (usada para ler o botão sem saber se ele diz Add to cart ou Remove; os links do card também têm papel de botão, o que tornaria a busca por papel ambígua) e ao sinal de que o menu fechado já foi escondido (`.bm-menu-wrap[hidden]`, ver [BUG-023](docs/relatorio-de-bugs.md#bug-023)).
+- **Seletores estáveis:** todos os elementos são localizados pelo atributo `data-test` do site (`get_by_test_id`), que não muda quando o layout ou o texto mudam. Os botões do card usam o prefixo do `data-test` (`add-to-cart-…` vira `remove-…` depois do clique), sem depender do texto exibido. Só duas exceções, justificadas no código: os botões de abrir e fechar o menu são localizados pelo **ID** (`#react-burger-menu-btn`), porque o `data-test="open-menu"` está na imagem do ícone, que fica por baixo do botão e não recebe o clique; e o sinal de que o menu fechado já foi escondido ([BUG-023](docs/relatorio-de-bugs.md#bug-023)) é "o elemento `[hidden]` que contém o link All Items", ancorado num `data-test`, porque o contêiner não tem `data-test` nem ID. Nenhum seletor depende de classe CSS ou de tag.
 - **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixtures `login_as` e `session_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
 - **Carrinho montado sem passar pela tela:** o SauceDemo não tem API, e o carrinho mora no `localStorage` como lista de ids. A fixture `cart_with(4, 5)` grava essa lista antes de a página carregar, uma única vez por aba (para um item removido não "voltar" no reload), e só aceita ids do catálogo, sem repetição. Só os testes do botão "Add to cart" e a jornada completa clicam na tela; os demais (checkout, Reset App State, `problem_user` e `error_user`) abrem a tela direto pela URL e não falham por causa do botão de adicionar (BUG-010 e BUG-015).
 - **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
@@ -344,6 +386,8 @@ Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-m
 - levar a checagem de acessibilidade com axe-core para o CI, falhando só em violações sérias e críticas;
 - adicionar ruff ao CI e ao `pre-commit`;
 - avaliar as 4 [suspeitas](docs/relatorio-de-bugs.md#suspeitas) do relatório, como o pedido que pode ser finalizado de novo pelo botão Voltar.
+- testar o recibo em PDF do botão **Generate PDF order** (itens, total e dados de entrega), funcionalidade nova do site que ainda não tem teste;
+- fechar as lacunas de cobertura das [regras de negócio](docs/requisitos-inferidos.md#regras-de-negócio): a ordem de validação do login e do checkout (RN-02 e RN-15), a validade de 10 minutos da sessão (RN-05), o inventário abrir em A–Z (RN-07), o clique na imagem do produto (RN-09) e o comportamento do resumo ao recarregar e ao voltar ao passo 1 (RN-20).
 
 ---
 

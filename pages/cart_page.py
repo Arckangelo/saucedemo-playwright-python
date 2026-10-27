@@ -1,6 +1,6 @@
 from playwright.sync_api import Page
 
-from pages.base_page import BasePage
+from pages.base_page import REMOVE_BUTTON, BasePage
 from pages.cart_rows import CartRow, read_rows
 from pages.checkout_page import CheckoutInformationPage
 from pages.header import Header
@@ -24,7 +24,7 @@ class CartPage(BasePage):
         item = self.items.filter(
             has=self.page.get_by_test_id("inventory-item-name").get_by_text(product_name, exact=True)
         )
-        item.get_by_role("button", name="Remove").click()
+        item.get_by_test_id(REMOVE_BUTTON).click()
 
     def checkout(self) -> CheckoutInformationPage:
         self.checkout_button.click()

@@ -20,6 +20,7 @@ Cypress 12+).
 
 import base64
 import json
+import os
 import re
 import time
 import urllib.error
@@ -53,6 +54,24 @@ def _site_unavailable_reason(base_url: str) -> str | None:
     if "Swag Labs" not in body:
         return "respondeu, mas não com a página do Swag Labs"
     return None
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--base-user",
+        default=Users.STANDARD,
+        choices=[Users.STANDARD, Users.PROBLEM, Users.ERROR, Users.VISUAL, Users.PERFORMANCE_GLITCH],
+        help=(
+            "Usuário dos testes do standard_user (fixtures inventory_page e standard_session). "
+            "Trocar por um perfil com defeitos é uma análise de mutação: um teste que continua "
+            "passando numa funcionalidade que o perfil quebra tem asserção fraca."
+        ),
+    )
+
+
+def pytest_report_header(config):
+    if config.getoption("base_user") != Users.STANDARD:
+        return f"ANÁLISE DE MUTAÇÃO: testes do standard_user rodando como {config.getoption('base_user')}"
 
 
 def pytest_sessionstart(session):
@@ -135,9 +154,15 @@ def user_cookies(browser: Browser, browser_context_args: dict) -> Callable[[str]
     return get
 
 
+@pytest.fixture(scope="session")
+def base_user(pytestconfig) -> str:
+    """Usuário dos testes do standard_user: --base-user (padrão: standard_user)."""
+    return pytestconfig.getoption("base_user")
+
+
 @pytest.fixture
-def standard_user_cookies(user_cookies) -> list:
-    return user_cookies(Users.STANDARD)
+def standard_user_cookies(user_cookies, base_user: str) -> list:
+    return user_cookies(base_user)
 
 
 @pytest.fixture
@@ -151,9 +176,9 @@ def session_as(context: BrowserContext, user_cookies) -> Callable[[str], None]:
 
 
 @pytest.fixture
-def standard_session(session_as) -> None:
-    """Contexto autenticado como standard_user, sem abrir nenhuma página."""
-    session_as(Users.STANDARD)
+def standard_session(session_as, base_user: str) -> None:
+    """Contexto autenticado como standard_user (ou o --base-user), sem abrir nenhuma página."""
+    session_as(base_user)
 
 
 # Roda antes dos scripts do site em toda carga de página do contexto, inclusive
@@ -222,18 +247,19 @@ def login_as(page: Page, context: BrowserContext, user_cookies) -> Callable[[str
 
 
 @pytest.fixture
-def oracle_inventory(browser: Browser, browser_context_args: dict, standard_user_cookies: list):
+def oracle_inventory(browser: Browser, browser_context_args: dict, user_cookies):
     """Inventário do standard_user em um contexto SEPARADO, usado como oráculo.
 
     Testes de outros perfis comparam o que veem com o que o standard_user vê,
     em vez de fixar preços, imagens ou posições no código. O contexto é
     próprio para não misturar cookies com o usuário sob teste, mas usa as
     mesmas opções (viewport, --device) do contexto do teste, senão o layout
-    dos dois não seria comparável.
+    dos dois não seria comparável. O oráculo é sempre o standard_user, mesmo
+    com --base-user: comparar um mutante com outro não provaria nada.
     """
     context = browser.new_context(**browser_context_args)
     try:
-        yield _open_inventory(context.new_page(), context, standard_user_cookies)
+        yield _open_inventory(context.new_page(), context, user_cookies(Users.STANDARD))
     finally:
         context.close()
 
@@ -300,6 +326,53 @@ def pytest_collection_modifyitems(items):
 
 
 # --- Relatório ------------------------------------------------------------
+
+_XPASS_STRICT = "[XPASS(strict)]"
+
+
+def pytest_terminal_summary(terminalreporter, config):
+    """No CI, escreve no resumo do workflow a contagem de passed, XFAIL e XPASS.
+
+    O GitHub Actions define $GITHUB_STEP_SUMMARY: o Markdown gravado nesse
+    arquivo aparece na página da execução. Fora do CI a variável não existe e
+    nada é escrito. Com xfail_strict, um XPASS não é contado como "xpassed": o
+    pytest o transforma em falha com a mensagem "[XPASS(strict)] ...". Por isso
+    ele é separado das falhas comuns: significa que um bug conhecido foi
+    corrigido e o teste precisa sair do xfail.
+    """
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path or hasattr(config, "workerinput"):
+        return
+    stats = terminalreporter.stats
+    failed = stats.get("failed", [])
+    xpassed = [r for r in failed if str(r.longrepr).startswith(_XPASS_STRICT)]
+    real_failures = [r for r in failed if r not in xpassed]
+    mode = f"`-m \"{config.option.markexpr}\"`" if config.option.markexpr else "suíte completa"
+
+    lines = [
+        f"### Resultado dos testes ({mode})",
+        "",
+        "| Resultado | Quantidade |",
+        "|---|:-:|",
+        f"| ✅ Passaram | {len(stats.get('passed', []))} |",
+        f"| 🐞 XFAIL (bug conhecido, ainda reproduz) | {len(stats.get('xfailed', []))} |",
+        f"| 🎉 XPASS (bug conhecido corrigido?) | {len(xpassed)} |",
+        f"| ❌ Falharam | {len(real_failures)} |",
+        f"| ⚠️ Erros | {len(stats.get('error', []))} |",
+        f"| ⏭️ Pulados | {len(stats.get('skipped', []))} |",
+        "",
+    ]
+    if xpassed:
+        lines += ["**XPASS:** o bug deixou de reproduzir. Confirme no site e tire o `xfail` do teste:", ""]
+        lines += [f"- `{r.nodeid}`: {str(r.longrepr)[len(_XPASS_STRICT):].strip()}" for r in xpassed]
+        lines.append("")
+    if real_failures or stats.get("error"):
+        lines += ["**Falhas e erros:**", ""]
+        lines += [f"- `{r.nodeid}` ({r.when})" for r in real_failures + stats.get("error", [])]
+        lines.append("")
+    with open(path, "a", encoding="utf-8") as summary:
+        summary.write("\n".join(lines) + "\n")
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
