@@ -35,6 +35,10 @@ class CartNotClearedError(AssertionError):
     """O carrinho continuou com itens depois de o pedido ser concluído."""
 
 
+class WrongSubtotalError(AssertionError):
+    """O subtotal do resumo não é a soma dos preços dos itens."""
+
+
 @pytest.mark.xfail(
     strict=True,
     raises=SortNotAppliedError,
@@ -111,3 +115,23 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
     badge = complete.header.cart_badge
     with bug_check(CartNotClearedError, lambda: f"Contador após o pedido: {badge.all_inner_texts()}"):
         assert badge.all_inner_texts() == []
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=WrongSubtotalError,
+    reason="BUG-025 (#ISSUE): o resumo do problem_user mostra o subtotal em dobro",
+)
+def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, cart_with):
+    # Encontrado pela análise de mutação (--base-user problem_user). Carrinho
+    # montado pelo localStorage e resumo aberto pela URL: o formulário do passo 1
+    # está quebrado para este perfil (BUG-009), e o resumo abre sem ele (BUG-024).
+    session_as(Users.PROBLEM)
+    products = [Products.BACKPACK, Products.ONESIE]
+    cart_with(*(PRODUCT_IDS[product] for product in products))
+    overview = CheckoutOverviewPage(page).open()
+    expect(overview.items).to_have_count(len(products))  # pré-condição: o carrinho foi montado
+
+    expected = sum(PRODUCT_PRICES[PRODUCT_IDS[product]]["price"] for product in products)
+    with bug_check(WrongSubtotalError, lambda: f"Subtotal {overview.get_subtotal()}, esperado {expected}"):
+        assert overview.get_subtotal() == expected

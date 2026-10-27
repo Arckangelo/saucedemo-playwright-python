@@ -55,6 +55,24 @@ def _site_unavailable_reason(base_url: str) -> str | None:
     return None
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--base-user",
+        default=Users.STANDARD,
+        choices=[Users.STANDARD, Users.PROBLEM, Users.ERROR, Users.VISUAL, Users.PERFORMANCE_GLITCH],
+        help=(
+            "Usuário dos testes do standard_user (fixtures inventory_page e standard_session). "
+            "Trocar por um perfil com defeitos é uma análise de mutação: um teste que continua "
+            "passando numa funcionalidade que o perfil quebra tem asserção fraca."
+        ),
+    )
+
+
+def pytest_report_header(config):
+    if config.getoption("base_user") != Users.STANDARD:
+        return f"ANÁLISE DE MUTAÇÃO: testes do standard_user rodando como {config.getoption('base_user')}"
+
+
 def pytest_sessionstart(session):
     """Encerra a execução logo no início se o saucedemo.com estiver fora do ar.
 
@@ -135,9 +153,15 @@ def user_cookies(browser: Browser, browser_context_args: dict) -> Callable[[str]
     return get
 
 
+@pytest.fixture(scope="session")
+def base_user(pytestconfig) -> str:
+    """Usuário dos testes do standard_user: --base-user (padrão: standard_user)."""
+    return pytestconfig.getoption("base_user")
+
+
 @pytest.fixture
-def standard_user_cookies(user_cookies) -> list:
-    return user_cookies(Users.STANDARD)
+def standard_user_cookies(user_cookies, base_user: str) -> list:
+    return user_cookies(base_user)
 
 
 @pytest.fixture
@@ -151,9 +175,9 @@ def session_as(context: BrowserContext, user_cookies) -> Callable[[str], None]:
 
 
 @pytest.fixture
-def standard_session(session_as) -> None:
-    """Contexto autenticado como standard_user, sem abrir nenhuma página."""
-    session_as(Users.STANDARD)
+def standard_session(session_as, base_user: str) -> None:
+    """Contexto autenticado como standard_user (ou o --base-user), sem abrir nenhuma página."""
+    session_as(base_user)
 
 
 # Roda antes dos scripts do site em toda carga de página do contexto, inclusive
@@ -222,18 +246,19 @@ def login_as(page: Page, context: BrowserContext, user_cookies) -> Callable[[str
 
 
 @pytest.fixture
-def oracle_inventory(browser: Browser, browser_context_args: dict, standard_user_cookies: list):
+def oracle_inventory(browser: Browser, browser_context_args: dict, user_cookies):
     """Inventário do standard_user em um contexto SEPARADO, usado como oráculo.
 
     Testes de outros perfis comparam o que veem com o que o standard_user vê,
     em vez de fixar preços, imagens ou posições no código. O contexto é
     próprio para não misturar cookies com o usuário sob teste, mas usa as
     mesmas opções (viewport, --device) do contexto do teste, senão o layout
-    dos dois não seria comparável.
+    dos dois não seria comparável. O oráculo é sempre o standard_user, mesmo
+    com --base-user: comparar um mutante com outro não provaria nada.
     """
     context = browser.new_context(**browser_context_args)
     try:
-        yield _open_inventory(context.new_page(), context, standard_user_cookies)
+        yield _open_inventory(context.new_page(), context, user_cookies(Users.STANDARD))
     finally:
         context.close()
 

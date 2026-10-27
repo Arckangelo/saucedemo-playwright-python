@@ -19,21 +19,21 @@ As sugestões de melhoria estão em [sugestoes-de-melhoria.md](sugestoes-de-melh
 
 ## Resumo
 
-**24 bugs confirmados**: 23 novos e 1 que a suíte já cobria (BUG-007). **8 afetam todos os
-usuários**, inclusive o `standard_user` (BUG-001 a BUG-006, BUG-023 e BUG-024); os **16 restantes são os
+**25 bugs confirmados**: 24 novos e 1 que a suíte já cobria (BUG-007). **8 afetam todos os
+usuários**, inclusive o `standard_user` (BUG-001 a BUG-006, BUG-023 e BUG-024); os **17 restantes são os
 defeitos de treino** que o SauceDemo injeta de propósito no `problem_user`, no `error_user` e no
 `visual_user` (veja "Classificação" em [Ambiente e critérios](#ambiente-e-critérios)). Cada um foi reproduzido
-em pelo menos duas execuções independentes. 23 viraram um teste automatizado `xfail(strict=True)`,
+em pelo menos duas execuções independentes. 24 viraram um teste automatizado `xfail(strict=True)`,
 que falha somente pelo defeito descrito; o BUG-023, um bug de tempo, ficou sem teste de propósito
 e tem um script de reprodução controlada.
 
 | Severidade | Qtd. | | Usuário afetado | Qtd. |
 |---|:-:|---|---|:-:|
 | Crítica | 2 | | Todos (inclusive `standard_user`) | 8 |
-| Alta | 3 | | `problem_user` | 7 |
+| Alta | 4 | | `problem_user` | 8 |
 | Média | 12 | | `error_user` | 5 |
 | Baixa | 7 | | `visual_user` | 4 |
-| **Total** | **24** | | `performance_glitch_user` e `locked_out_user` | 0 |
+| **Total** | **25** | | `performance_glitch_user` e `locked_out_user` | 0 |
 
 | ID | Título | Usuário | Severidade | Prioridade | Issue |
 |---|---|---|---|---|:-:|
@@ -52,6 +52,7 @@ e tem um script de reprodução controlada.
 | [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Média | P2 | [#12](https://github.com/Arckangelo/saucedemo-playwright-python/issues/12) |
 | [BUG-012](#bug-012) | Link About aponta para uma página 404 | problem | Baixa | P3 | [#13](https://github.com/Arckangelo/saucedemo-playwright-python/issues/13) |
 | [BUG-013](#bug-013) | Carrinho continua cheio depois do pedido | problem | Média | P2 | [#14](https://github.com/Arckangelo/saucedemo-playwright-python/issues/14) |
+| [BUG-025](#bug-025) | Resumo mostra o subtotal em dobro | problem | Alta | P1 | [#ISSUE](https://github.com/Arckangelo/saucedemo-playwright-python/issues/ISSUE) |
 | [BUG-014](#bug-014) | Ordenação exibe "Sorting is broken!" e não ordena | error | Média | P2 | [#15](https://github.com/Arckangelo/saucedemo-playwright-python/issues/15) |
 | [BUG-015](#bug-015) | Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript | error | Alta | P1 | [#16](https://github.com/Arckangelo/saucedemo-playwright-python/issues/16) |
 | [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Média | P2 | [#17](https://github.com/Arckangelo/saucedemo-playwright-python/issues/17) |
@@ -281,10 +282,11 @@ responder dentro do limite.
 
 **Reprodutibilidade:** 100%, em 2 execuções independentes, com `standard_user`, `performance_glitch_user` e `visual_user`.
 
-**Efeito na suíte:** quatro testes abrem o resumo direto pela URL para isolar o que verificam e, por isso, dependem deste bug. Se ele for corrigido, eles passam a cair no passo 1 e precisam preenchê-lo antes:
+**Efeito na suíte:** cinco testes abrem o resumo direto pela URL para isolar o que verificam e, por isso, dependem deste bug. Se ele for corrigido, eles passam a cair no passo 1 e precisam preenchê-lo antes:
 - `test_cart_checkout.py::test_resumo_calcula_subtotal_imposto_e_total`;
 - `test_cart_checkout.py::test_concluir_o_pedido_esvazia_o_carrinho`;
 - `test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` (BUG-013);
+- `test_problem_user.py::test_resumo_calcula_o_subtotal_pela_soma_dos_itens` (BUG-025);
 - `test_error_user.py::test_finish_conclui_o_pedido` (BUG-018).
 
 **Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg) · [recibo sem dados de entrega](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-sem-dados-de-entrega.pdf) · [recibo normal, para comparação](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-normal-para-comparacao.pdf)
@@ -407,6 +409,27 @@ A falha é silenciosa, sem nenhuma mensagem.
 **Esperado:** pedido concluído e carrinho vazio (RN-19). **Obtido:** pedido concluído, mas o contador continua em 1 e o item fica no `localStorage`.
 
 **Evidência:** [pedido concluído com contador 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/bug-013-problem-carrinho-cheio-apos-pedido.jpg)
+
+<a id="bug-025"></a>
+### BUG-025: Resumo mostra o subtotal em dobro
+
+| Severidade | Prioridade | Teste |
+|---|---|---|
+| Alta | P1 | `tests/test_problem_user.py::test_resumo_calcula_o_subtotal_pela_soma_dos_itens` |
+
+**Como foi descoberto:** pela análise de mutação (`pytest --base-user problem_user`). O teste de cálculos do resumo, escrito para o `standard_user`, falhou ao rodar com o `problem_user`, numa funcionalidade que a matriz não registrava como quebrada.
+
+**Pré-condições:** Backpack e Onesie no carrinho (dois produtos que o `problem_user` consegue adicionar). Como o formulário está quebrado (BUG-009), o passo 1 foi pulado indo direto a `/checkout-step-two.html` (possível por causa do [BUG-024](#bug-024)).
+
+**Passos:** abrir o resumo e ler **Item total**, **Tax** e **Total**.
+
+**Esperado:** subtotal igual à soma dos itens ($29.99 + $7.99 = $37.98), imposto de $3.04 e total de $41.02 (RN-17), como no `standard_user`.
+
+**Obtido:** os preços de cada item estão certos, mas o subtotal é o **dobro** da soma ($75.96), e o imposto ($6.08) e o total ($82.04) são calculados sobre ele. Com três itens (Backpack, Bike Light e Onesie), o subtotal aparece sem arredondamento: "Item total: $95.93999999999998". Nenhum erro JavaScript.
+
+**Reprodutibilidade:** 100%, em 2 execuções independentes pela tela (cliques em **Add to cart**) e em 3 execuções do teste automatizado. O `standard_user`, pelo mesmo caminho, mostra os valores certos.
+
+**Evidência:** [subtotal dobrado com 2 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-025-subtotal-dobrado-2-itens.jpg) · [subtotal dobrado e sem arredondamento com 3 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-025-subtotal-dobrado-3-itens.jpg)
 
 ---
 

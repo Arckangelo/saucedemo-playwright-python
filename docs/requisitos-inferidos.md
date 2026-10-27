@@ -135,6 +135,7 @@ Referência: `standard_user`. ✅ = igual ao `standard_user`; ❌ = diverge (bug
 | Detalhe do produto | ✅ | — | ❌ abre o produto seguinte (BUG-011) | ✅ | ✅ | ✅ |
 | Checkout: campo nome | ✅ | — | ✅ | ✅ | ✅ | ✅ |
 | Checkout: campo sobrenome | ✅ | — | ❌ texto vai para o nome (BUG-009) | ✅ | ❌ não aceita texto (BUG-016) e não é validado (BUG-017) | ✅ |
+| Checkout: subtotal do resumo | ✅ | — | ❌ o dobro da soma dos itens (BUG-025) | ✅ | ✅ | ✅ |
 | Checkout: Finish | ✅ | — | ✅ | ✅ | ❌ não conclui (BUG-018) | ✅ |
 | Carrinho vazio após o pedido | ✅ | — | ❌ continua com o item (BUG-013) | ✅ | — | ✅ |
 | Menu: About | ✅ | — | ❌ aponta para `/error/404` (BUG-012) | ✅ | ✅ | ✅ |
