@@ -214,6 +214,14 @@ assim o bug de imagens do `problem_user`. A categoria "comportamento intencional
 
 **Evidência:** [logs-rede-console-e-estado.json](https://github.com/Arckangelo/saucedemo-playwright-python/blob/fa61fae526128797eea6ece49b626ee897581799/docs/evidencias/logs-rede-console-e-estado.json) (chave "BUG-006")
 
+**Atualização (27/10/2026):** o comportamento do Backtrace mudou e o status deixou de ser observável
+no navegador. As duas chamadas continuam saindo na primeira carga, com `UNIVERSE`/`TOKEN`, mas o
+servidor leva de 8 a 10 s só no handshake TLS, e o cliente de telemetria do site aborta cada chamada
+em 15 s (`net::ERR_ABORTED`), sem receber status, e tenta de novo depois de 10 s. O defeito continua:
+as credenciais são de exemplo e nenhum evento chega ao destino. O teste trata a falta de resposta
+como inconclusiva (skip) em vez de marcar o bug como corrigido; volta a dar XFAIL quando o servidor
+responder dentro do limite.
+
 <a id="bug-023"></a>
 ### BUG-023: Menu lateral abre invisível se clicado logo após a página carregar
 
