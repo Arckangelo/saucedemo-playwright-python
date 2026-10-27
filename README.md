@@ -9,9 +9,9 @@
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
-Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e documentou **23 defeitos**: **7 afetam todos os usuários**, inclusive o padrão (como um pedido de $0.00 concluído com o carrinho vazio), e **16 são os defeitos de treino** que o SauceDemo injeta de propósito nos perfis especiais. Cada um tem issue e evidências e, em 22 casos, um teste automatizado que avisa quando o bug for corrigido.
+Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia reversa do site e documentou **24 defeitos**: **8 afetam todos os usuários**, inclusive o padrão (como um pedido de $0.00 concluído com o carrinho vazio), e **16 são os defeitos de treino** que o SauceDemo injeta de propósito nos perfis especiais. Cada um tem issue e evidências e, em 23 casos, um teste automatizado que avisa quando o bug for corrigido.
 
-<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 7 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 16 defeitos de treino que o site injeta de propósito nos perfis especiais (7 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 78, cobrindo os 6 perfis de usuário; 23 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
+<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 16 defeitos de treino que o site injeta de propósito nos perfis especiais (7 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 86, cobrindo os 6 perfis de usuário; 24 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
 > Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
 
@@ -35,9 +35,9 @@ Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia 
 
 ## Destaques
 
-- **82 execuções de teste** a partir de 40 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **86 execuções de teste** a partir de 41 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
-- **23 defeitos documentados** (7 que afetam todos os usuários e 16 de treino dos perfis especiais), 22 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O 23º, um bug de tempo, tem um script de reprodução controlada.
+- **24 defeitos documentados** (8 que afetam todos os usuários e 16 de treino dos perfis especiais), 23 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
 - **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; no CI, cerca de 17 s a cada push e 33 s na suíte completa.
 - **Relatório HTML** com screenshot automático de cada falha.
@@ -113,7 +113,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 |---|---|:---:|
 | **Login** | Usuários válidos acessam a loja (`standard`, `problem`, `performance_glitch`, `error`, `visual`) | 5 |
 | | Login inválido mostra a mensagem certa (bloqueado, senha errada, usuário inexistente, campos vazios) | 5 |
-| | Páginas internas exigem login (`/inventory`, `/cart`, `/checkout`) | 3 |
+| | Páginas internas exigem login (inventário, detalhe, carrinho e as três telas do checkout) | 6 |
 | | Cookie de sessão adulterado não dá acesso (usuário inexistente, bloqueado, maiúsculas) | 3 |
 | | Logout encerra a sessão de verdade | 1 |
 | **Catálogo** | Ordenação por nome (A–Z, Z–A) e por preço (menor e maior) | 4 |
@@ -131,6 +131,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | | Formulário exige nome, sobrenome e CEP | 3 |
 | | Formulário rejeita campos só com espaços | 3 |
 | | Não conclui pedido com o carrinho vazio | 1 |
+| | Resumo do checkout exige o passo 1 (nome, sobrenome e CEP) | 1 |
 | | Carrinho continua salvo após recarregar a página, com os ids certos no `localStorage` | 1 |
 | | Carrinho mostra nome, preço e quantidade 1 de cada produto | 1 |
 | | Remover do carrinho mantém os demais itens após recarregar | 1 |
@@ -138,9 +139,9 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome e carrinho após o pedido | 10 |
 | **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
 | **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
-| | **Total** | **82** |
+| | **Total** | **86** |
 
-Das 82 execuções, 46 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
+Das 86 execuções, 49 passam e 37 documentam bugs conhecidos como falha esperada (`xfail`).
 
 ### Perfis de usuário
 
@@ -148,7 +149,7 @@ O SauceDemo oferece usuários com comportamentos diferentes. Os defeitos do `pro
 
 | Usuário | Comportamento | Como é testado |
 |---|---|---|
-| `standard_user` | Funciona normalmente, mas compartilha os 7 bugs que afetam todos os usuários (ex.: pedido concluído com o carrinho vazio) | Base de todos os fluxos e **oráculo** dos outros perfis; 7 bugs registrados (6 como falhas conhecidas e 1 com script de reprodução) |
+| `standard_user` | Funciona normalmente, mas compartilha os 8 bugs que afetam todos os usuários (ex.: pedido concluído com o carrinho vazio) | Base de todos os fluxos e **oráculo** dos outros perfis; 8 bugs registrados (7 como falhas conhecidas e 1 com script de reprodução) |
 | `locked_out_user` | Bloqueado no login | Verifica a mensagem de bloqueio, inclusive com cookie forjado |
 | `problem_user` | Defeitos de interface: imagens, ordenação, botões, detalhe errado e formulário | 7 bugs registrados como falhas conhecidas |
 | `performance_glitch_user` | ~5 s de atraso sempre que o inventário é renderizado | Usa um tempo de espera maior, sem pausas fixas; tempos medidos nos [requisitos](docs/requisitos-inferidos.md#tempos-do-performance_glitch_user) |
@@ -165,12 +166,13 @@ cada perfil foi comparado com o `standard_user`.
 | Documento | Conteúdo |
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
-| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 23 bugs confirmados (7 que afetam todos os usuários e 16 de treino dos perfis especiais; 2 críticos, 3 altos, 11 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
+| [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 24 bugs confirmados (8 que afetam todos os usuários e 16 de treino dos perfis especiais; 2 críticos, 3 altos, 12 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
 | [Issues dos bugs](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug) | Uma issue por bug confirmado, com severidade, passos para reproduzir, evidências e o teste que a cobre |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques entre os defeitos que afetam todos os usuários: o `standard_user` consegue concluir um
-pedido de $0.00 com o carrinho vazio, e o paralelismo da própria suíte revelou uma condição de
+pedido de $0.00 com o carrinho vazio ou, digitando a URL do resumo, sem nome nem endereço de entrega
+([BUG-024](docs/relatorio-de-bugs.md#bug-024)); e o paralelismo da própria suíte revelou uma condição de
 corrida no menu do site ([BUG-023](docs/relatorio-de-bugs.md#bug-023)): investigada a partir do
 trace do Playwright e reproduzida com a CPU 30x mais lenta, ela deixa o menu aberto porém
 invisível. Entre os defeitos de treino, o `visual_user` vê um preço no catálogo e paga outro, e o
@@ -198,7 +200,7 @@ saucedemo-playwright-python/
 │   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
 │   ├── sugestoes-de-melhoria.md  # Melhorias para a aplicação e para o projeto
 │   ├── evidencias/               # Screenshots e logs citados no relatório
-│   └── img/                      # Imagem-resumo exibida no topo deste README
+│   └── img/                      # Imagem-resumo do topo deste README e o HTML que a gera
 ├── pages/                 # Page Objects (uma classe por tela)
 │   ├── base_page.py
 │   ├── header.py          # Cabeçalho comum (carrinho e menu lateral)

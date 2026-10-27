@@ -30,9 +30,10 @@ def test_usuarios_validos_acessam_o_inventario(login_page: LoginPage, username: 
     # estourar o timeout (padrão: 5s), igual ao .should() do Cypress.
     # O performance_glitch_user trava a renderização do inventário por ~5s
     # de propósito, então aqui aumentamos o timeout só para estas asserções.
+    # A URL e os 6 produtos na tela já provam o acesso; o título não pega
+    # nenhum bug a mais.
     expect(login_page.page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
-    expect(inventory.header.title).to_have_text("Products", timeout=SLOW_RENDER_TIMEOUT)
-    expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
+    expect(inventory.items).to_have_count(TOTAL_PRODUCTS, timeout=SLOW_RENDER_TIMEOUT)
 
 
 @pytest.mark.parametrize(

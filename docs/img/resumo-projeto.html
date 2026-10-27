@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Fonte da imagem docs/img/resumo-projeto.png. Para regenerar: abrir no Chromium do Playwright com viewport 1600x2000 e device_scale_factor 1.35 e tirar um screenshot (2160x2700). -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=block" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12161c; --card: #191e26; --line: #2a303a; --box: #2b313b;
+    --text: #f3f4f6; --muted: #a3a9b4; --dim: #8a909b; --yellow: #f2c14e; --red: #ef5b5b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1600px; height: 2000px; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; }
+  .page { position: relative; width: 1600px; height: 2000px; padding: 0 118px; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .top { position: absolute; top: 104px; left: 118px; right: 118px; display: flex; justify-content: space-between;
+         font-family: "JetBrains Mono", monospace; font-size: 26px; letter-spacing: 6px; color: var(--muted); }
+  .hero { position: absolute; top: 200px; left: 118px; right: 118px; display: flex; align-items: center; gap: 30px; }
+  .big { font-size: 330px; font-weight: 900; color: var(--yellow); line-height: 0.8; letter-spacing: -8px; width: 215px; flex: none; }
+  .hero h1 { font-size: 72px; font-weight: 800; line-height: 1.12; letter-spacing: -2px; }
+  .hl { color: var(--yellow); }
+  .rule { position: absolute; left: 118px; right: 118px; height: 2px; background: var(--line); }
+  .plus { position: absolute; top: 580px; left: 118px; right: 118px; display: flex; align-items: center; gap: 30px; }
+  .plus b { font-size: 96px; font-weight: 800; color: #d4d7dd; letter-spacing: -3px; }
+  .plus p { font-size: 36px; color: var(--muted); line-height: 1.35; }
+  .bars { position: absolute; top: 732px; left: 118px; display: flex; gap: 33px; }
+  .group .sq { display: flex; gap: 9px; }
+  .group .sq i { width: 44px; height: 44px; border-radius: 7px; background: var(--box); display: block; }
+  .group.on .sq i { background: var(--yellow); }
+  .group span { display: block; margin-top: 16px; font-family: "JetBrains Mono", monospace; font-size: 23px; color: var(--muted); letter-spacing: 1px; }
+  .group span b { color: var(--text); font-weight: 700; }
+  .group.on span b { color: var(--yellow); }
+  .stats { position: absolute; top: 877px; left: 118px; right: 118px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 45px; }
+  .stat { border-top: 3px solid var(--line); padding-top: 26px; }
+  .stat b { display: block; font-size: 86px; font-weight: 800; letter-spacing: -3px; line-height: 1.05; }
+  .stat b .arrow { font-size: 52px; color: var(--dim); font-weight: 500; letter-spacing: 0; margin: 0 6px; }
+  .stat p { margin-top: 30px; font-size: 29px; color: var(--muted); line-height: 1.33; }
+  .card { position: absolute; top: 1140px; left: 118px; right: 118px; height: 490px; background: var(--card);
+          border: 2px solid var(--line); border-radius: 26px; padding: 40px 55px; }
+  .card .tag { font-family: "JetBrains Mono", monospace; font-size: 26px; color: var(--yellow); letter-spacing: 3px; }
+  .card h2 { margin-top: 22px; font-size: 46px; font-weight: 800; line-height: 1.3; letter-spacing: -0.5px; }
+  .flow { margin-top: 36px; display: flex; align-items: center; gap: 30px; }
+  .flow .box { flex: 1; border: 2px solid var(--line); border-radius: 14px; padding: 18px 24px 20px; height: 128px; }
+  .flow .box small { font-family: "JetBrains Mono", monospace; font-size: 20px; letter-spacing: 3px; color: var(--muted); }
+  .flow .box div { margin-top: 8px; font-size: 44px; font-weight: 700; }
+  .flow .box div.red { color: var(--red); }
+  .flow .box div.mono { font-family: "JetBrains Mono", monospace; font-weight: 700; }
+  .flow .box div.small { font-size: 33px; margin-top: 18px; }
+  .flow .arr { font-size: 36px; color: var(--dim); }
+  .card .note { margin-top: 34px; font-size: 26px; color: var(--muted); }
+  .tech { position: absolute; top: 1778px; left: 118px; font-family: "JetBrains Mono", monospace; font-size: 25px; color: var(--muted); letter-spacing: 1px; }
+  .foot { position: absolute; top: 1872px; left: 118px; right: 118px; display: flex; justify-content: space-between; align-items: center; }
+  .foot b { font-size: 34px; font-weight: 800; }
+  .foot b span { color: var(--dim); font-weight: 400; }
+  .foot .gh { font-family: "JetBrains Mono", monospace; font-size: 29px; color: var(--text); letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="top"><span>QA · ENGENHARIA REVERSA</span><span>PYTHON + PLAYWRIGHT</span></div>
+
+  <div class="hero">
+    <div class="big">8</div>
+    <h1>defeitos que afetam <span class="hl">todos os usuários</span> do SauceDemo, inclusive o padrão</h1>
+  </div>
+
+  <div class="rule" style="top: 536px"></div>
+
+  <div class="plus"><b>+16</b><p>defeitos de treino que o site injeta de propósito nos perfis especiais, também mapeados e testados</p></div>
+
+  <div class="bars">
+    <div class="group on"><div class="sq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span><b>8</b> todos</span></div>
+    <div class="group"><div class="sq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span><b>7</b> problem_user</span></div>
+    <div class="group"><div class="sq"><i></i><i></i><i></i><i></i><i></i></div><span><b>5</b> error_user</span></div>
+    <div class="group"><div class="sq"><i></i><i></i><i></i><i></i></div><span><b>4</b> visual_user</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>24<span class="arrow">→</span>86</b><p>execuções de teste, cobrindo os 6 perfis de usuário</p></div>
+    <div class="stat"><b>24</b><p>issues no GitHub, cada uma com evidência</p></div>
+    <div class="stat"><b>6x</b><p>CI mais rápido a cada push (101 s → 17 s)</p></div>
+  </div>
+
+  <div class="card">
+    <div class="tag">BUG-001 · todos os usuários · fluxo principal</div>
+    <h2>Até o usuário padrão conclui um pedido com o carrinho vazio.</h2>
+    <div class="flow">
+      <div class="box"><small>CARRINHO</small><div>0 itens</div></div>
+      <span class="arr">→</span>
+      <div class="box"><small>TOTAL</small><div class="red mono">$0.00</div></div>
+      <span class="arr">→</span>
+      <div class="box"><small>STATUS</small><div class="red small">Pedido concluído</div></div>
+    </div>
+    <p class="note">Separar defeitos reais dos de treino mostra onde está o risco de verdade.</p>
+  </div>
+
+  <div class="tech">Page Object Model · pytest-xdist · GitHub Actions · DevSecOps</div>
+  <div class="rule" style="top: 1840px"></div>
+  <div class="foot"><b>Ângelo Roque Barbosa <span>· QA</span></b><span class="gh">github.com/Arckangelo</span></div>
+</div>
+</body>
+</html>

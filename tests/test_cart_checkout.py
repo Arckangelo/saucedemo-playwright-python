@@ -46,10 +46,8 @@ def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: Inven
     for product in products:
         inventory_page.add_to_cart(product)
 
-    cart = inventory_page.go_to_cart()
-    expect(cart.item_names).to_have_text(products)
-
-    information = cart.checkout()
+    # Os itens são conferidos uma vez só, no resumo: o carrinho tem teste próprio.
+    information = inventory_page.go_to_cart().checkout()
     information.fill_information(**CHECKOUT_INFO)
     overview = information.continue_to_overview()
     # Cada linha conferida contra a tabela de referência, não contra a tela.
