@@ -52,7 +52,7 @@ e tem um script de reprodução controlada.
 | [BUG-011](#bug-011) | Detalhe abre o produto seguinte ao clicado | problem | Média | P2 | [#12](https://github.com/Arckangelo/saucedemo-playwright-python/issues/12) |
 | [BUG-012](#bug-012) | Link About aponta para uma página 404 | problem | Baixa | P3 | [#13](https://github.com/Arckangelo/saucedemo-playwright-python/issues/13) |
 | [BUG-013](#bug-013) | Carrinho continua cheio depois do pedido | problem | Média | P2 | [#14](https://github.com/Arckangelo/saucedemo-playwright-python/issues/14) |
-| [BUG-025](#bug-025) | Resumo mostra o subtotal em dobro | problem | Alta | P1 | [#ISSUE](https://github.com/Arckangelo/saucedemo-playwright-python/issues/ISSUE) |
+| [BUG-025](#bug-025) | Resumo mostra o subtotal em dobro | problem | Alta | P1 | [#37](https://github.com/Arckangelo/saucedemo-playwright-python/issues/37) |
 | [BUG-014](#bug-014) | Ordenação exibe "Sorting is broken!" e não ordena | error | Média | P2 | [#15](https://github.com/Arckangelo/saucedemo-playwright-python/issues/15) |
 | [BUG-015](#bug-015) | Adicionar falha em 3 produtos e remover falha nos outros 3, com erro JavaScript | error | Alta | P1 | [#16](https://github.com/Arckangelo/saucedemo-playwright-python/issues/16) |
 | [BUG-016](#bug-016) | Campo de sobrenome não aceita texto | error | Média | P2 | [#17](https://github.com/Arckangelo/saucedemo-playwright-python/issues/17) |
@@ -429,7 +429,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 
 **Reprodutibilidade:** 100%, em 2 execuções independentes pela tela (cliques em **Add to cart**) e em 3 execuções do teste automatizado. O `standard_user`, pelo mesmo caminho, mostra os valores certos.
 
-**Evidência:** [subtotal dobrado com 2 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-025-subtotal-dobrado-2-itens.jpg) · [subtotal dobrado e sem arredondamento com 3 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-025-subtotal-dobrado-3-itens.jpg)
+**Evidência:** [subtotal dobrado com 2 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/7923d9bf721d1cbc24370f079ed7c1254a9c3d1e/docs/evidencias/bug-025-subtotal-dobrado-2-itens.jpg) · [subtotal dobrado e sem arredondamento com 3 itens](https://github.com/Arckangelo/saucedemo-playwright-python/blob/7923d9bf721d1cbc24370f079ed7c1254a9c3d1e/docs/evidencias/bug-025-subtotal-dobrado-3-itens.jpg)
 
 ---
 

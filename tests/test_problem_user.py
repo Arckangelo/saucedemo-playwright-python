@@ -120,7 +120,7 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
 @pytest.mark.xfail(
     strict=True,
     raises=WrongSubtotalError,
-    reason="BUG-025 (#ISSUE): o resumo do problem_user mostra o subtotal em dobro",
+    reason="BUG-025 (#37): o resumo do problem_user mostra o subtotal em dobro",
 )
 def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, cart_with):
     # Encontrado pela análise de mutação (--base-user problem_user). Carrinho
