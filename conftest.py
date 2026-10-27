@@ -20,6 +20,7 @@ Cypress 12+).
 
 import base64
 import json
+import os
 import re
 import time
 import urllib.error
@@ -325,6 +326,53 @@ def pytest_collection_modifyitems(items):
 
 
 # --- Relatório ------------------------------------------------------------
+
+_XPASS_STRICT = "[XPASS(strict)]"
+
+
+def pytest_terminal_summary(terminalreporter, config):
+    """No CI, escreve no resumo do workflow a contagem de passed, XFAIL e XPASS.
+
+    O GitHub Actions define $GITHUB_STEP_SUMMARY: o Markdown gravado nesse
+    arquivo aparece na página da execução. Fora do CI a variável não existe e
+    nada é escrito. Com xfail_strict, um XPASS não é contado como "xpassed": o
+    pytest o transforma em falha com a mensagem "[XPASS(strict)] ...". Por isso
+    ele é separado das falhas comuns: significa que um bug conhecido foi
+    corrigido e o teste precisa sair do xfail.
+    """
+    path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not path or hasattr(config, "workerinput"):
+        return
+    stats = terminalreporter.stats
+    failed = stats.get("failed", [])
+    xpassed = [r for r in failed if str(r.longrepr).startswith(_XPASS_STRICT)]
+    real_failures = [r for r in failed if r not in xpassed]
+    mode = f"`-m \"{config.option.markexpr}\"`" if config.option.markexpr else "suíte completa"
+
+    lines = [
+        f"### Resultado dos testes ({mode})",
+        "",
+        "| Resultado | Quantidade |",
+        "|---|:-:|",
+        f"| ✅ Passaram | {len(stats.get('passed', []))} |",
+        f"| 🐞 XFAIL (bug conhecido, ainda reproduz) | {len(stats.get('xfailed', []))} |",
+        f"| 🎉 XPASS (bug conhecido corrigido?) | {len(xpassed)} |",
+        f"| ❌ Falharam | {len(real_failures)} |",
+        f"| ⚠️ Erros | {len(stats.get('error', []))} |",
+        f"| ⏭️ Pulados | {len(stats.get('skipped', []))} |",
+        "",
+    ]
+    if xpassed:
+        lines += ["**XPASS:** o bug deixou de reproduzir. Confirme no site e tire o `xfail` do teste:", ""]
+        lines += [f"- `{r.nodeid}`: {str(r.longrepr)[len(_XPASS_STRICT):].strip()}" for r in xpassed]
+        lines.append("")
+    if real_failures or stats.get("error"):
+        lines += ["**Falhas e erros:**", ""]
+        lines += [f"- `{r.nodeid}` ({r.when})" for r in real_failures + stats.get("error", [])]
+        lines.append("")
+    with open(path, "a", encoding="utf-8") as summary:
+        summary.write("\n".join(lines) + "\n")
+
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):

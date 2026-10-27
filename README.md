@@ -301,6 +301,8 @@ O que roda depende do gatilho:
 | Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa e publicação no GitHub Pages | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
 | Manual (aba **Actions**) | Suíte completa (e publicação, se rodado na `main`) | Rodar sob demanda |
 
+Ao final de cada execução, a página do workflow mostra um **resumo** com a contagem de testes que passaram, de **XFAIL** (bug conhecido que continua reproduzindo) e de **XPASS** (bug conhecido que deixou de reproduzir), além de falhas, erros e pulados. Um XPASS aparece com o teste e o bug: é o sinal para confirmar a correção no site e tirar o `xfail` do teste. O resumo é escrito pelo `conftest.py` (hook `pytest_terminal_summary`) no `$GITHUB_STEP_SUMMARY`; fora do CI, nada é escrito.
+
 Os testes de bugs conhecidos ficam fora do push nas outras branches porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
 
 > **Atenção ao agendamento:** o GitHub só agenda workflows a partir da branch padrão (`main`) e, em repositórios públicos como este, **desativa automaticamente os workflows agendados após 60 dias sem atividade** no repositório (sem commits, por exemplo). Para voltar a ter a execução diária, basta reativar o workflow na aba **Actions**.
