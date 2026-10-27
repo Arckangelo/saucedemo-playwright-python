@@ -4,6 +4,13 @@ from decimal import Decimal
 from playwright.sync_api import Page
 
 
+# data-test dos botões de carrinho: "add-to-cart-<produto>" vira "remove-<produto>"
+# depois do clique. Os prefixos localizam o botão sem depender do texto exibido.
+ADD_TO_CART_BUTTON = re.compile(r"^add-to-cart-")
+REMOVE_BUTTON = re.compile(r"^remove-")
+CART_BUTTON = re.compile(r"^(add-to-cart|remove)-")
+
+
 def parse_money(text: str) -> Decimal:
     """Extrai o valor monetário de um texto: 'Item total: $39.98' -> Decimal('39.98').
 
