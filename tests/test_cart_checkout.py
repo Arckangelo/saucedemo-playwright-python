@@ -17,6 +17,10 @@ class EmptyCartOrderError(AssertionError):
     """Um pedido sem nenhum item foi concluído."""
 
 
+class SkippedCheckoutStepError(AssertionError):
+    """O pedido foi concluído sem passar pelo passo 1 (nome, sobrenome e CEP)."""
+
+
 class BlankFieldAcceptedError(AssertionError):
     """Um campo preenchido só com espaços foi aceito como válido."""
 
@@ -163,6 +167,30 @@ def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     if _blocked(complete.complete_header):
         return
     raise EmptyCartOrderError(f"Pedido vazio concluído: {complete.complete_header.inner_text()}")
+
+
+@pytest.mark.regression
+@pytest.mark.xfail(
+    strict=True,
+    raises=SkippedCheckoutStepError,
+    reason="BUG-024 (#ISSUE): o resumo abre pela URL e conclui o pedido sem o passo 1 (nome, sobrenome e CEP)",
+)
+def test_resumo_exige_o_passo_1_preenchido(page: Page, standard_session, cart_with):
+    # Carrinho com um item e o resumo aberto direto pela URL, sem nunca passar
+    # pelo formulário do passo 1.
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
+    overview = CheckoutOverviewPage(page).open()
+
+    # A correção pode bloquear em qualquer ponto (voltar ao passo 1, esconder o
+    # Finish ou não concluir). Cada bloqueio é o comportamento correto: o teste
+    # passa, e o xfail(strict=True) avisa que o bug foi corrigido.
+    if _blocked(overview.finish_button):
+        return
+    expect(overview.items).to_have_count(1)  # pré-condição: o resumo mostra o carrinho montado
+    complete = overview.finish()
+    if _blocked(complete.complete_header):
+        return
+    raise SkippedCheckoutStepError(f"Pedido concluído sem nome, sobrenome e CEP: {page.url}")
 
 
 def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPage):
