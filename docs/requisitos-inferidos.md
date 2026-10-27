@@ -58,7 +58,7 @@ flowchart TD
 | Carrinho | `/cart.html` | `inventory-item`, `item-quantity`, `continue-shopping`, `checkout` |
 | Checkout 1 | `/checkout-step-one.html` | `firstName`, `lastName`, `postalCode`, `continue`, `cancel`, `error` |
 | Checkout 2 | `/checkout-step-two.html` | `subtotal-label`, `tax-label`, `total-label`, `payment-info-value`, `shipping-info-value`, `finish` |
-| Concluído | `/checkout-complete.html` | `complete-header`, `back-to-products` |
+| Concluído | `/checkout-complete.html` | `complete-header`, `back-to-products`, `generate-pdf-order` (recibo em PDF; só aparece depois de um **Finish**, não ao abrir a página pela URL) |
 | Menu | (todas as telas logadas) | `inventory-sidebar-link`, `dynamic-catalog-sidebar-link`, `about-sidebar-link`, `logout-sidebar-link`, `reset-sidebar-link` |
 
 ---

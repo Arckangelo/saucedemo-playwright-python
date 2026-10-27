@@ -277,7 +277,7 @@ responder dentro do limite.
 
 **Esperado:** sem nome, sobrenome e CEP (RN-15), o resumo não deve abrir: o site deve voltar ao passo 1 ou bloquear o **Finish**.
 
-**Obtido:** o resumo abre com os itens, o pagamento, a entrega e o total, e o pedido é concluído com "Thank you for your order!". Os dados do comprador não existem em lugar nenhum (nem no `localStorage` nem no `sessionStorage`).
+**Obtido:** o resumo abre com os itens, o pagamento, a entrega e o total, e o pedido é concluído com "Thank you for your order!". Os dados do comprador não existem em lugar nenhum (nem no `localStorage` nem no `sessionStorage`). O recibo gerado por **Generate PDF order** confirma o pedido como "dispatched" sem a seção **SHIP TO**: não há nome nem endereço de entrega (no fluxo normal, o recibo traz nome, sobrenome e CEP).
 
 **Reprodutibilidade:** 100%, em 2 execuções independentes, com `standard_user`, `performance_glitch_user` e `visual_user`.
 
@@ -287,7 +287,7 @@ responder dentro do limite.
 - `test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` (BUG-013);
 - `test_error_user.py::test_finish_conclui_o_pedido` (BUG-018).
 
-**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg)
+**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg) · [recibo sem dados de entrega](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-recibo-sem-dados-de-entrega.pdf) · [recibo normal, para comparação](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-recibo-normal-para-comparacao.pdf)
 
 ---
 
@@ -577,3 +577,11 @@ Observado, mas **não** é defeito:
 **Verificações sem achados:** nenhuma violação **séria ou crítica** do axe-core 4.10 nas 6 telas
 (login, inventário, detalhe, carrinho e os dois passos do checkout); nenhuma rolagem horizontal
 em 390×844; nenhuma exceção JavaScript no fluxo completo de compra do `standard_user`.
+
+**Confirmação aberta pela URL (verificado em 27/10/2026, sem achado):** logado e com o carrinho
+`[4, 5]` (montado pelo `localStorage` e, em outra execução, pelos cliques na tela), abrir
+`/checkout-complete.html` direto mostra "Thank you for your order!", mas **nada muda**: o carrinho
+continua `[4, 5]`, inclusive depois de recarregar, e o botão **Generate PDF order** não aparece (ele
+só existe depois de um **Finish** de verdade). Ao contrário do projeto em Cypress, em que a
+confirmação e a fatura eram geradas pela URL, aqui a página é só uma tela estática, sem pedido. Sem
+login, a rota redireciona para o login (coberta em `test_rotas_protegidas_exigem_login`).
