@@ -44,7 +44,7 @@ e tem um script de reprodução controlada.
 | [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 | [#6](https://github.com/Arckangelo/saucedemo-playwright-python/issues/6) |
 | [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 | [#7](https://github.com/Arckangelo/saucedemo-playwright-python/issues/7) |
 | [BUG-023](#bug-023) | Menu lateral abre invisível se clicado logo após a página carregar | todos | Baixa | P4 | [#25](https://github.com/Arckangelo/saucedemo-playwright-python/issues/25) |
-| [BUG-024](#bug-024) | Resumo do checkout abre pela URL e conclui o pedido sem o passo 1 | todos | Média | P2 | [#ISSUE](https://github.com/Arckangelo/saucedemo-playwright-python/issues/ISSUE) |
+| [BUG-024](#bug-024) | Resumo do checkout abre pela URL e conclui o pedido sem o passo 1 | todos | Média | P2 | [#35](https://github.com/Arckangelo/saucedemo-playwright-python/issues/35) |
 | [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 | [#8](https://github.com/Arckangelo/saucedemo-playwright-python/issues/8) |
 | [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 | [#9](https://github.com/Arckangelo/saucedemo-playwright-python/issues/9) |
 | [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 | [#10](https://github.com/Arckangelo/saucedemo-playwright-python/issues/10) |
@@ -287,7 +287,7 @@ responder dentro do limite.
 - `test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` (BUG-013);
 - `test_error_user.py::test_finish_conclui_o_pedido` (BUG-018).
 
-**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/COMMIT/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg)
+**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg)
 
 ---
 

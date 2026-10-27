@@ -173,7 +173,7 @@ def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
 @pytest.mark.xfail(
     strict=True,
     raises=SkippedCheckoutStepError,
-    reason="BUG-024 (#ISSUE): o resumo abre pela URL e conclui o pedido sem o passo 1 (nome, sobrenome e CEP)",
+    reason="BUG-024 (#35): o resumo abre pela URL e conclui o pedido sem o passo 1 (nome, sobrenome e CEP)",
 )
 def test_resumo_exige_o_passo_1_preenchido(page: Page, standard_session, cart_with):
     # Carrinho com um item e o resumo aberto direto pela URL, sem nunca passar
