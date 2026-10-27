@@ -35,7 +35,7 @@ Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia 
 
 ## Destaques
 
-- **78 execuções de teste** a partir de 36 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **80 execuções de teste** a partir de 38 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
 - **23 defeitos documentados** (7 que afetam todos os usuários e 16 de treino dos perfis especiais), 22 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O 23º, um bug de tempo, tem um script de reprodução controlada.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
@@ -124,18 +124,20 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | | A URL `?id=N` abre o produto certo | 6 |
 | | Produto inexistente não entra no carrinho (pela URL e pelo `localStorage`) | 3 |
 | **Menu** | All Items volta ao inventário; About aponta para a Sauce Labs | 3 |
-| **Carrinho e checkout** | Compra completa, conferindo subtotal, imposto de 8% e total | 1 |
+| **Carrinho e checkout** | Compra completa, conferindo cada item, subtotal, imposto de 8% e total com a tabela de preços | 1 |
 | | Formulário exige nome, sobrenome e CEP | 3 |
 | | Formulário rejeita campos só com espaços | 3 |
 | | Não conclui pedido com o carrinho vazio | 1 |
-| | Carrinho continua salvo após recarregar a página | 1 |
+| | Carrinho continua salvo após recarregar a página, com os ids certos no `localStorage` | 1 |
+| | Carrinho mostra nome, preço e quantidade 1 de cada produto | 1 |
+| | Remover do carrinho mantém os demais itens após recarregar | 1 |
 | **Saúde técnica** | Compra sem erros JavaScript; rotas respondem HTTP 200; telemetria sem erros | 3 |
 | **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome e carrinho após o pedido | 10 |
 | **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
 | **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
-| | **Total** | **78** |
+| | **Total** | **80** |
 
-Das 78 execuções, 42 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
+Das 80 execuções, 44 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
 
 ### Perfis de usuário
 
@@ -201,12 +203,14 @@ saucedemo-playwright-python/
 │   ├── inventory_page.py
 │   ├── product_detail_page.py
 │   ├── cart_page.py
+│   ├── cart_rows.py       # Leitura das linhas (nome, preço, quantidade) do carrinho e do resumo
 │   └── checkout_page.py
 ├── scripts/
 │   ├── gerar_relatorio_pdf.py  # Gera docs/relatorio-de-bugs.pdf a partir do Markdown
 │   └── reproduzir_bug_023.py   # Reproduz a condição de corrida do menu (BUG-023) com a CPU mais lenta
 ├── support/
-│   └── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
+│   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
+│   └── item_checks.py     # assert_item: confere uma linha com a tabela de preços
 ├── tests/                 # Os testes, separados por área e por perfil
 │   ├── test_login.py
 │   ├── test_inventory.py
@@ -309,9 +313,10 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 <summary><b>Clique para ver os detalhes</b></summary>
 
 - **Seletores estáveis:** os elementos são localizados principalmente pelo atributo `data-test` do site, que não muda quando o layout muda. Os botões Open Menu, Close Menu, Add to cart e Remove são encontrados pelo papel acessível e pelo nome (como um leitor de tela os enxerga). Seletores CSS ficam restritos às imagens dos produtos, à tag `<button>` dentro do card do produto (usada para ler o botão sem saber se ele diz Add to cart ou Remove; os links do card também têm papel de botão, o que tornaria a busca por papel ambígua) e ao sinal de que o menu fechado já foi escondido (`.bm-menu-wrap[hidden]`, ver [BUG-023](docs/relatorio-de-bugs.md#bug-023)).
-- **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixture `login_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
+- **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixtures `login_as` e `session_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
+- **Carrinho montado sem passar pela tela:** o SauceDemo não tem API, e o carrinho mora no `localStorage` como lista de ids. A fixture `cart_with(4, 5)` grava essa lista antes de a página carregar, uma única vez por aba (para um item removido não "voltar" no reload), e só aceita ids do catálogo, sem repetição. Só os testes do botão "Add to cart" e a jornada completa clicam na tela; os demais (checkout, Reset App State, `problem_user` e `error_user`) abrem a tela direto pela URL e não falham por causa do botão de adicionar (BUG-010 e BUG-015).
 - **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
-- **Resultados calculados, não decorados:** a ordenação é comparada com a lista ordenada a partir da própria tela, e no checkout subtotal, imposto e total são recalculados a partir dos preços exibidos.
+- **Tabela de preços como fonte de verdade:** `PRODUCT_PRICES` (em `data/constants.py`) guarda id, nome e preço dos 6 produtos, conferidos uma única vez no site. Ordenação, linhas do carrinho e do resumo, subtotal, imposto e total são calculados a partir dela, nunca a partir da própria tela: um preço errado exibido e cobrado de forma coerente passaria despercebido se o teste somasse o que a tela mostra.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
 - **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. O `conftest.py` aplica o marker `known_bug` a todo xfail com "BUG-", então basta seguir a convenção.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.

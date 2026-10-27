@@ -9,8 +9,8 @@ import re
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import TOTAL_PRODUCTS, Messages, Products, Users
-from pages import CheckoutOverviewPage
+from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Messages, Products, Users
+from pages import CheckoutInformationPage, CheckoutOverviewPage
 from support.bug_checks import add_remove_params, bug_check, check_add_and_remove, wait_for_render
 
 pytestmark = pytest.mark.regression
@@ -45,7 +45,7 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
 
     inventory = login_as(Users.ERROR)
     expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
-    expected = sorted(inventory.get_item_names(), reverse=True)
+    expected = sorted((product["name"] for product in PRODUCT_PRICES.values()), reverse=True)
 
     inventory.sort_by("za")
     wait_for_render(page)
@@ -61,10 +61,11 @@ def test_adicionar_e_remover_cada_produto(login_as, product: str):
 
 
 @pytest.fixture
-def checkout_information(login_as):
-    inventory = login_as(Users.ERROR)
-    inventory.add_to_cart(Products.BACKPACK)  # este produto o error_user consegue adicionar
-    return inventory.go_to_cart().checkout()
+def checkout_information(page: Page, session_as, cart_with):
+    # Carrinho montado pelo localStorage: os testes não dependem do Add to cart (BUG-015).
+    session_as(Users.ERROR)
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
+    return CheckoutInformationPage(page).open()
 
 
 @pytest.mark.xfail(
@@ -73,10 +74,10 @@ def checkout_information(login_as):
     reason="BUG-016 (#17): o campo de sobrenome do error_user não aceita texto",
 )
 def test_campo_sobrenome_aceita_texto(checkout_information):
-    checkout_information.fill_information("Ana", "Souza", "72980-000")
+    checkout_information.fill_information(**CHECKOUT_INFO)
 
     values = checkout_information.get_values()
-    if values["last_name"] != "Souza":
+    if values["last_name"] != CHECKOUT_INFO["last_name"]:
         raise LastNameInputIgnoredError(f"Campos após o preenchimento: {values}")
 
 
@@ -86,8 +87,8 @@ def test_campo_sobrenome_aceita_texto(checkout_information):
     reason="BUG-017 (#18): o error_user avança no checkout sem sobrenome",
 )
 def test_checkout_exige_sobrenome(checkout_information):
-    checkout_information.first_name_input.fill("Ana")
-    checkout_information.postal_code_input.fill("72980-000")
+    checkout_information.first_name_input.fill(CHECKOUT_INFO["first_name"])
+    checkout_information.postal_code_input.fill(CHECKOUT_INFO["postal_code"])
     checkout_information.continue_button.click()
 
     page = checkout_information.page
@@ -102,14 +103,14 @@ def test_checkout_exige_sobrenome(checkout_information):
     raises=FinishFailedError,
     reason="BUG-018 (#19): o Finish do error_user não conclui o pedido (erro JavaScript)",
 )
-def test_finish_conclui_o_pedido(login_as, page: Page, browser_errors):
-    inventory = login_as(Users.ERROR)
-    inventory.add_to_cart(Products.BACKPACK)
-    expect(inventory.header.cart_badge).to_have_text("1")
+def test_finish_conclui_o_pedido(page: Page, session_as, cart_with, browser_errors):
+    # Carrinho montado pelo localStorage: o teste não depende do Add to cart (BUG-015).
+    session_as(Users.ERROR)
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
 
     # Vamos direto ao resumo para o teste não depender do formulário (BUG-016/017).
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.item_names).to_have_text([Products.BACKPACK])
+    expect(overview.item_names).to_have_text([Products.BACKPACK])  # pré-condição: o carrinho foi montado
 
     complete = overview.finish()
     wait_for_render(page)

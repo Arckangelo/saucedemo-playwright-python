@@ -1,11 +1,10 @@
 """Inventário: ordenação, integridade das imagens e manipulação do carrinho."""
 
 import pytest
-from playwright.sync_api import expect
+from playwright.sync_api import Page, expect
 
-from data.constants import PASSWORD, TOTAL_PRODUCTS, Products, Users
+from data.constants import PASSWORD, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Products, Users
 from pages import InventoryPage, LoginPage
-from pages.base_page import parse_money
 from support.bug_checks import bug_check, wait_for_render
 
 
@@ -21,21 +20,22 @@ from support.bug_checks import bug_check, wait_for_render
 def test_ordenacao_de_produtos(
     inventory_page: InventoryPage, option: str, sort_by: str, descending: bool
 ):
-    # Garante que a lista já foi renderizada antes de lê-la (ver all_inner_texts).
+    # Garante que a lista já foi renderizada: sem isso, a pré-condição abaixo
+    # (not_to_have_text) passaria com a lista ainda vazia.
     expect(inventory_page.items).to_have_count(TOTAL_PRODUCTS)
 
-    # O resultado esperado é CALCULADO a partir do que está na tela, e não
-    # escrito à mão: se o catálogo mudar, o teste continua válido.
+    # O resultado esperado é CALCULADO a partir da tabela de referência, não da
+    # tela: se o site exibisse um produto ou preço errado, ordenar o que está
+    # na tela não perceberia. Se o catálogo mudar, a tabela é atualizada de
+    # propósito, num lugar só.
+    catalog = PRODUCT_PRICES.values()
     if sort_by == "name":
         locator = inventory_page.item_names
-        expected = sorted(inventory_page.get_item_names(), reverse=descending)
+        expected = sorted((product["name"] for product in catalog), reverse=descending)
     else:
         locator = inventory_page.item_prices
-        expected = sorted(
-            inventory_page.item_prices.all_inner_texts(),
-            key=parse_money,
-            reverse=descending,
-        )
+        prices = sorted((product["price"] for product in catalog), reverse=descending)
+        expected = [f"${price}" for price in prices]
 
     # Pré-condição: a lista NÃO pode já estar na ordem esperada. A página abre
     # em A-Z, então sem isto o caso "az" passaria mesmo com a ordenação
@@ -119,18 +119,18 @@ class StaleCartButtonsError(AssertionError):
     raises=StaleCartButtonsError,
     reason="BUG-003 (#4): Reset App State esvazia o carrinho, mas os botões continuam em 'Remove'",
 )
-def test_reset_app_state_restaura_os_botoes(inventory_page: InventoryPage):
+def test_reset_app_state_restaura_os_botoes(page: Page, standard_session, cart_with):
     products = [Products.BACKPACK, Products.BIKE_LIGHT]
-    for product in products:
-        inventory_page.add_to_cart(product)
-    expect(inventory_page.header.cart_badge).to_have_text("2")
+    cart_with(*(PRODUCT_IDS[product] for product in products))
+    inventory = InventoryPage(page).open()
+    expect(inventory.header.cart_badge).to_have_text("2")  # pré-condição: o carrinho foi montado
 
-    inventory_page.header.reset_app_state()
-    expect(inventory_page.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
+    inventory.header.reset_app_state()
+    expect(inventory.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
 
     # O contador sumiu (sinal acima): a tela já reagiu ao reset.
-    wait_for_render(inventory_page.page)
+    wait_for_render(inventory.page)
     for product in products:
-        button = inventory_page.item_button(product)
+        button = inventory.item_button(product)
         with bug_check(StaleCartButtonsError, f"Botão de '{product}' continua em 'Remove'"):
             assert button.inner_text() == "Add to cart"

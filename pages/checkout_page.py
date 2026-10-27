@@ -9,6 +9,7 @@ from decimal import Decimal
 from playwright.sync_api import Page
 
 from pages.base_page import BasePage, parse_money
+from pages.cart_rows import CartRow, read_rows
 from pages.header import Header
 
 
@@ -52,15 +53,15 @@ class CheckoutOverviewPage(BasePage):
     def __init__(self, page: Page):
         super().__init__(page)
         self.header = Header(page)
+        self.items = page.get_by_test_id("inventory-item")
         self.item_names = page.get_by_test_id("inventory-item-name")
-        self.item_prices = page.get_by_test_id("inventory-item-price")
         self.subtotal_label = page.get_by_test_id("subtotal-label")
         self.tax_label = page.get_by_test_id("tax-label")
         self.total_label = page.get_by_test_id("total-label")
         self.finish_button = page.get_by_test_id("finish")
 
-    def get_item_prices(self) -> list[Decimal]:
-        return [parse_money(text) for text in self.item_prices.all_inner_texts()]
+    def get_rows(self) -> list[CartRow]:
+        return read_rows(self.items)
 
     def get_subtotal(self) -> Decimal:
         # inner_text() tem auto-wait: espera o elemento existir antes de ler.
