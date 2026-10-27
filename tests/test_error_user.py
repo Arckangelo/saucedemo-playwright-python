@@ -55,6 +55,9 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
         raise SortingBrokenError(f"Alerta inesperado: {alerts}")
 
 
+# BUG-015: o botão que falha lança "Failed to add item to the cart." ou
+# "Failed to remove item from cart." sem tratamento.
+@pytest.mark.allow_js_errors
 @pytest.mark.parametrize("product", add_remove_params("BUG-015 (#16)", Users.ERROR))
 def test_adicionar_e_remover_cada_produto(login_as, product: str):
     check_add_and_remove(login_as(Users.ERROR), product)
@@ -68,6 +71,8 @@ def checkout_information(page: Page, session_as, cart_with):
     return CheckoutInformationPage(page).open()
 
 
+# BUG-016: digitar no sobrenome lança "Cannot read properties of undefined (reading 'value')".
+@pytest.mark.allow_js_errors
 @pytest.mark.xfail(
     strict=True,
     raises=LastNameInputIgnoredError,
@@ -98,6 +103,8 @@ def test_checkout_exige_sobrenome(checkout_information):
         assert error.all_inner_texts() == [Messages.LAST_NAME_REQUIRED]
 
 
+# BUG-018: o clique em Finish lança "wa.cesetRart is not a function" e o pedido não conclui.
+@pytest.mark.allow_js_errors
 @pytest.mark.xfail(
     strict=True,
     raises=FinishFailedError,
