@@ -56,7 +56,7 @@ A13 vêm de inspeção manual, fora do que a verificação automática cobre.
 ## Parte B: melhorias para este projeto
 
 Situação na primeira entrega (15/10/2026): **78 execuções, ~108 s em série** (42 passam e 36
-são `xfail` de bugs conhecidos), só no Chromium. B2 e B6 já foram implementados, e a espera fixa
+são `xfail` de bugs conhecidos), só no Chromium. B2, B6 e B10 já foram implementados, e a espera fixa
 de 2 s dos testes de bug foi trocada pela espera da renderização: hoje a suíte completa leva ~81 s
 em série e ~24 s em paralelo, medidos localmente com 8 núcleos.
 
@@ -71,7 +71,7 @@ em série e ~24 s em paralelo, medidos localmente com 8 núcleos.
 | B7 | **Regressão por usuário como matriz única.** | Médio | Médio |
 | B8 | **Linter e formatação no CI** (ruff). | Baixo | Médio |
 | B9 | **Detecção de flakiness agendada.** | Baixo | Médio |
-| B10 | **Estado preparado sem interface.** | Baixo | Médio |
+| B10 | **Estado preparado sem interface.** **Implementado.** | Baixo | Médio |
 
 ### Detalhes
 
@@ -127,7 +127,10 @@ semanalmente `pytest --count=5` (pytest-repeat) e acompanhar os resultados que m
 execuções. Não usar re-execução automática de falhas: ela esconde a instabilidade em vez de
 mostrá-la.
 
-**B10. Estado sem interface.** Os testes que precisam de itens no carrinho podem gravar o
-`localStorage` diretamente (como já se faz com o cookie de sessão) quando a adição pela interface
-não for o objeto do teste. Reduz tempo e acoplamento com os bugs de botões do `problem_user` e do
-`error_user`.
+**B10. Estado sem interface (implementado em 27/10/2026).** Os testes que precisam de itens no
+carrinho gravam o `localStorage` diretamente, pela fixture `cart_with` (e a sessão pelo cookie, com
+`session_as`), quando a adição pela interface não é o objeto do teste. Só os testes do botão Add to
+cart e a jornada completa clicam na tela. Resultado: os testes do checkout, do Reset App State, do
+`problem_user` e do `error_user` deixaram de depender dos botões quebrados (BUG-010 e BUG-015), e
+os 12 testes migrados ficaram ~17% mais rápidos em série. A fixture grava uma única vez por aba,
+para um item removido não "voltar" no reload, e recusa ids fora do catálogo ou repetidos.

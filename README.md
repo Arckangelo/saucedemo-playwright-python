@@ -378,6 +378,8 @@ Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-m
 - levar a checagem de acessibilidade com axe-core para o CI, falhando só em violações sérias e críticas;
 - adicionar ruff ao CI e ao `pre-commit`;
 - avaliar as 4 [suspeitas](docs/relatorio-de-bugs.md#suspeitas) do relatório, como o pedido que pode ser finalizado de novo pelo botão Voltar.
+- testar o recibo em PDF do botão **Generate PDF order** (itens, total e dados de entrega), funcionalidade nova do site que ainda não tem teste;
+- fechar as lacunas de cobertura das [regras de negócio](docs/requisitos-inferidos.md#regras-de-negócio): a ordem de validação do login e do checkout (RN-02 e RN-15), a validade de 10 minutos da sessão (RN-05), o inventário abrir em A–Z (RN-07), o clique na imagem do produto (RN-09) e o comportamento do resumo ao recarregar e ao voltar ao passo 1 (RN-20).
 
 ---
 
