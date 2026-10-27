@@ -90,23 +90,34 @@ def test_cada_produto_exibe_sua_propria_imagem(login_page: LoginPage, username: 
         raise BrokenProductImagesError(f"Imagens repetidas ou de erro (404): {sources}")
 
 
-def test_adicionar_e_remover_produtos_atualiza_o_carrinho(inventory_page: InventoryPage):
-    badge = inventory_page.header.cart_badge
+def test_adicionar_atualiza_contador_e_botao(inventory_page: InventoryPage):
+    # Clica na tela de propósito: é este teste que garante o botão Add to cart.
+    # Dois produtos, para o contador provar que conta (e não mostra sempre 1).
+    products = [Products.BACKPACK, Products.BIKE_LIGHT]
+    for product in products:
+        inventory_page.add_to_cart(product)
 
-    inventory_page.add_to_cart(Products.BACKPACK)
-    expect(badge).to_have_text("1")
-    expect(inventory_page.item_button(Products.BACKPACK)).to_have_text("Remove")
+    expect(inventory_page.header.cart_badge).to_have_text("2")
+    for product in products:
+        expect(inventory_page.item_button(product)).to_have_text("Remove")
 
-    inventory_page.add_to_cart(Products.BIKE_LIGHT)
-    expect(badge).to_have_text("2")
 
-    inventory_page.remove_from_cart(Products.BACKPACK)
-    expect(badge).to_have_text("1")
-    expect(inventory_page.item_button(Products.BACKPACK)).to_have_text("Add to cart")
+def test_remover_o_ultimo_item_esconde_o_contador_e_volta_o_botao(
+    page: Page, standard_session, cart_with
+):
+    # O carrinho é montado pelo localStorage (adicionar tem teste próprio), mas
+    # a remoção é clicada na tela: é este teste que garante o botão Remove.
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
+    inventory = InventoryPage(page).open()
+    expect(inventory.header.cart_badge).to_have_text("1")  # pré-condição: o carrinho foi montado
 
-    inventory_page.remove_from_cart(Products.BIKE_LIGHT)
-    # Com o carrinho vazio, o contador some da tela.
-    expect(badge).to_be_hidden()
+    inventory.remove_from_cart(Products.BACKPACK)
+
+    # Com o carrinho vazio, o contador some e o botão volta a oferecer a adição.
+    # Não conferimos o localStorage: neste site o contador é calculado a partir
+    # dele, então uma remoção não gravada já faz o contador continuar na tela.
+    expect(inventory.header.cart_badge).to_be_hidden()
+    expect(inventory.item_button(Products.BACKPACK)).to_have_text("Add to cart")
 
 
 class StaleCartButtonsError(AssertionError):

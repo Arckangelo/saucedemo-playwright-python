@@ -7,6 +7,7 @@ from playwright.sync_api import BrowserContext, Page, expect
 
 from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, TOTAL_PRODUCTS, Messages, Users
 from pages import InventoryPage, LoginPage
+from support.state import SESSION_COOKIE, session_cookie
 
 
 @pytest.mark.smoke
@@ -79,7 +80,7 @@ def test_cookie_de_sessao_adulterado_nao_da_acesso(
 ):
     # A sessão do saucedemo é só o nome do usuário em um cookie. Um valor
     # forjado não pode abrir a loja, nem para um usuário bloqueado.
-    context.add_cookies([{"name": "session-username", "value": cookie_value, "url": base_url}])
+    context.add_cookies([{"name": SESSION_COOKIE, "value": cookie_value, "url": base_url}])
     page.goto(InventoryPage.PATH)
 
     login = LoginPage(page)
@@ -87,12 +88,14 @@ def test_cookie_de_sessao_adulterado_nao_da_acesso(
     expect(login.error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))
 
 
-def test_logout_encerra_a_sessao(inventory_page: InventoryPage):
+def test_logout_encerra_a_sessao(inventory_page: InventoryPage, context: BrowserContext):
     inventory_page.header.logout()
     login = LoginPage(inventory_page.page)
     expect(login.login_button).to_be_visible()
 
     # Não basta voltar para a tela de login: a sessão precisa ter sido de fato
-    # encerrada. Tentar acessar o inventário de novo deve ser bloqueado.
+    # encerrada. O cookie tem de sumir (a causa) e o inventário, reaberto, tem
+    # de ser bloqueado (o efeito).
+    assert session_cookie(context) is None
     inventory_page.open()
     expect(login.error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))

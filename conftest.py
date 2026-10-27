@@ -24,7 +24,7 @@ import re
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -248,7 +248,7 @@ class BrowserErrors:
 
 
 @pytest.fixture(autouse=True)
-def browser_errors(page: Page) -> BrowserErrors:
+def browser_errors(page: Page, request: pytest.FixtureRequest) -> Iterator[BrowserErrors]:
     """Registra exceções JavaScript, erros de console e respostas HTTP 4xx/5xx.
 
     page.on() inscreve uma função que o Playwright chama a cada evento
@@ -256,6 +256,11 @@ def browser_errors(page: Page) -> BrowserErrors:
     ouvintes são registrados antes de qualquer fixture que navegue, então
     nada da primeira carga da página se perde, seja qual for a ordem dos
     parâmetros do teste. Basta pedir `browser_errors` para ler os erros.
+
+    No teardown, qualquer exceção JavaScript não tratada falha o teste (como
+    o Cypress faz por padrão), a menos que ele tenha o marker allow_js_errors,
+    sempre com um comentário dizendo qual bug gera o erro. Erros de console e
+    respostas HTTP de terceiros não entram nessa regra (ver test_console_e_rede.py).
     """
     errors = BrowserErrors()
 
@@ -269,7 +274,14 @@ def browser_errors(page: Page) -> BrowserErrors:
         lambda message: message.type == "error" and errors.console_errors.append(message.text),
     )
     page.on("response", on_response)
-    return errors
+    yield errors
+
+    if errors.page_errors and not request.node.get_closest_marker("allow_js_errors"):
+        pytest.fail(
+            "Erros JavaScript não tratados na página:\n" + "\n".join(errors.page_errors)
+            + "\nSe forem de um bug conhecido, marque o teste com allow_js_errors e cite o bug.",
+            pytrace=False,
+        )
 
 
 # --- Marcadores -------------------------------------------------------------

@@ -1,6 +1,5 @@
 """Carrinho e checkout: persistência, validação de formulário e compra completa."""
 
-import json
 import re
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -8,9 +7,10 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TAX_RATE, Messages, Products
-from pages import CartPage, CheckoutInformationPage, InventoryPage
+from pages import CartPage, CheckoutInformationPage, CheckoutOverviewPage, InventoryPage
 from support.bug_checks import bug_check, wait_for_render
 from support.item_checks import assert_item
+from support.state import cart_ids
 
 
 class EmptyCartOrderError(AssertionError):
@@ -35,7 +35,9 @@ def checkout_information_page(page: Page, standard_session, cart_with) -> Checko
 
 
 @pytest.mark.smoke
-def test_compra_completa_com_validacao_dos_valores(inventory_page: InventoryPage):
+def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: InventoryPage):
+    # A única jornada inteira pela tela: adicionar, carrinho, formulário,
+    # resumo e Finish. Os cálculos do resumo têm teste próprio.
     products = [Products.BACKPACK, Products.BOLT_TSHIRT, Products.ONESIE]
     for product in products:
         inventory_page.add_to_cart(product)
@@ -51,6 +53,20 @@ def test_compra_completa_com_validacao_dos_valores(inventory_page: InventoryPage
     for row, product in zip(overview.get_rows(), products, strict=True):
         assert_item(row, PRODUCT_IDS[product])
 
+    # Que o carrinho é esvaziado depois do pedido é conferido em
+    # test_concluir_o_pedido_esvazia_o_carrinho, direto no localStorage.
+    complete = overview.finish()
+    expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
+
+
+def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, cart_with):
+    # RN-17. Carrinho montado pelo localStorage e resumo aberto pela URL: o
+    # caminho até o resumo é coberto pela jornada completa.
+    products = [Products.BACKPACK, Products.BOLT_TSHIRT, Products.ONESIE]
+    cart_with(*(PRODUCT_IDS[product] for product in products))
+    overview = CheckoutOverviewPage(page).open()
+    expect(overview.items).to_have_count(len(products))  # pré-condição: o carrinho foi montado
+
     # Valores esperados calculados a partir da tabela de referência, não dos
     # preços exibidos: se o site exibisse e cobrasse um preço errado de forma
     # coerente (como o BUG-019), somar a própria tela não perceberia.
@@ -60,10 +76,6 @@ def test_compra_completa_com_validacao_dos_valores(inventory_page: InventoryPage
     assert overview.get_subtotal() == expected_subtotal
     assert overview.get_tax() == expected_tax
     assert overview.get_total() == expected_subtotal + expected_tax
-
-    complete = overview.finish()
-    expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
-    expect(complete.header.cart_badge).to_be_hidden()
 
 
 @pytest.mark.parametrize(
@@ -160,16 +172,29 @@ def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPag
     inventory_page.page.reload()
     expect(inventory_page.header.cart_badge).to_have_text("2")
 
-    # O saucedemo guarda o carrinho no localStorage. page.evaluate() roda
-    # JavaScript dentro do navegador e devolve o resultado para o Python
-    # (parecido com cy.window().then(win => win.localStorage...)).
+    # O saucedemo guarda o carrinho no localStorage (cart_ids lê por baixo da
+    # tela, como cy.window().then(win => win.localStorage...) no Cypress).
     # Ids exatos, na ordem em que foram adicionados (RN-08 e RN-13): é nesse
     # formato que os testes montam o carrinho direto pelo localStorage.
-    stored = inventory_page.page.evaluate("() => localStorage.getItem('cart-contents')")
-    assert json.loads(stored) == [PRODUCT_IDS[Products.BACKPACK], PRODUCT_IDS[Products.FLEECE_JACKET]]
+    assert cart_ids(inventory_page.page) == [PRODUCT_IDS[Products.BACKPACK], PRODUCT_IDS[Products.FLEECE_JACKET]]
 
     cart: CartPage = inventory_page.go_to_cart()
     expect(cart.item_names).to_have_text([Products.BACKPACK, Products.FLEECE_JACKET])
+
+
+def test_concluir_o_pedido_esvazia_o_carrinho(page: Page, standard_session, cart_with):
+    # RN-19. Carrinho montado pelo localStorage e resumo aberto pela URL: o
+    # caminho até aqui já é coberto pela jornada completa.
+    cart_with(PRODUCT_IDS[Products.BACKPACK])
+    overview = CheckoutOverviewPage(page).open()
+    expect(overview.items).to_have_count(1)  # pré-condição: o carrinho foi montado
+
+    complete = overview.finish()
+    expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
+
+    # Não basta o contador sumir da tela: o carrinho tem de sair do localStorage,
+    # senão os itens voltam na próxima visita.
+    assert cart_ids(page) == []
 
 
 def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standard_session, cart_with):

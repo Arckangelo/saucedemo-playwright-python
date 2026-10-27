@@ -35,7 +35,7 @@ Além de cobrir login, catálogo, carrinho e checkout, o projeto fez engenharia 
 
 ## Destaques
 
-- **80 execuções de teste** a partir de 38 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **82 execuções de teste** a partir de 40 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
 - **23 defeitos documentados** (7 que afetam todos os usuários e 16 de treino dos perfis especiais), 22 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O 23º, um bug de tempo, tem um script de reprodução controlada.
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
@@ -118,26 +118,29 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | | Logout encerra a sessão de verdade | 1 |
 | **Catálogo** | Ordenação por nome (A–Z, Z–A) e por preço (menor e maior) | 4 |
 | | Cada produto exibe a própria imagem | 2 |
-| | Adicionar e remover produtos atualiza o contador do carrinho | 1 |
+| | Adicionar atualiza o contador e o botão | 1 |
+| | Remover o último item esconde o contador e volta o botão | 1 |
 | | Reset App State volta os botões para "Add to cart" | 1 |
 | **Detalhe do produto** | Clicar no produto abre o detalhe dele | 1 |
 | | A URL `?id=N` abre o produto certo | 6 |
 | | Produto inexistente não entra no carrinho (pela URL e pelo `localStorage`) | 3 |
 | **Menu** | All Items volta ao inventário; About aponta para a Sauce Labs | 3 |
-| **Carrinho e checkout** | Compra completa, conferindo cada item, subtotal, imposto de 8% e total com a tabela de preços | 1 |
+| **Carrinho e checkout** | Compra completa pela tela, do inventário ao pedido concluído, conferindo cada item | 1 |
+| | Resumo calcula subtotal, imposto de 8% e total com a tabela de preços | 1 |
+| | Concluir o pedido esvazia o carrinho no `localStorage` | 1 |
 | | Formulário exige nome, sobrenome e CEP | 3 |
 | | Formulário rejeita campos só com espaços | 3 |
 | | Não conclui pedido com o carrinho vazio | 1 |
 | | Carrinho continua salvo após recarregar a página, com os ids certos no `localStorage` | 1 |
 | | Carrinho mostra nome, preço e quantidade 1 de cada produto | 1 |
 | | Remover do carrinho mantém os demais itens após recarregar | 1 |
-| **Saúde técnica** | Compra sem erros JavaScript; rotas respondem HTTP 200; telemetria sem erros | 3 |
+| **Saúde técnica** | Rotas respondem HTTP 200; telemetria sem erros (erros JavaScript são conferidos em todos os testes) | 2 |
 | **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome e carrinho após o pedido | 10 |
 | **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
 | **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
-| | **Total** | **80** |
+| | **Total** | **82** |
 
-Das 80 execuções, 44 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
+Das 82 execuções, 46 passam e 36 documentam bugs conhecidos como falha esperada (`xfail`).
 
 ### Perfis de usuário
 
@@ -210,7 +213,8 @@ saucedemo-playwright-python/
 │   └── reproduzir_bug_023.py   # Reproduz a condição de corrida do menu (BUG-023) com a CPU mais lenta
 ├── support/
 │   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
-│   └── item_checks.py     # assert_item: confere uma linha com a tabela de preços
+│   ├── item_checks.py     # assert_item: confere uma linha com a tabela de preços
+│   └── state.py           # cart_ids e session_cookie: leem o estado por baixo da tela
 ├── tests/                 # Os testes, separados por área e por perfil
 │   ├── test_login.py
 │   ├── test_inventory.py
@@ -319,6 +323,8 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Tabela de preços como fonte de verdade:** `PRODUCT_PRICES` (em `data/constants.py`) guarda id, nome e preço dos 6 produtos, conferidos uma única vez no site. Ordenação, linhas do carrinho e do resumo, subtotal, imposto e total são calculados a partir dela, nunca a partir da própria tela: um preço errado exibido e cobrado de forma coerente passaria despercebido se o teste somasse o que a tela mostra.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
 - **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. O `conftest.py` aplica o marker `known_bug` a todo xfail com "BUG-", então basta seguir a convenção.
+- **Erro JavaScript falha qualquer teste:** a fixture `browser_errors` (autouse) falha o teste no teardown se a página lançar uma exceção não tratada, como o Cypress faz por padrão. Só os testes com o marker `allow_js_errors` toleram exceções, e cada uso cita o bug que as gera (hoje, BUG-015, BUG-016 e BUG-018, todos do `error_user`).
+- **Estado conferido por baixo da tela onde a tela não basta:** `cart_ids` lê o carrinho no `localStorage` e `session_cookie` lê o cookie de sessão. São usados onde a tela não prova o efeito: os ids gravados ao adicionar, o carrinho esvaziado depois do pedido e o cookie apagado no logout. Onde a tela já é calculada a partir desse estado (o contador do carrinho), conferir os dois seria redundante.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
 - **Confirmar que algo NÃO aconteceu, sem esperar um tempo fixo:** para provar um bug (o contador não mudou, o pedido não foi concluído), não adianta esperar o efeito, porque ele nunca vem. Em vez de aguardar um tempo fixo, o teste executa a ação, espera o navegador desenhar dois quadros (`wait_for_render`, com `requestAnimationFrame`) e lê o estado sem esperar mais. O navegador só desenha um quadro depois de processar o evento e a atualização de tela que ele dispara, então esse é o sinal concreto de que a ação já teve efeito, se fosse ter. A técnica foi validada no `standard_user`: em 175 repetições de 7 ações diferentes, o efeito sempre já estava na tela depois dos dois quadros. Onde há um sinal ainda mais direto (a página de pedido concluído apareceu, o contador sumiu), ele é usado.
 - **Exceções documentadas (esperas por sinal, não por tempo):**
