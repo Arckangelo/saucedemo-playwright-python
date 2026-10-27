@@ -1,6 +1,7 @@
 """Autenticação: login com os diferentes perfis de usuário, erros e rotas protegidas."""
 
 import re
+from urllib.parse import urlparse
 
 import pytest
 from playwright.sync_api import BrowserContext, Page, expect
@@ -29,9 +30,10 @@ def test_usuarios_validos_acessam_o_inventario(login_page: LoginPage, username: 
     # estourar o timeout (padrão: 5s), igual ao .should() do Cypress.
     # O performance_glitch_user trava a renderização do inventário por ~5s
     # de propósito, então aqui aumentamos o timeout só para estas asserções.
+    # A URL e os 6 produtos na tela já provam o acesso; o título não pega
+    # nenhum bug a mais.
     expect(login_page.page).to_have_url(re.compile(r"/inventory\.html$"), timeout=SLOW_RENDER_TIMEOUT)
-    expect(inventory.header.title).to_have_text("Products", timeout=SLOW_RENDER_TIMEOUT)
-    expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
+    expect(inventory.items).to_have_count(TOTAL_PRODUCTS, timeout=SLOW_RENDER_TIMEOUT)
 
 
 @pytest.mark.parametrize(
@@ -55,15 +57,24 @@ def test_login_invalido_exibe_mensagem_de_erro(
 
 @pytest.mark.parametrize(
     "protected_path",
-    ["/inventory.html", "/cart.html", "/checkout-step-one.html"],
+    [
+        "/inventory.html",
+        "/inventory-item.html?id=4",
+        "/cart.html",
+        "/checkout-step-one.html",
+        "/checkout-step-two.html",
+        "/checkout-complete.html",
+    ],
 )
 def test_rotas_protegidas_exigem_login(page: Page, protected_path: str):
     page.goto(protected_path)
-    login = LoginPage(page)
 
-    # Sem sessão, o site redireciona para o login e explica o motivo.
-    expect(login.login_button).to_be_visible()
-    expect(login.error_message).to_have_text(Messages.not_logged_in(protected_path))
+    # Sem sessão, o site redireciona para o login e explica o motivo. Essa
+    # mensagem só existe na tela de login, então ela basta como prova do
+    # redirecionamento. O site cita a rota sem a query string (?id=4).
+    expect(LoginPage(page).error_message).to_have_text(
+        Messages.not_logged_in(urlparse(protected_path).path)
+    )
 
 
 @pytest.mark.regression
@@ -83,9 +94,8 @@ def test_cookie_de_sessao_adulterado_nao_da_acesso(
     context.add_cookies([{"name": SESSION_COOKIE, "value": cookie_value, "url": base_url}])
     page.goto(InventoryPage.PATH)
 
-    login = LoginPage(page)
-    expect(login.login_button).to_be_visible()
-    expect(login.error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))
+    # A mensagem só existe na tela de login: ela prova que o acesso foi negado.
+    expect(LoginPage(page).error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))
 
 
 def test_logout_encerra_a_sessao(inventory_page: InventoryPage, context: BrowserContext):

@@ -19,21 +19,21 @@ As sugestões de melhoria estão em [sugestoes-de-melhoria.md](sugestoes-de-melh
 
 ## Resumo
 
-**23 bugs confirmados**: 22 novos e 1 que a suíte já cobria (BUG-007). **7 afetam todos os
-usuários**, inclusive o `standard_user` (BUG-001 a BUG-006 e BUG-023); os **16 restantes são os
+**24 bugs confirmados**: 23 novos e 1 que a suíte já cobria (BUG-007). **8 afetam todos os
+usuários**, inclusive o `standard_user` (BUG-001 a BUG-006, BUG-023 e BUG-024); os **16 restantes são os
 defeitos de treino** que o SauceDemo injeta de propósito no `problem_user`, no `error_user` e no
 `visual_user` (veja "Classificação" em [Ambiente e critérios](#ambiente-e-critérios)). Cada um foi reproduzido
-em pelo menos duas execuções independentes. 22 viraram um teste automatizado `xfail(strict=True)`,
+em pelo menos duas execuções independentes. 23 viraram um teste automatizado `xfail(strict=True)`,
 que falha somente pelo defeito descrito; o BUG-023, um bug de tempo, ficou sem teste de propósito
 e tem um script de reprodução controlada.
 
 | Severidade | Qtd. | | Usuário afetado | Qtd. |
 |---|:-:|---|---|:-:|
-| Crítica | 2 | | Todos (inclusive `standard_user`) | 7 |
+| Crítica | 2 | | Todos (inclusive `standard_user`) | 8 |
 | Alta | 3 | | `problem_user` | 7 |
-| Média | 11 | | `error_user` | 5 |
+| Média | 12 | | `error_user` | 5 |
 | Baixa | 7 | | `visual_user` | 4 |
-| **Total** | **23** | | `performance_glitch_user` e `locked_out_user` | 0 |
+| **Total** | **24** | | `performance_glitch_user` e `locked_out_user` | 0 |
 
 | ID | Título | Usuário | Severidade | Prioridade | Issue |
 |---|---|---|---|---|:-:|
@@ -44,6 +44,7 @@ e tem um script de reprodução controlada.
 | [BUG-005](#bug-005) | Rotas internas respondem HTTP 404 | todos | Baixa | P3 | [#6](https://github.com/Arckangelo/saucedemo-playwright-python/issues/6) |
 | [BUG-006](#bug-006) | Telemetria com credenciais de exemplo gera erros 401 | todos | Baixa | P4 | [#7](https://github.com/Arckangelo/saucedemo-playwright-python/issues/7) |
 | [BUG-023](#bug-023) | Menu lateral abre invisível se clicado logo após a página carregar | todos | Baixa | P4 | [#25](https://github.com/Arckangelo/saucedemo-playwright-python/issues/25) |
+| [BUG-024](#bug-024) | Resumo do checkout abre pela URL e conclui o pedido sem o passo 1 | todos | Média | P2 | [#35](https://github.com/Arckangelo/saucedemo-playwright-python/issues/35) |
 | [BUG-007](#bug-007) | Todos os produtos exibem a imagem de erro | problem | Média | P3 | [#8](https://github.com/Arckangelo/saucedemo-playwright-python/issues/8) |
 | [BUG-008](#bug-008) | Ordenação não muda a lista | problem | Média | P2 | [#9](https://github.com/Arckangelo/saucedemo-playwright-python/issues/9) |
 | [BUG-009](#bug-009) | Sobrenome digitado vai para o campo de nome | problem | **Crítica** | P1 | [#10](https://github.com/Arckangelo/saucedemo-playwright-python/issues/10) |
@@ -258,6 +259,36 @@ responder dentro do limite.
 
 **Evidência:** [resultado da reprodução controlada](https://github.com/Arckangelo/saucedemo-playwright-python/blob/49c8a2924de60f1eb35a1b5ca4eff1201aa692df/docs/evidencias/bug-023-reproducao.json) · [script de reprodução](https://github.com/Arckangelo/saucedemo-playwright-python/blob/49c8a2924de60f1eb35a1b5ca4eff1201aa692df/scripts/reproduzir_bug_023.py)
 
+<a id="bug-024"></a>
+### BUG-024: Resumo do checkout abre pela URL e conclui o pedido sem o passo 1
+
+| Usuário | Severidade | Prioridade | Teste |
+|---|---|---|---|
+| todos (`standard_user`) | Média | P2 | `tests/test_cart_checkout.py::test_resumo_exige_o_passo_1_preenchido` |
+
+**Como foi descoberto:** o teste do BUG-013 já ia direto ao resumo para contornar o formulário quebrado do `problem_user` (BUG-009). O contorno só funciona porque o site não exige o passo 1, o que nunca tinha sido registrado como defeito. Encontrado na comparação com o projeto em Cypress, que tem um bug parecido (checkout e pagamento abertos pela URL).
+
+**Pré-condições:** usuário logado, com pelo menos um item no carrinho.
+
+**Passos**
+1. Adicionar um produto ao carrinho e abrir o carrinho (`/cart.html`).
+2. Em vez de clicar em **Checkout**, digitar na barra de endereço `/checkout-step-two.html`.
+3. Clicar em **Finish**.
+
+**Esperado:** sem nome, sobrenome e CEP (RN-15), o resumo não deve abrir: o site deve voltar ao passo 1 ou bloquear o **Finish**.
+
+**Obtido:** o resumo abre com os itens, o pagamento, a entrega e o total, e o pedido é concluído com "Thank you for your order!". Os dados do comprador não existem em lugar nenhum (nem no `localStorage` nem no `sessionStorage`). O recibo gerado por **Generate PDF order** confirma o pedido como "dispatched" sem a seção **SHIP TO**: não há nome nem endereço de entrega (no fluxo normal, o recibo traz nome, sobrenome e CEP).
+
+**Reprodutibilidade:** 100%, em 2 execuções independentes, com `standard_user`, `performance_glitch_user` e `visual_user`.
+
+**Efeito na suíte:** quatro testes abrem o resumo direto pela URL para isolar o que verificam e, por isso, dependem deste bug. Se ele for corrigido, eles passam a cair no passo 1 e precisam preenchê-lo antes:
+- `test_cart_checkout.py::test_resumo_calcula_subtotal_imposto_e_total`;
+- `test_cart_checkout.py::test_concluir_o_pedido_esvazia_o_carrinho`;
+- `test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` (BUG-013);
+- `test_error_user.py::test_finish_conclui_o_pedido` (BUG-018).
+
+**Evidência:** [resumo aberto sem o passo 1](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-resumo-sem-passo-1.jpg) · [pedido concluído sem os dados](https://github.com/Arckangelo/saucedemo-playwright-python/blob/b165707ffc109a92423560b00456720682ead1c2/docs/evidencias/bug-024-pedido-concluido-sem-dados.jpg) · [recibo sem dados de entrega](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-sem-dados-de-entrega.pdf) · [recibo normal, para comparação](https://github.com/Arckangelo/saucedemo-playwright-python/blob/5743790b4ca2c6a430e5d0f60936ce48cc04bd4b/docs/evidencias/bug-024-recibo-normal-para-comparacao.pdf)
+
 ---
 
 ## Bugs do problem_user
@@ -369,7 +400,7 @@ A falha é silenciosa, sem nenhuma mensagem.
 |---|---|---|
 | Média | P2 | `tests/test_problem_user.py::test_carrinho_esvazia_apos_concluir_o_pedido` |
 
-**Pré-condições:** Backpack no carrinho. Como o formulário está quebrado (BUG-009), o passo 1 foi pulado indo direto a `/checkout-step-two.html`.
+**Pré-condições:** Backpack no carrinho. Como o formulário está quebrado (BUG-009), o passo 1 foi pulado indo direto a `/checkout-step-two.html`. Esse contorno só funciona por causa do [BUG-024](#bug-024): se ele for corrigido, este teste terá de preencher o passo 1 de outra forma.
 
 **Passos:** clicar em **Finish**.
 
@@ -546,3 +577,11 @@ Observado, mas **não** é defeito:
 **Verificações sem achados:** nenhuma violação **séria ou crítica** do axe-core 4.10 nas 6 telas
 (login, inventário, detalhe, carrinho e os dois passos do checkout); nenhuma rolagem horizontal
 em 390×844; nenhuma exceção JavaScript no fluxo completo de compra do `standard_user`.
+
+**Confirmação aberta pela URL (verificado em 27/10/2026, sem achado):** logado e com o carrinho
+`[4, 5]` (montado pelo `localStorage` e, em outra execução, pelos cliques na tela), abrir
+`/checkout-complete.html` direto mostra "Thank you for your order!", mas **nada muda**: o carrinho
+continua `[4, 5]`, inclusive depois de recarregar, e o botão **Generate PDF order** não aparece (ele
+só existe depois de um **Finish** de verdade). Ao contrário do projeto em Cypress, em que a
+confirmação e a fatura eram geradas pela URL, aqui a página é só uma tela estática, sem pedido. Sem
+login, a rota redireciona para o login (coberta em `test_rotas_protegidas_exigem_login`).

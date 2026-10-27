@@ -58,7 +58,7 @@ flowchart TD
 | Carrinho | `/cart.html` | `inventory-item`, `item-quantity`, `continue-shopping`, `checkout` |
 | Checkout 1 | `/checkout-step-one.html` | `firstName`, `lastName`, `postalCode`, `continue`, `cancel`, `error` |
 | Checkout 2 | `/checkout-step-two.html` | `subtotal-label`, `tax-label`, `total-label`, `payment-info-value`, `shipping-info-value`, `finish` |
-| Concluído | `/checkout-complete.html` | `complete-header`, `back-to-products` |
+| Concluído | `/checkout-complete.html` | `complete-header`, `back-to-products`, `generate-pdf-order` (recibo em PDF; só aparece depois de um **Finish**, não ao abrir a página pela URL) |
 | Menu | (todas as telas logadas) | `inventory-sidebar-link`, `dynamic-catalog-sidebar-link`, `about-sidebar-link`, `logout-sidebar-link`, `reset-sidebar-link` |
 
 ---
@@ -98,7 +98,7 @@ flowchart TD
 
 | ID | Regra observada |
 |---|---|
-| RN-15 | Nome, sobrenome e CEP são obrigatórios, validados nessa ordem e um de cada vez. |
+| RN-15 | Nome, sobrenome e CEP são obrigatórios, validados nessa ordem e um de cada vez. A regra só vale para quem passa pelo formulário: o resumo abre direto pela URL sem esses dados (BUG-024). |
 | RN-16 | O CEP aceita qualquer texto (não há validação de formato). |
 | RN-17 | Imposto = 8% do subtotal, arredondado a 2 casas; total = subtotal + imposto. Confirmado no código-fonte oficial (`utils/orderCalculations.js`). |
 | RN-18 | Pagamento ("SauceCard #31337") e entrega ("Free Pony Express Delivery!") são fixos. |
@@ -140,7 +140,7 @@ Referência: `standard_user`. ✅ = igual ao `standard_user`; ❌ = diverge (bug
 | Menu: About | ✅ | — | ❌ aponta para `/error/404` (BUG-012) | ✅ | ✅ | ✅ |
 | Voltar ao inventário | ✅ | — | ✅ | ⏱ ~5,1 s | ✅ | ✅ |
 
-Bugs que afetam **todos** os usuários, inclusive o `standard_user`: BUG-001 a BUG-006 e BUG-023 (menu lateral que abre invisível se clicado logo após a página carregar, numa máquina lenta).
+Bugs que afetam **todos** os usuários, inclusive o `standard_user`: BUG-001 a BUG-006, BUG-023 (menu lateral que abre invisível se clicado logo após a página carregar, numa máquina lenta) e BUG-024 (resumo do checkout aberto pela URL, sem o passo 1).
 
 ### Padrão nos botões do problem_user e do error_user
 
