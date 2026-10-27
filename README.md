@@ -4,8 +4,10 @@
 [![Security](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
-![Playwright](https://img.shields.io/badge/Playwright-1.63-2EAD33?logo=playwright&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)
+
+📊 [Relatório HTML da última execução na `main`](https://arckangelo.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf)
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
@@ -287,18 +289,19 @@ saucedemo-playwright-python/
 
 ## Integração contínua
 
-O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha.
+O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha. Na `main`, o job **Publicar relatório no GitHub Pages** coloca o relatório HTML no ar em [https://arckangelo.github.io/saucedemo-playwright-python/](https://arckangelo.github.io/saucedemo-playwright-python/) (só o relatório; os traces ficam no artefato).
 
 O que roda depende do gatilho:
 
 | Gatilho | O que executa | Para quê |
 |---|---|---|
-| Push em qualquer branch | `pytest -n auto -m "not known_bug"`: só os testes que devem passar | Feedback rápido a cada mudança |
+| Push fora da `main` | `pytest -n auto -m "not known_bug"`: só os testes que devem passar | Feedback rápido a cada mudança |
+| Push na `main` (merge) | Suíte completa e publicação no GitHub Pages | Manter no ar o relatório do que está na `main`, com os bugs conhecidos |
 | Pull request | `pytest -n auto`: suíte completa, com os testes de bugs conhecidos | Garantir, antes do merge, que os bugs documentados continuam se comportando como registrado |
-| Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
-| Manual (aba **Actions**) | Suíte completa | Rodar sob demanda |
+| Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa e publicação no GitHub Pages | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
+| Manual (aba **Actions**) | Suíte completa (e publicação, se rodado na `main`) | Rodar sob demanda |
 
-Os testes de bugs conhecidos ficam fora do push porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
+Os testes de bugs conhecidos ficam fora do push nas outras branches porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
 
 > **Atenção ao agendamento:** o GitHub só agenda workflows a partir da branch padrão (`main`) e, em repositórios públicos como este, **desativa automaticamente os workflows agendados após 60 dias sem atividade** no repositório (sem commits, por exemplo). Para voltar a ter a execução diária, basta reativar o workflow na aba **Actions**.
 
@@ -320,7 +323,7 @@ Além dos testes, o CI aplica práticas de DevSecOps para proteger o próprio re
 **Endurecimento dos workflows**
 
 - `permissions: contents: read` no topo de cada workflow; permissões extras só no job que precisa
-  (`security-events: write` no CodeQL e no gitleaks).
+  (`security-events: write` no CodeQL e no gitleaks; `pages` e `id-token` no deploy do GitHub Pages).
 - Todas as actions fixadas pelo **SHA completo do commit**, com a versão em comentário. Uma tag
   pode ser movida para código malicioso; um SHA não. O Dependabot mantém esses SHAs atualizados.
 - O gitleaks roda pelo binário oficial com versão e checksum SHA-256 fixos.

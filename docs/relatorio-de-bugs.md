@@ -76,8 +76,8 @@ e tem um script de reprodução controlada.
 | Item | Valor |
 |---|---|
 | Aplicação | https://www.saucedemo.com (produção) |
-| Data | 15/10/2026 |
-| Navegador | Chromium 153.0.8010.12 (Playwright 1.63.0), 1280×720 |
+| Data | 27/10/2026 (BUG-024, BUG-025 e atualização do BUG-006); os demais foram verificados em 15/10/2026 |
+| Navegador | Chromium 156.0.8078.4 (Playwright 1.64.1) em 27/10; Chromium 153.0.8010.12 (Playwright 1.63.0) em 15/10; 1280×720 |
 | Sistema | Ubuntu 26.04.1 LTS, Python 3.14.4 |
 | Senha | `secret_sauce` para todos os usuários |
 
