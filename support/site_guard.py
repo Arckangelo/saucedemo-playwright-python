@@ -1,7 +1,7 @@
 """Proteção contra instabilidade do site, num ponto só.
 
 Site fora do ar não é resultado de teste: não aprova nada e não prova bug.
-Este módulo faz três coisas:
+Este módulo faz quatro coisas:
 
 - `safe_goto` abre uma página e repete só o CARREGAMENTO (nunca o teste)
   quando o site responde com um status de indisponibilidade ou não responde.
@@ -10,6 +10,11 @@ Este módulo faz três coisas:
 - O hook de relatório transforma a exceção `SiteUnavailable` num resultado
   próprio, "SITE INDISPONÍVEL" (um skip com esse motivo), seja qual for o
   xfail do teste.
+- Quando um teste falha (ou um bug conhecido "reproduz"), o site é
+  conferido de novo. Se estiver fora do ar, o resultado também vira
+  "SITE INDISPONÍVEL": cobre a queda que acontece no meio do teste, depois
+  de um clique ou de um reload, onde safe_goto não age. O teste não é
+  repetido.
 - Disjuntor: depois de `BREAKER_THRESHOLD` quedas, os testes seguintes nem
   começam. Com pytest-xdist, os processos compartilham a contagem por uma
   pasta temporária criada pelo processo principal.
@@ -23,6 +28,8 @@ Qualquer "SITE INDISPONÍVEL" faz a execução terminar com código 2
 import shutil
 import tempfile
 import time
+import urllib.error
+import urllib.request
 import uuid
 from pathlib import Path
 
@@ -42,6 +49,8 @@ GOTO_ATTEMPTS = 3
 # Pausa antes da 2ª e da 3ª tentativa. É a única espera por tempo da suíte, e
 # fica fora dos testes: dá ao site um instante para voltar antes de desistir.
 GOTO_BACKOFF_S = (1, 3)
+
+SITE_CHECK_TIMEOUT_S = 15
 
 BREAKER_THRESHOLD = 2
 
@@ -108,6 +117,26 @@ def safe_goto(page: Page, url: str, backoff_s: tuple[float, ...] = GOTO_BACKOFF_
     raise SiteUnavailable(f"{url} {reason}, em {GOTO_ATTEMPTS} tentativas")
 
 
+def site_unavailable_reason(base_url: str) -> str | None:
+    """Motivo pelo qual o site não está utilizável, ou None se estiver.
+
+    Uma requisição HTTP simples, sem navegador: serve para a checagem do
+    início da execução e para conferir o site depois de uma falha.
+    """
+    request = urllib.request.Request(base_url, headers={"User-Agent": "saucedemo-e2e-healthcheck"})
+    try:
+        with urllib.request.urlopen(request, timeout=SITE_CHECK_TIMEOUT_S) as response:
+            body = response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as error:
+        return f"respondeu HTTP {error.code}"
+    except (urllib.error.URLError, TimeoutError, OSError) as error:
+        return f"não respondeu ({getattr(error, 'reason', error)})"
+    # Uma página de erro ou de desafio (ex.: Cloudflare) também responde 200.
+    if REAL_PAGE_TITLE not in body:
+        return "respondeu, mas não com a página do Swag Labs"
+    return None
+
+
 def is_unavailable_report(report) -> bool:
     """O resultado é um "SITE INDISPONÍVEL" (vale também para relatórios vindos do xdist)."""
     longrepr = getattr(report, "longrepr", None)
@@ -168,24 +197,64 @@ def pytest_runtest_setup(item):
 # --- Resultado ---------------------------------------------------------------
 
 
-@pytest.hookimpl(wrapper=True, tryfirst=True)
-def pytest_runtest_makereport(item, call):
-    """Transforma SiteUnavailable em "SITE INDISPONÍVEL".
+def _base_url(config) -> str | None:
+    try:
+        return config.getoption("base_url", None) or config.getini("base_url") or None
+    except ValueError:  # sem o plugin pytest-base-url, a opção não existe
+        return None
 
-    tryfirst num wrapper o deixa por fora dos outros: ele vê o resultado final,
-    depois que o xfail já foi avaliado, e o substitui.
+
+def _outage_after_failure(item, call, report) -> str | None:
+    """Se o teste falhou ou deu XFAIL e o site está fora do ar agora, o motivo.
+
+    Uma falha comum com o site no ar continua falha. O XFAIL também é
+    conferido: um bug conhecido que "reproduz" porque a página não carregou
+    seria um resultado falso.
     """
-    report = yield
-    if call.excinfo is None or not call.excinfo.errisinstance(SiteUnavailable):
-        return report
-    message = str(call.excinfo.value)
-    if "disjuntor aberto" not in message:
-        _record_outage(item.config)
+    xfailed = report.skipped and hasattr(report, "wasxfail")
+    if not (report.failed or xfailed):
+        return None
+    base_url = _base_url(item.config)
+    if not base_url:
+        return None
+    reason = site_unavailable_reason(base_url)
+    if reason is None:
+        return None
+    outcome = "deu XFAIL" if xfailed else "falhou"
+    if call.excinfo is not None:
+        original = call.excinfo.exconly()
+    else:  # ex.: XPASS estrito, que falha sem exceção
+        original = report.longreprtext
+    original = (original.strip().splitlines() or [""])[0][:300]
+    return f"o teste {outcome} e, logo depois, {base_url} {reason}. Falha original: {original}"
+
+
+def _mark_unavailable(item, report, message: str):
     path, line, _ = item.reportinfo()
     report.outcome = "skipped"
     report.longrepr = (str(path), (line or 0) + 1, f"{REASON_PREFIX}: {message}")
     if hasattr(report, "wasxfail"):
         del report.wasxfail
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    """Transforma queda do site em "SITE INDISPONÍVEL".
+
+    tryfirst num wrapper o deixa por fora dos outros: ele vê o resultado final,
+    depois que o xfail já foi avaliado, e o substitui.
+    """
+    report = yield
+    if call.excinfo is not None and call.excinfo.errisinstance(SiteUnavailable):
+        message = str(call.excinfo.value)
+        if "disjuntor aberto" not in message:
+            _record_outage(item.config)
+        _mark_unavailable(item, report, message)
+        return report
+    message = _outage_after_failure(item, call, report)
+    if message:
+        _record_outage(item.config)
+        _mark_unavailable(item, report, message)
     return report
 
 

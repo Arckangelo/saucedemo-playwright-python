@@ -23,8 +23,6 @@ import json
 import os
 import re
 import time
-import urllib.error
-import urllib.request
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
@@ -35,30 +33,11 @@ from pytest_html import extras
 
 from data.constants import PASSWORD, PRODUCT_PRICES, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
-from support.site_guard import REAL_PAGE_TITLE, is_unavailable_report
+from support.site_guard import is_unavailable_report, site_unavailable_reason
 
 # pytester: roda uma sessão de pytest dentro de um teste (tests/test_protecao_site.py).
 # O plugin support.site_guard é carregado pelo pytest.ini.
 pytest_plugins = ["pytester"]
-
-
-SITE_CHECK_TIMEOUT_S = 15
-
-
-def _site_unavailable_reason(base_url: str) -> str | None:
-    """Motivo pelo qual o site não está utilizável, ou None se estiver."""
-    request = urllib.request.Request(base_url, headers={"User-Agent": "saucedemo-e2e-healthcheck"})
-    try:
-        with urllib.request.urlopen(request, timeout=SITE_CHECK_TIMEOUT_S) as response:
-            body = response.read().decode("utf-8", errors="replace")
-    except urllib.error.HTTPError as error:
-        return f"respondeu HTTP {error.code}"
-    except (urllib.error.URLError, TimeoutError, OSError) as error:
-        return f"não respondeu ({getattr(error, 'reason', error)})"
-    # Uma página de erro ou de desafio (ex.: Cloudflare) também responde 200.
-    if REAL_PAGE_TITLE not in body:
-        return "respondeu, mas não com a página do Swag Labs"
-    return None
 
 
 def pytest_addoption(parser):
@@ -90,7 +69,7 @@ def pytest_sessionstart(session):
     if hasattr(config, "workerinput") or config.option.collectonly:
         return
     base_url = config.getoption("base_url") or config.getini("base_url")
-    reason = _site_unavailable_reason(base_url)
+    reason = site_unavailable_reason(base_url)
     if reason:
         pytest.exit(
             f"SITE INDISPONÍVEL: {base_url} {reason}. Nenhum teste foi executado; "

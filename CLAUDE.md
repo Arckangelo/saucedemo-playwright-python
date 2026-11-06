@@ -25,7 +25,8 @@ para quando o assunto aparecer.
 5. **Site fora do ar não é resultado:** a proteção fica num ponto só, `support/site_guard.py`. Abra
    páginas sempre por `BasePage.open()` ou `safe_goto` (nunca `page.goto` direto) e passe status lido
    fora dela (`page.request`) por `check_status`. Queda vira "SITE INDISPONÍVEL", com disjuntor e
-   código de saída 2; nunca aprovação nem bug. Não acrescente retry de teste (`pytest-rerunfailures`
+   código de saída 2; nunca aprovação nem bug. Teste que falha (ou dá XFAIL) com o site fora do ar
+   também vira "SITE INDISPONÍVEL"; com o site no ar, falha continua falha. Não acrescente retry de teste (`pytest-rerunfailures`
    ou parecido): repetir teste que falhou esconde instabilidade. Repetir o carregamento da página,
    dentro do `safe_goto`, é outra coisa e é a única espera por tempo permitida.
 6. **Bug novo, antes do commit, confira tudo que fala de bugs:**
