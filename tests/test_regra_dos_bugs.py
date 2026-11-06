@@ -28,7 +28,7 @@ def problems_of(mark_decorator, strict_default=True, documented=DOCUMENTED) -> l
 
 def test_xfail_dentro_da_regra_nao_tem_problemas():
     mark = pytest.mark.xfail(strict=True, raises=FakeBugError, reason="BUG-001 (#2): bug simulado")
-    assert problems_of(mark) == []
+    assert problems_of(mark) == [], "problemas apontados num xfail dentro da regra"
 
 
 @pytest.mark.parametrize(
@@ -91,13 +91,15 @@ def test_xfail_fora_da_regra_e_apontado(mark, expected: str):
 
 def test_strict_vem_do_pytest_ini_quando_nao_esta_no_marker():
     mark = pytest.mark.xfail(raises=FakeBugError, reason="BUG-001 (#2): x")
-    assert problems_of(mark, strict_default=True) == []
-    assert any("strict=True" in problem for problem in problems_of(mark, strict_default=False))
+    assert problems_of(mark, strict_default=True) == [], "com xfail_strict no ini, sem strict= não é problema"
+    assert any(
+        "strict=True" in problem for problem in problems_of(mark, strict_default=False)
+    ), "sem strict= no marker nem no ini, deveria faltar strict=True"
 
 
 def test_sem_bugs_md_o_id_nao_e_conferido_na_tabela():
     mark = pytest.mark.xfail(strict=True, raises=FakeBugError, reason="BUG-999 (#2): x")
-    assert problems_of(mark, documented=None) == []
+    assert problems_of(mark, documented=None) == [], "sem BUGS.md, o ID não deveria ser conferido na tabela"
 
 
 # --- Resultado da execução (sessão de pytest dentro do teste) ----------------
@@ -175,7 +177,7 @@ def test_xfail_fora_da_regra_vira_erro_e_nao_xfail(inner_pytest, pytester: pytes
     result.stdout.fnmatch_lines(["*BUG-001 é a issue #2 no BUGS.md, não #9*"])
     # O corpo do teste com xfail errado nem roda: a falha dele não aparece.
     result.stdout.no_fnmatch_line("*seletor não encontrado*")
-    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert result.ret == pytest.ExitCode.TESTS_FAILED, "xfail fora da regra deveria terminar com código 1"
     # No relatório JUnit, só o xfail dentro da regra aparece como XFAIL (skipped).
     junit = (pytester.path / "resultado.xml").read_text(encoding="utf-8")
     assert junit.count("<skipped") == 1, junit
