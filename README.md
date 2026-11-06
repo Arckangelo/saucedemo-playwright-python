@@ -14,7 +14,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos.
+- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 17 testes conferem a própria [proteção contra instabilidade](#integração-contínua) da suíte.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
@@ -156,6 +156,8 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
+Além delas, `tests/test_protecao_site.py` tem 17 testes da própria suíte, e não do site: simulam a queda do site para provar que a proteção contra instabilidade funciona.
+
 ### Perfis de usuário
 
 O SauceDemo oferece usuários com comportamentos diferentes. Os defeitos do `problem_user`, do `error_user` e do `visual_user` são injetados de propósito pelo site, para treino; a suíte mapeia e automatiza cada um:
@@ -255,6 +257,7 @@ saucedemo-playwright-python/
 ├── support/
 │   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
 │   ├── item_checks.py     # assert_item: confere uma linha com a tabela de preços
+│   ├── site_guard.py      # Proteção contra instabilidade: safe_goto, SITE INDISPONÍVEL e disjuntor
 │   └── state.py           # cart_ids e session_cookie: leem o estado por baixo da tela
 ├── tests/                 # Os testes, separados por área e por perfil
 │   ├── test_login.py
@@ -263,6 +266,7 @@ saucedemo-playwright-python/
 │   ├── test_menu.py
 │   ├── test_cart_checkout.py
 │   ├── test_console_e_rede.py
+│   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
 │   └── test_visual_user.py
@@ -317,7 +321,14 @@ Os testes de bugs conhecidos ficam fora do push nas outras branches porque não 
 
 > **Atenção ao agendamento:** o GitHub só agenda workflows a partir da branch padrão (`main`) e, em repositórios públicos como este, **desativa automaticamente os workflows agendados após 60 dias sem atividade** no repositório (sem commits, por exemplo). Para voltar a ter a execução diária, basta reativar o workflow na aba **Actions**.
 
-Antes de qualquer teste, o `conftest.py` confere se o saucedemo.com responde com a página do Swag Labs. Se não responder, a execução é interrompida com a mensagem `SITE INDISPONÍVEL`, em vez de gerar dezenas de falhas que pareceriam bugs.
+**Site fora do ar não vira resultado.** Uma queda do site faria dezenas de testes falharem como se fossem bugs, ou faria um teste de bug conhecido "passar" pelo motivo errado. A proteção fica num ponto só ([`support/site_guard.py`](support/site_guard.py)):
+
+- **Antes de qualquer teste**, o `conftest.py` confere se o saucedemo.com responde com a página do Swag Labs. Se não responder, a execução é interrompida com a mensagem `SITE INDISPONÍVEL`.
+- **Em toda página aberta** (`safe_goto`), o carregamento, e só ele, é tentado até 3 vezes quando o site responde 429, 502–504 ou 520–524, não responde ou mostra uma página que não é a do site. A página real é reconhecida pelo título "Swag Labs", não pelo status: as rotas internas respondem 404 mesmo funcionando (BUG-005).
+- **Se o site não voltar**, o teste termina como `SITE INDISPONÍVEL`, nem aprovado nem bug, mesmo que tenha `xfail`. Depois de 2 quedas, o **disjuntor** abre e os testes seguintes nem começam.
+- **A execução nunca fica verde:** qualquer `SITE INDISPONÍVEL` faz o pytest terminar com código 2, e o resumo do CI mostra quantos testes foram afetados.
+
+O teste que falhou não é repetido: repetir esconde instabilidade em vez de mostrá-la. A proteção é testada em [`tests/test_protecao_site.py`](tests/test_protecao_site.py), que simula a queda.
 
 ---
 
@@ -376,7 +387,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Exceções documentadas (esperas por sinal, não por tempo):**
   - **Menu lateral ([BUG-023](docs/relatorio-de-bugs.md#bug-023)):** o componente do menu (`react-burger-menu`) agenda um timer de 500 ms, ao carregar a página e ao fechar o menu, que esconde o menu fechado. Um clique antes desse timer, em máquina lenta, deixa o menu "aberto" mas invisível. A condição de corrida apareceu nas execuções em paralelo e foi reproduzida com a CPU 30x mais lenta. Antes de abrir o menu, o `Header` espera o atributo `hidden` aparecer no menu fechado, o sinal de que o timer já rodou (no máximo 500 ms depois da carga).
   - **Telemetria (BUG-006):** o teste espera até 10 s pela requisição ao Backtrace. A espera termina assim que ela sai; só chega ao limite se a telemetria tiver sido removida, e nesse caso o teste passa e o xfail avisa. Se a requisição sai mas não recebe resposta (desde 27/10/2026 o Backtrace demora mais que os 15 s em que o próprio site aborta a chamada), o resultado é inconclusivo e o teste é pulado (skip), em vez de um falso "corrigido".
-- **Site indisponível não vira falha de teste:** uma checagem única no início da sessão (`pytest_sessionstart`) interrompe a execução se o site não responder. Não há retry: re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
+- **Site indisponível não vira resultado:** uma checagem no início da sessão interrompe a execução se o site não responder, e toda página é aberta por `safe_goto`, que tenta o carregamento de novo quando o site responde com erro de indisponibilidade e, se ele não voltar, termina o teste como `SITE INDISPONÍVEL`, com disjuntor e código de saída 2 (detalhes em [Integração contínua](#integração-contínua)). Repetir o carregamento de uma página não é repetir o teste: um teste que falhou nunca roda de novo, porque re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
 
 </details>
 

@@ -14,6 +14,8 @@ import pytest
 from playwright.sync_api import Page, Request
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
+from support.site_guard import check_status, safe_goto
+
 
 class InternalRouteStatusError(AssertionError):
     """Uma rota interna respondeu com status HTTP de erro."""
@@ -38,6 +40,10 @@ def test_rotas_internas_respondem_http_200(page: Page):
     # page.request faz a requisição HTTP direta, sem renderizar a página:
     # mostra o status que o servidor devolve para quem acessa o link.
     statuses = {path: page.request.get(path).status for path in paths}
+    # Um 503 aqui seria queda do site, não o 404 do bug: sem esta checagem, o
+    # xfail contaria a queda como "o bug ainda reproduz".
+    for path, status in statuses.items():
+        check_status(status, path)
 
     errors = {path: status for path, status in statuses.items() if status != 200}
     if errors:
@@ -62,7 +68,7 @@ def test_telemetria_nao_gera_erros_http(page: Page):
     # sem depender de a rede "ficar ociosa", o que pode acontecer antes.
     try:
         with page.expect_request(is_telemetry, timeout=TELEMETRY_TIMEOUT) as request_info:
-            page.goto("/")
+            safe_goto(page, "/")
     except PlaywrightTimeoutError:
         return  # nenhuma telemetria enviada (ex.: foi removida): não há o que reportar
 

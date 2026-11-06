@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from playwright.sync_api import Page
 
+from support.site_guard import safe_goto
+
 
 # data-test dos botões de carrinho: "add-to-cart-<produto>" vira "remove-<produto>"
 # depois do clique. Os prefixos localizam o botão sem depender do texto exibido.
@@ -37,5 +39,7 @@ class BasePage:
         self.page = page
 
     def open(self):
-        self.page.goto(self.PATH)
+        # safe_goto, e não page.goto: se o site estiver fora do ar, o teste
+        # termina como SITE INDISPONÍVEL, e não como falha (support/site_guard.py).
+        safe_goto(self.page, self.PATH)
         return self

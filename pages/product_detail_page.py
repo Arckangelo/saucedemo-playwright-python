@@ -4,6 +4,7 @@ from playwright.sync_api import Page
 
 from pages.base_page import BasePage
 from pages.header import Header
+from support.site_guard import safe_goto
 
 
 class ProductDetailPage(BasePage):
@@ -22,7 +23,7 @@ class ProductDetailPage(BasePage):
 
     def open_by_id(self, product_id: int | str) -> "ProductDetailPage":
         """Abre o detalhe direto pela URL. Para abrir pelo nome, use InventoryPage.open_product()."""
-        self.page.goto(f"{self.PATH}?id={product_id}")
+        safe_goto(self.page, f"{self.PATH}?id={product_id}")
         return self
 
     def get_product_id(self) -> str | None:

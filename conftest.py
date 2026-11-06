@@ -35,6 +35,11 @@ from pytest_html import extras
 
 from data.constants import PASSWORD, PRODUCT_PRICES, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
+from support.site_guard import REAL_PAGE_TITLE, is_unavailable_report
+
+# pytester: roda uma sessão de pytest dentro de um teste (tests/test_protecao_site.py).
+# O plugin support.site_guard é carregado pelo pytest.ini.
+pytest_plugins = ["pytester"]
 
 
 SITE_CHECK_TIMEOUT_S = 15
@@ -51,7 +56,7 @@ def _site_unavailable_reason(base_url: str) -> str | None:
     except (urllib.error.URLError, TimeoutError, OSError) as error:
         return f"não respondeu ({getattr(error, 'reason', error)})"
     # Uma página de erro ou de desafio (ex.: Cloudflare) também responde 200.
-    if "Swag Labs" not in body:
+    if REAL_PAGE_TITLE not in body:
         return "respondeu, mas não com a página do Swag Labs"
     return None
 
@@ -347,6 +352,7 @@ def pytest_terminal_summary(terminalreporter, config):
     failed = stats.get("failed", [])
     xpassed = [r for r in failed if str(r.longrepr).startswith(_XPASS_STRICT)]
     real_failures = [r for r in failed if r not in xpassed]
+    unavailable = [r for r in stats.get("site indisponível", []) if is_unavailable_report(r)]
     mode = f"`-m \"{config.option.markexpr}\"`" if config.option.markexpr else "suíte completa"
 
     lines = [
@@ -360,8 +366,15 @@ def pytest_terminal_summary(terminalreporter, config):
         f"| ❌ Falharam | {len(real_failures)} |",
         f"| ⚠️ Erros | {len(stats.get('error', []))} |",
         f"| ⏭️ Pulados | {len(stats.get('skipped', []))} |",
+        f"| 🔌 Site indisponível (inconclusivo) | {len(unavailable)} |",
         "",
     ]
+    if unavailable:
+        lines += [
+            "**SITE INDISPONÍVEL:** o site caiu durante a execução. Esses testes não provam nada, "
+            "nem aprovação nem bug; a execução termina com erro. Rode de novo quando o site voltar.",
+            "",
+        ]
     if xpassed:
         lines += ["**XPASS:** o bug deixou de reproduzir. Confirme no site e tire o `xfail` do teste:", ""]
         lines += [f"- `{r.nodeid}`: {str(r.longrepr)[len(_XPASS_STRICT):].strip()}" for r in xpassed]
