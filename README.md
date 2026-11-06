@@ -266,6 +266,7 @@ saucedemo-playwright-python/
 │   ├── test_error_user.py
 │   └── test_visual_user.py
 ├── BUGS.md                # Resumo dos bugs: ID, severidade, área, teste e issue
+├── CLAUDE.md              # Regras para agentes de IA (o Claude Code lê automaticamente)
 ├── conftest.py            # Preparação compartilhada (login por usuário, oráculo, erros, relatório)
 ├── pytest.ini             # Configuração do pytest
 ├── requirements.txt       # Dependências com versões fixas
