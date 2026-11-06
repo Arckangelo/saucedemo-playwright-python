@@ -12,10 +12,12 @@ class PhantomCartItemError(AssertionError):
     """O contador do carrinho conta um produto que não existe no catálogo."""
 
 
+# CT-PRODUCT-DETAIL-01
 def test_detalhe_mostra_o_produto_clicado(inventory_page: InventoryPage):
     assert find_wrong_product_details(inventory_page, Products.ALL) == [], "produtos que abriram outro detalhe"
 
 
+# CT-PRODUCT-DETAIL-02
 @pytest.mark.parametrize(
     "product, product_id", [pytest.param(name, pid, id=name) for name, pid in PRODUCT_IDS.items()]
 )
@@ -24,6 +26,7 @@ def test_url_do_detalhe_abre_o_produto_pelo_id(inventory_page: InventoryPage, pr
     expect(detail.name).to_have_text(product)
 
 
+# CT-PRODUCT-DETAIL-03
 @pytest.mark.regression
 @pytest.mark.parametrize("invalid_id", ["6", "-1"])
 @pytest.mark.xfail(
@@ -45,6 +48,7 @@ def test_produto_inexistente_nao_entra_no_carrinho(inventory_page: InventoryPage
         assert badge.all_inner_texts() == [], "o contador conta o produto inexistente"
 
 
+# CT-PRODUCT-DETAIL-04
 @pytest.mark.regression
 @pytest.mark.xfail(
     strict=True,

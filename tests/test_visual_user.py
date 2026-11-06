@@ -47,6 +47,7 @@ def oracle(oracle_inventory) -> InventoryPage:
     return oracle_inventory
 
 
+# CT-VISUAL-USER-01
 @pytest.mark.xfail(
     strict=True,
     raises=PriceMismatchError,
@@ -72,6 +73,7 @@ def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
         raise PriceMismatchError(f"Preços divergentes: {divergent}")
 
 
+# CT-VISUAL-USER-02
 @pytest.mark.xfail(
     strict=True,
     raises=ImageMismatchError,
@@ -124,6 +126,7 @@ def _wait_for_fonts(inventory: InventoryPage):
     inventory.page.evaluate("() => document.fonts.ready.then(() => true)")
 
 
+# CT-VISUAL-USER-03
 @pytest.mark.parametrize("element", _layout_params())
 def test_layout_igual_ao_do_standard_user(visual_inventory, oracle, element: str):
     _wait_for_fonts(oracle)

@@ -51,9 +51,12 @@ para quando o assunto aparecer.
 9. **Idioma:** identificadores em inglês (classes, métodos, fixtures, variáveis, constantes). Em
    português: nomes das funções de teste (`test_usuarios_validos_acessam_o_inventario`), docstrings,
    comentários, mensagens, documentação, commits e PRs.
-10. **Rastreabilidade:** bugs como `BUG-NNN` (com a issue) e regras de negócio como `RN-NN`
-    (`docs/requisitos-inferidos.md`), citados no teste. Teste novo de regra atualiza a cobertura das
-    regras; bug novo segue a regra 6.
+10. **Rastreabilidade:** todo teste do site tem o comentário `# CT-<ARQUIVO>-NN` na linha acima do
+    primeiro decorador (ou do `def`), com ARQUIVO = nome do arquivo sem `test_` e `.py`, em
+    maiúsculas e com hífen (`test_cart_checkout.py` → `CT-CART-CHECKOUT-01`), numerado na ordem do
+    arquivo. Teste novo ou alterado exige atualizar `docs/casos-de-teste.md`. Bugs como `BUG-NNN`
+    (com a issue) e regras de negócio como `RN-NN` (`docs/requisitos-inferidos.md`), citados no
+    teste. Teste novo de regra atualiza a cobertura das regras; bug novo segue a regra 6.
 11. **Como escrever testes:**
     - nunca `sleep` nem `wait_for_timeout`: o Playwright espera sozinho; para provar que algo NÃO
       aconteceu, use `wait_for_render` (dois quadros) ou um sinal direto, nunca um tempo fixo;
