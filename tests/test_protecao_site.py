@@ -6,9 +6,16 @@ queda é simulada, sem depender do site:
 - a rede é trocada por respostas falsas (page.route) para testar safe_goto;
 - uma sessão de pytest roda dentro do teste (pytester) para provar que
   SiteUnavailable vira "SITE INDISPONÍVEL", que o disjuntor abre e que a
-  execução termina com código 2, nunca verde.
+  execução termina com código 2, nunca verde;
+- a mesma sessão roda com o site "fora do ar" (uma porta fechada) e "no ar"
+  (um servidor local) para provar que uma falha só vira "SITE INDISPONÍVEL"
+  quando o site de fato não responde.
 """
 
+import socket
+import threading
+from collections.abc import Iterator
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
@@ -222,3 +229,80 @@ def test_processos_do_xdist_compartilham_a_pasta_do_disjuntor(inner_pytest):
     )
 
     result.assert_outcomes(passed=1)
+
+
+# --- Falha com o site fora do ar ---------------------------------------------
+
+FAILING_TESTS = """
+import pytest
+
+def test_passa():
+    pass
+
+def test_falha():
+    assert 1 == 2, "valor errado"
+
+@pytest.mark.xfail(strict=True, raises=AssertionError, reason="BUG-999 (#0): bug simulado")
+def test_bug_conhecido():
+    assert False, "o bug reproduz"
+
+def test_depois():
+    pass
+"""
+
+
+@pytest.fixture
+def site_down() -> str:
+    """URL de um site fora do ar: uma porta livre, sem nada escutando."""
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    return f"http://127.0.0.1:{port}"
+
+
+@pytest.fixture
+def site_up() -> Iterator[str]:
+    """URL de um site no ar: um servidor local que responde a página do Swag Labs."""
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            self.wfile.write(REAL_PAGE.encode())
+
+        def log_message(self, *args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        yield f"http://127.0.0.1:{server.server_address[1]}"
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_falha_com_o_site_fora_do_ar_vira_site_indisponivel(inner_pytest, site_down: str):
+    result = inner_pytest(FAILING_TESTS, "-v", f"--base-url={site_down}")
+
+    result.stdout.fnmatch_lines(
+        [
+            "*test_passa PASSED*",
+            "*test_falha SITE INDISPONÍVEL*",
+            "*test_bug_conhecido SITE INDISPONÍVEL*",
+            "*test_depois SITE INDISPONÍVEL*",  # as 2 quedas abriram o disjuntor
+            "*test_falha: o teste falhou e, logo depois, * não respondeu*"
+            "Falha original: AssertionError: valor errado*",
+            "*test_bug_conhecido: o teste deu XFAIL e, logo depois, * não respondeu*",
+        ]
+    )
+    assert result.ret == pytest.ExitCode.INTERRUPTED, "a execução não pode terminar verde"
+
+
+def test_falha_com_o_site_no_ar_continua_falha(inner_pytest, site_up: str):
+    result = inner_pytest(FAILING_TESTS, f"--base-url={site_up}")
+
+    result.assert_outcomes(passed=2, failed=1, xfailed=1)
+    result.stdout.no_fnmatch_line("*SITE INDISPONÍVEL*")
+    assert result.ret == pytest.ExitCode.TESTS_FAILED

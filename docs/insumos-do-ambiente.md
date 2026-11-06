@@ -89,6 +89,7 @@ sem o passo 1 (BUG-024). As regras ainda sem teste estão nos
 |---|---|---|
 | Site fora do ar antes de começar | sem resposta em 15 s, ou HTTP de erro na página inicial | a checagem do `pytest_sessionstart` interrompe a execução com "SITE INDISPONÍVEL"; nenhum teste roda |
 | Site cai no meio da execução | ao abrir uma página: HTTP 429, 502–504 ou 520–524, sem resposta, ou página sem o título "Swag Labs" | `safe_goto` tenta o carregamento até 3 vezes; se o site não voltar, o teste termina como "SITE INDISPONÍVEL"; depois de 2 quedas, o disjuntor impede os testes seguintes; a execução termina com código 2 |
+| Site cai no meio de um teste, depois de um clique ou reload | o teste falha (ou dá XFAIL) e, logo depois, o site não passa na checagem | o resultado vira "SITE INDISPONÍVEL", com a falha original no motivo; com o site no ar, a falha continua falha |
 | Página de erro ou de desafio que responde 200 (ex.: Cloudflare) | a página não tem o título `<title>Swag Labs</title>` | as mesmas checagens: o título é o marcador da página real |
 | Telemetria do Backtrace sem resposta (desde 27/10/2026) | a requisição sai, mas não volta antes do limite de 15 s do próprio site | o teste do BUG-006 é pulado (skip, inconclusivo), nunca vira "corrigido" |
 | Menu lateral clicado cedo demais em máquina lenta (BUG-023) | menu "aberto", mas invisível | o `Header` espera o sinal de que o menu fechado foi escondido antes de abri-lo |
@@ -97,9 +98,9 @@ sem o passo 1 (BUG-024). As regras ainda sem teste estão nos
 **Não é instabilidade:** as rotas internas respondem **HTTP 404** mesmo funcionando, porque o site é
 uma aplicação de página única (BUG-005). Um 404 numa rota interna não indica site fora do ar.
 
-**Lacuna conhecida:** a proteção age ao abrir uma página. Uma queda depois disso, durante um clique ou
-um `page.reload()`, ainda aparece como falha comum. Fechar essa lacuna é o próximo passo do padrão
-adotado.
+**Limite conhecido:** a checagem depois de uma falha é feita logo depois dela. Se o site cair e voltar
+no meio de um teste, antes da checagem, a falha aparece como falha comum. O trace do Playwright mostra
+as respostas da rede de cada falha (`test-results/`), o que permite reconhecer esse caso.
 
 **Sem repetição de teste:** a suíte não repete teste que falhou (regra 5 do `CLAUDE.md`), porque
 repetir esconde instabilidade em vez de mostrá-la.

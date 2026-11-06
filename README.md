@@ -14,7 +14,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 17 testes conferem a própria [proteção contra instabilidade](#integração-contínua) da suíte.
+- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 19 testes conferem a própria [proteção contra instabilidade](#integração-contínua) da suíte.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
@@ -156,7 +156,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, `tests/test_protecao_site.py` tem 17 testes da própria suíte, e não do site: simulam a queda do site para provar que a proteção contra instabilidade funciona.
+Além delas, `tests/test_protecao_site.py` tem 19 testes da própria suíte, e não do site: simulam a queda do site para provar que a proteção contra instabilidade funciona.
 
 ### Perfis de usuário
 
@@ -325,7 +325,9 @@ Os testes de bugs conhecidos ficam fora do push nas outras branches porque não 
 
 - **Antes de qualquer teste**, o `conftest.py` confere se o saucedemo.com responde com a página do Swag Labs. Se não responder, a execução é interrompida com a mensagem `SITE INDISPONÍVEL`.
 - **Em toda página aberta** (`safe_goto`), o carregamento, e só ele, é tentado até 3 vezes quando o site responde 429, 502–504 ou 520–524, não responde ou mostra uma página que não é a do site. A página real é reconhecida pelo título "Swag Labs", não pelo status: as rotas internas respondem 404 mesmo funcionando (BUG-005).
-- **Se o site não voltar**, o teste termina como `SITE INDISPONÍVEL`, nem aprovado nem bug, mesmo que tenha `xfail`. Depois de 2 quedas, o **disjuntor** abre e os testes seguintes nem começam.
+- **Se o site não voltar**, o teste termina como `SITE INDISPONÍVEL`, nem aprovado nem bug, mesmo que tenha `xfail`.
+- **Quando um teste falha** (ou um bug conhecido "reproduz"), o site é conferido de novo. Se estiver fora do ar, o resultado também vira `SITE INDISPONÍVEL`, com a falha original no motivo. Isso cobre a queda no meio do teste, depois de um clique ou de um reload. Com o site no ar, a falha continua falha.
+- Depois de 2 quedas, o **disjuntor** abre e os testes seguintes nem começam.
 - **A execução nunca fica verde:** qualquer `SITE INDISPONÍVEL` faz o pytest terminar com código 2, e o resumo do CI mostra quantos testes foram afetados.
 
 O teste que falhou não é repetido: repetir esconde instabilidade em vez de mostrá-la. A proteção é testada em [`tests/test_protecao_site.py`](tests/test_protecao_site.py), que simula a queda.
@@ -387,7 +389,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Exceções documentadas (esperas por sinal, não por tempo):**
   - **Menu lateral ([BUG-023](docs/relatorio-de-bugs.md#bug-023)):** o componente do menu (`react-burger-menu`) agenda um timer de 500 ms, ao carregar a página e ao fechar o menu, que esconde o menu fechado. Um clique antes desse timer, em máquina lenta, deixa o menu "aberto" mas invisível. A condição de corrida apareceu nas execuções em paralelo e foi reproduzida com a CPU 30x mais lenta. Antes de abrir o menu, o `Header` espera o atributo `hidden` aparecer no menu fechado, o sinal de que o timer já rodou (no máximo 500 ms depois da carga).
   - **Telemetria (BUG-006):** o teste espera até 10 s pela requisição ao Backtrace. A espera termina assim que ela sai; só chega ao limite se a telemetria tiver sido removida, e nesse caso o teste passa e o xfail avisa. Se a requisição sai mas não recebe resposta (desde 27/10/2026 o Backtrace demora mais que os 15 s em que o próprio site aborta a chamada), o resultado é inconclusivo e o teste é pulado (skip), em vez de um falso "corrigido".
-- **Site indisponível não vira resultado:** uma checagem no início da sessão interrompe a execução se o site não responder, e toda página é aberta por `safe_goto`, que tenta o carregamento de novo quando o site responde com erro de indisponibilidade e, se ele não voltar, termina o teste como `SITE INDISPONÍVEL`, com disjuntor e código de saída 2 (detalhes em [Integração contínua](#integração-contínua)). Repetir o carregamento de uma página não é repetir o teste: um teste que falhou nunca roda de novo, porque re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
+- **Site indisponível não vira resultado:** uma checagem no início da sessão interrompe a execução se o site não responder, toda página é aberta por `safe_goto`, que tenta o carregamento de novo quando o site responde com erro de indisponibilidade e, se ele não voltar, termina o teste como `SITE INDISPONÍVEL`, e um teste que falha com o site fora do ar também termina assim; há disjuntor e código de saída 2 (detalhes em [Integração contínua](#integração-contínua)). Repetir o carregamento de uma página não é repetir o teste: um teste que falhou nunca roda de novo, porque re-executar testes que falharam esconde instabilidade em vez de mostrá-la.
 
 </details>
 
