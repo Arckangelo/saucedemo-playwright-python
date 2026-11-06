@@ -19,9 +19,10 @@ para quando o assunto aparecer.
 3. **Nunca afrouxe uma asserção para o teste passar.** Se o site mudou, investigue; se for defeito do
    site, é bug novo (regra 6).
 4. **Bug conhecido é `xfail(strict=True)` com `raises=` específico** e motivo começando pelo ID e pela
-   issue: `reason="BUG-NNN (#issue): ..."`. Assim o `conftest.py` aplica o marker `known_bug`, outra
-   falha (login, seletor) não se esconde no xfail e um XPASS avisa que o bug foi corrigido. Nunca use
-   xfail sem `raises=` nem `strict=False`.
+   issue: `reason="BUG-NNN (#issue): ..."`, com o ID e a issue que constam no `BUGS.md`. Assim o
+   marker `known_bug` é aplicado sozinho, outra falha (login, seletor) não se esconde no xfail e um
+   XPASS avisa que o bug foi corrigido. Nunca use xfail sem `raises=` nem `strict=False`. A regra é
+   conferida por `support/known_bugs.py`: um xfail fora dela faz o teste terminar como ERRO.
 5. **Site fora do ar não é resultado:** a proteção fica num ponto só, `support/site_guard.py`. Abra
    páginas sempre por `BasePage.open()` ou `safe_goto` (nunca `page.goto` direto) e passe status lido
    fora dela (`page.request`) por `check_status`. Queda vira "SITE INDISPONÍVEL", com disjuntor e
@@ -75,7 +76,7 @@ para quando o assunto aparecer.
     - perfis com defeito comparados ao `standard_user` como oráculo (`oracle_inventory`), em vez de
       valores fixos no código.
 12. **Markers:** `smoke` para fluxos críticos, `regression` para regressão por perfil e bordas;
-    `known_bug` é aplicado sozinho pelo `conftest.py` (não marque à mão).
+    `known_bug` é aplicado sozinho por `support/known_bugs.py` (não marque à mão).
 13. **Dependências:** versões exatas no `requirements.txt`, publicadas há pelo menos duas semanas; o
     pip-audit do CI falha em severidade alta ou crítica.
 

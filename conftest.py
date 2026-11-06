@@ -294,19 +294,8 @@ def browser_errors(page: Page, request: pytest.FixtureRequest) -> Iterator[Brows
         )
 
 
-# --- Marcadores -------------------------------------------------------------
-
-def pytest_collection_modifyitems(items):
-    """Marca como `known_bug` todo xfail cujo motivo comece com "BUG-".
-
-    Assim a convenção fica num lugar só: basta escrever o xfail com o ID do
-    bug para o teste entrar em `pytest -m known_bug`.
-    """
-    for item in items:
-        for mark in item.iter_markers("xfail"):
-            if str(mark.kwargs.get("reason", "")).startswith("BUG-"):
-                item.add_marker(pytest.mark.known_bug)
-                break
+# O marker `known_bug` e a conferência da regra dos xfail ficam no plugin
+# support/known_bugs.py, carregado pelo pytest.ini.
 
 
 # --- Relatório ------------------------------------------------------------
