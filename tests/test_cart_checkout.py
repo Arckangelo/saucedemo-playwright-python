@@ -57,7 +57,7 @@ def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: Inven
     information.fill_information(**CHECKOUT_INFO)
     overview = information.continue_to_overview()
     # Cada linha conferida contra a tabela de referência, não contra a tela.
-    expect(overview.items).to_have_count(len(products))  # sincroniza antes de ler
+    expect(overview.items, "pré-condição: todas as linhas na tela antes de lê-las").to_have_count(len(products))
     for row, product in zip(overview.get_rows(), products, strict=True):
         assert_item(row, PRODUCT_IDS[product])
 
@@ -73,7 +73,7 @@ def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, c
     products = [Products.BACKPACK, Products.BOLT_TSHIRT, Products.ONESIE]
     cart_with(*(PRODUCT_IDS[product] for product in products))
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.items).to_have_count(len(products))  # pré-condição: o carrinho foi montado
+    expect(overview.items, "pré-condição: o carrinho foi montado").to_have_count(len(products))
 
     # Valores esperados calculados a partir da tabela de referência, não dos
     # preços exibidos: se o site exibisse e cobrasse um preço errado de forma
@@ -81,9 +81,9 @@ def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, c
     expected_subtotal = sum(PRODUCT_PRICES[PRODUCT_IDS[product]]["price"] for product in products)
     expected_tax = (expected_subtotal * Decimal(TAX_RATE)).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
-    assert overview.get_subtotal() == expected_subtotal
-    assert overview.get_tax() == expected_tax
-    assert overview.get_total() == expected_subtotal + expected_tax
+    assert overview.get_subtotal() == expected_subtotal, "subtotal do resumo (soma da tabela de preços)"
+    assert overview.get_tax() == expected_tax, "imposto do resumo (8% do subtotal, RN-17)"
+    assert overview.get_total() == expected_subtotal + expected_tax, "total do resumo (subtotal + imposto)"
 
 
 @pytest.mark.parametrize(
@@ -153,8 +153,8 @@ def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     # Controle positivo: a página do carrinho já foi desenhada. Sem ele, o
     # "carrinho vazio" e o "Checkout bloqueado" abaixo passariam com a página
     # ainda carregando (com a CPU lenta, o teste acusava o bug como corrigido).
-    expect(cart.continue_shopping_button).to_be_visible()
-    expect(cart.items).to_have_count(0)  # pré-condição: carrinho vazio
+    expect(cart.continue_shopping_button, "controle positivo: a página do carrinho foi desenhada").to_be_visible()
+    expect(cart.items, "pré-condição: carrinho vazio").to_have_count(0)
 
     # A correção pode bloquear o pedido em qualquer etapa (botão Checkout
     # escondido ou desabilitado, formulário que não avança, Finish que não
@@ -191,7 +191,7 @@ def test_resumo_exige_o_passo_1_preenchido(page: Page, standard_session, cart_wi
     # espera a tela ser desenhada antes de concluir que algo não está lá.
     if not reached(overview.finish_button, CheckoutOverviewPage.PATH):
         return
-    expect(overview.items).to_have_count(1)  # pré-condição: o resumo mostra o carrinho montado
+    expect(overview.items, "pré-condição: o resumo mostra o carrinho montado").to_have_count(1)
     complete = overview.finish()
     if not reached(complete.complete_header, CheckoutCompletePage.PATH):
         return
@@ -209,7 +209,10 @@ def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPag
     # tela, como cy.window().then(win => win.localStorage...) no Cypress).
     # Ids exatos, na ordem em que foram adicionados (RN-08 e RN-13): é nesse
     # formato que os testes montam o carrinho direto pelo localStorage.
-    assert cart_ids(inventory_page.page) == [PRODUCT_IDS[Products.BACKPACK], PRODUCT_IDS[Products.FLEECE_JACKET]]
+    assert cart_ids(inventory_page.page) == [
+        PRODUCT_IDS[Products.BACKPACK],
+        PRODUCT_IDS[Products.FLEECE_JACKET],
+    ], "ids do carrinho no localStorage depois de recarregar, na ordem em que foram adicionados"
 
     cart: CartPage = inventory_page.go_to_cart()
     expect(cart.item_names).to_have_text([Products.BACKPACK, Products.FLEECE_JACKET])
@@ -220,14 +223,14 @@ def test_concluir_o_pedido_esvazia_o_carrinho(page: Page, standard_session, cart
     # caminho até aqui já é coberto pela jornada completa.
     cart_with(PRODUCT_IDS[Products.BACKPACK])
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.items).to_have_count(1)  # pré-condição: o carrinho foi montado
+    expect(overview.items, "pré-condição: o carrinho foi montado").to_have_count(1)
 
     complete = overview.finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
     # Não basta o contador sumir da tela: o carrinho tem de sair do localStorage,
     # senão os itens voltam na próxima visita.
-    assert cart_ids(page) == []
+    assert cart_ids(page) == [], "o localStorage ainda tem itens depois do pedido concluído"
 
 
 def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standard_session, cart_with):
@@ -236,7 +239,7 @@ def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standa
     backpack, fleece = PRODUCT_IDS[Products.BACKPACK], PRODUCT_IDS[Products.FLEECE_JACKET]
     cart_with(backpack, fleece)
     cart = CartPage(page).open()
-    expect(cart.items).to_have_count(2)  # pré-condição: o carrinho foi montado
+    expect(cart.items, "pré-condição: o carrinho foi montado").to_have_count(2)
 
     cart.remove(Products.BACKPACK)
     expect(cart.items).to_have_count(1)
@@ -258,6 +261,6 @@ def test_carrinho_mostra_cada_produto_com_nome_preco_e_quantidade_1(inventory_pa
         inventory_page.add_to_cart(product)
 
     cart = inventory_page.go_to_cart()
-    expect(cart.items).to_have_count(len(products))  # sincroniza antes de ler
+    expect(cart.items, "pré-condição: todas as linhas na tela antes de lê-las").to_have_count(len(products))
     for row, product in zip(cart.get_rows(), products, strict=True):
         assert_item(row, PRODUCT_IDS[product])

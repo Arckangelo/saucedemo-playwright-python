@@ -52,8 +52,8 @@ def test_ordenacao_por_nome_z_a(login_as):
     inventory.sort_by("za")
     wait_for_render(inventory.page)
     with bug_check(SortNotAppliedError, lambda: f"Ordem exibida: {inventory.get_item_names()}"):
-        assert inventory.sort_select.input_value() == "za"
-        assert inventory.get_item_names() == expected
+        assert inventory.sort_select.input_value() == "za", "opção selecionada na ordenação"
+        assert inventory.get_item_names() == expected, "nomes na ordem Z-A"
 
 
 @pytest.mark.parametrize("product", add_remove_params("BUG-010 (#11)", Users.PROBLEM))
@@ -105,7 +105,7 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
     # O formulário do passo 1 está quebrado para este perfil (BUG-009), então
     # vamos direto ao resumo para isolar o comportamento do Finish.
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.header.cart_badge).to_have_text("1")  # pré-condição: o carrinho foi montado
+    expect(overview.header.cart_badge, "pré-condição: o carrinho foi montado").to_have_text("1")
     complete = overview.finish()
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
@@ -114,7 +114,7 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
     wait_for_render(page)
     badge = complete.header.cart_badge
     with bug_check(CartNotClearedError, lambda: f"Contador após o pedido: {badge.all_inner_texts()}"):
-        assert badge.all_inner_texts() == []
+        assert badge.all_inner_texts() == [], "o contador do carrinho continua na tela"
 
 
 @pytest.mark.xfail(
@@ -130,8 +130,8 @@ def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, c
     products = [Products.BACKPACK, Products.ONESIE]
     cart_with(*(PRODUCT_IDS[product] for product in products))
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.items).to_have_count(len(products))  # pré-condição: o carrinho foi montado
+    expect(overview.items, "pré-condição: o carrinho foi montado").to_have_count(len(products))
 
     expected = sum(PRODUCT_PRICES[PRODUCT_IDS[product]]["price"] for product in products)
     with bug_check(WrongSubtotalError, lambda: f"Subtotal {overview.get_subtotal()}, esperado {expected}"):
-        assert overview.get_subtotal() == expected
+        assert overview.get_subtotal() == expected, "subtotal do resumo (soma da tabela de preços)"

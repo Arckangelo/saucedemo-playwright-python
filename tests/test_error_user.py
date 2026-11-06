@@ -48,7 +48,7 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
     inventory.sort_by("za")
     wait_for_render(page)
     with bug_check(SortingBrokenError, lambda: f"Lista não ordenada; alertas: {alerts}"):
-        assert inventory.get_item_names() == expected
+        assert inventory.get_item_names() == expected, "nomes na ordem Z-A"
     if alerts:
         raise SortingBrokenError(f"Alerta inesperado: {alerts}")
 
@@ -116,7 +116,7 @@ def test_finish_conclui_o_pedido(page: Page, session_as, cart_with, browser_erro
 
     # Vamos direto ao resumo para o teste não depender do formulário (BUG-016/017).
     overview = CheckoutOverviewPage(page).open()
-    expect(overview.item_names).to_have_text([Products.BACKPACK])  # pré-condição: o carrinho foi montado
+    expect(overview.item_names, "pré-condição: o carrinho foi montado").to_have_text([Products.BACKPACK])
 
     complete = overview.finish()
     # A URL diz se o pedido avançou; a tela nova é esperada, não lida na hora:

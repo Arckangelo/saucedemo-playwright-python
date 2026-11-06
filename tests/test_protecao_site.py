@@ -198,7 +198,7 @@ def test_falha_comum_continua_falha(inner_pytest):
     )
 
     result.assert_outcomes(passed=1, failed=1)
-    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert result.ret == pytest.ExitCode.TESTS_FAILED, "uma falha comum deveria terminar com código 1"
 
 
 def test_disjuntor_e_codigo_de_saida_funcionam_com_xdist(inner_pytest):
@@ -305,4 +305,4 @@ def test_falha_com_o_site_no_ar_continua_falha(inner_pytest, site_up: str):
 
     result.assert_outcomes(passed=2, failed=1, xfailed=1)
     result.stdout.no_fnmatch_line("*SITE INDISPONÍVEL*")
-    assert result.ret == pytest.ExitCode.TESTS_FAILED
+    assert result.ret == pytest.ExitCode.TESTS_FAILED, "com o site no ar, a falha deveria terminar com código 1"
