@@ -8,6 +8,7 @@ from playwright.sync_api import BrowserContext, Page, expect
 
 from data.constants import PASSWORD, SLOW_RENDER_TIMEOUT, TOTAL_PRODUCTS, Messages, Users
 from pages import InventoryPage, LoginPage
+from support.site_guard import safe_goto
 from support.state import SESSION_COOKIE, session_cookie
 
 
@@ -67,7 +68,7 @@ def test_login_invalido_exibe_mensagem_de_erro(
     ],
 )
 def test_rotas_protegidas_exigem_login(page: Page, protected_path: str):
-    page.goto(protected_path)
+    safe_goto(page, protected_path)
 
     # Sem sessão, o site redireciona para o login e explica o motivo. Essa
     # mensagem só existe na tela de login, então ela basta como prova do
@@ -92,7 +93,7 @@ def test_cookie_de_sessao_adulterado_nao_da_acesso(
     # A sessão do saucedemo é só o nome do usuário em um cookie. Um valor
     # forjado não pode abrir a loja, nem para um usuário bloqueado.
     context.add_cookies([{"name": SESSION_COOKIE, "value": cookie_value, "url": base_url}])
-    page.goto(InventoryPage.PATH)
+    safe_goto(page, InventoryPage.PATH)
 
     # A mensagem só existe na tela de login: ela prova que o acesso foi negado.
     expect(LoginPage(page).error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))

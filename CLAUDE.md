@@ -22,9 +22,12 @@ para quando o assunto aparecer.
    issue: `reason="BUG-NNN (#issue): ..."`. Assim o `conftest.py` aplica o marker `known_bug`, outra
    falha (login, seletor) não se esconde no xfail e um XPASS avisa que o bug foi corrigido. Nunca use
    xfail sem `raises=` nem `strict=False`.
-5. **Site fora do ar não é resultado:** a checagem do `pytest_sessionstart` interrompe a execução com
-   "SITE INDISPONÍVEL". Não acrescente retry (`pytest-rerunfailures` ou parecido): repetir teste que
-   falhou esconde instabilidade.
+5. **Site fora do ar não é resultado:** a proteção fica num ponto só, `support/site_guard.py`. Abra
+   páginas sempre por `BasePage.open()` ou `safe_goto` (nunca `page.goto` direto) e passe status lido
+   fora dela (`page.request`) por `check_status`. Queda vira "SITE INDISPONÍVEL", com disjuntor e
+   código de saída 2; nunca aprovação nem bug. Não acrescente retry de teste (`pytest-rerunfailures`
+   ou parecido): repetir teste que falhou esconde instabilidade. Repetir o carregamento da página,
+   dentro do `safe_goto`, é outra coisa e é a única espera por tempo permitida.
 6. **Bug novo, antes do commit, confira tudo que fala de bugs:**
    - `BUGS.md`: linha na tabela e contagens (total, todos os usuários × perfis especiais);
    - `docs/relatorio-de-bugs.md`: seção completa (passos, esperado, obtido, evidência, teste) e resumo;
