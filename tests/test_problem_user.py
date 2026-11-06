@@ -39,6 +39,7 @@ class WrongSubtotalError(AssertionError):
     """O subtotal do resumo não é a soma dos preços dos itens."""
 
 
+# CT-PROBLEM-USER-01
 @pytest.mark.xfail(
     strict=True,
     raises=SortNotAppliedError,
@@ -56,11 +57,13 @@ def test_ordenacao_por_nome_z_a(login_as):
         assert inventory.get_item_names() == expected, "nomes na ordem Z-A"
 
 
+# CT-PROBLEM-USER-02
 @pytest.mark.parametrize("product", add_remove_params("BUG-010 (#11)", Users.PROBLEM))
 def test_adicionar_e_remover_cada_produto(login_as, product: str):
     check_add_and_remove(login_as(Users.PROBLEM), product)
 
 
+# CT-PROBLEM-USER-03
 @pytest.mark.xfail(
     strict=True,
     raises=WrongProductDetailError,
@@ -73,6 +76,7 @@ def test_detalhe_mostra_o_produto_clicado(login_as):
         raise WrongProductDetailError("; ".join(wrong))
 
 
+# CT-PROBLEM-USER-04
 @pytest.mark.xfail(
     strict=True,
     raises=LastNameFieldError,
@@ -92,6 +96,7 @@ def test_sobrenome_fica_no_campo_de_sobrenome(page: Page, session_as, cart_with)
         raise LastNameFieldError(f"Campos após digitar só o sobrenome: {values}")
 
 
+# CT-PROBLEM-USER-05
 @pytest.mark.xfail(
     strict=True,
     raises=CartNotClearedError,
@@ -117,6 +122,7 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
         assert badge.all_inner_texts() == [], "o contador do carrinho continua na tela"
 
 
+# CT-PROBLEM-USER-06
 @pytest.mark.xfail(
     strict=True,
     raises=WrongSubtotalError,

@@ -12,6 +12,7 @@ from support.site_guard import safe_goto
 from support.state import SESSION_COOKIE, session_cookie
 
 
+# CT-LOGIN-01
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "username",
@@ -37,6 +38,7 @@ def test_usuarios_validos_acessam_o_inventario(login_page: LoginPage, username: 
     expect(inventory.items).to_have_count(TOTAL_PRODUCTS, timeout=SLOW_RENDER_TIMEOUT)
 
 
+# CT-LOGIN-02
 @pytest.mark.parametrize(
     "username, password, expected_error",
     [
@@ -56,6 +58,7 @@ def test_login_invalido_exibe_mensagem_de_erro(
     expect(login_page.page).not_to_have_url(re.compile(r"/inventory\.html"))
 
 
+# CT-LOGIN-03
 @pytest.mark.parametrize(
     "protected_path",
     [
@@ -78,6 +81,7 @@ def test_rotas_protegidas_exigem_login(page: Page, protected_path: str):
     )
 
 
+# CT-LOGIN-04
 @pytest.mark.regression
 @pytest.mark.parametrize(
     "cookie_value",
@@ -99,6 +103,7 @@ def test_cookie_de_sessao_adulterado_nao_da_acesso(
     expect(LoginPage(page).error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))
 
 
+# CT-LOGIN-05
 def test_logout_encerra_a_sessao(inventory_page: InventoryPage, context: BrowserContext):
     inventory_page.header.logout()
     login = LoginPage(inventory_page.page)

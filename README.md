@@ -7,7 +7,7 @@
 ![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)
 
-📊 [Relatório HTML da última execução na `main`](https://arckangelo.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf)
+📊 [Relatório HTML da última execução na `main`](https://arckangelo.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf) · 📋 [Casos de teste](docs/casos-de-teste.md)
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
@@ -236,6 +236,7 @@ saucedemo-playwright-python/
 │   └── constants.py       # Usuários, produtos, ids e mensagens esperadas
 ├── docs/
 │   ├── analise-de-mutacao.md     # Testes do standard_user rodados com os perfis defeituosos
+│   ├── casos-de-teste.md         # Um caso de teste por teste do site, com o ID CT do código
 │   ├── insumos-do-ambiente.md    # Ambiente, fonte de verdade, dados, critérios e instabilidades
 │   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências

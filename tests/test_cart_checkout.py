@@ -44,6 +44,7 @@ def checkout_information_page(page: Page, standard_session, cart_with) -> Checko
     return CheckoutInformationPage(page).open()
 
 
+# CT-CART-CHECKOUT-01
 @pytest.mark.smoke
 def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: InventoryPage):
     # A única jornada inteira pela tela: adicionar, carrinho, formulário,
@@ -67,6 +68,7 @@ def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: Inven
     expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
 
 
+# CT-CART-CHECKOUT-02
 def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, cart_with):
     # RN-17. Carrinho montado pelo localStorage e resumo aberto pela URL: o
     # caminho até o resumo é coberto pela jornada completa.
@@ -86,6 +88,7 @@ def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, c
     assert overview.get_total() == expected_subtotal + expected_tax, "total do resumo (subtotal + imposto)"
 
 
+# CT-CART-CHECKOUT-03
 @pytest.mark.parametrize(
     "empty_field, expected_error",
     [
@@ -109,6 +112,7 @@ def test_checkout_exige_campos_obrigatorios(
     expect(checkout.page).to_have_url(re.compile(re.escape(checkout.PATH) + "$"))
 
 
+# CT-CART-CHECKOUT-04
 @pytest.mark.regression
 @pytest.mark.parametrize(
     "blank_field, field_label",
@@ -142,6 +146,7 @@ def test_checkout_rejeita_campos_so_com_espacos(
         expect(checkout.error_message).to_be_visible()
 
 
+# CT-CART-CHECKOUT-05
 @pytest.mark.regression
 @pytest.mark.xfail(
     strict=True,
@@ -174,6 +179,7 @@ def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     raise EmptyCartOrderError(f"Pedido vazio concluído: {complete.complete_header.inner_text()}")
 
 
+# CT-CART-CHECKOUT-06
 @pytest.mark.regression
 @pytest.mark.xfail(
     strict=True,
@@ -198,6 +204,7 @@ def test_resumo_exige_o_passo_1_preenchido(page: Page, standard_session, cart_wi
     raise SkippedCheckoutStepError(f"Pedido concluído sem nome, sobrenome e CEP: {page.url}")
 
 
+# CT-CART-CHECKOUT-07
 def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPage):
     inventory_page.add_to_cart(Products.BACKPACK)
     inventory_page.add_to_cart(Products.FLEECE_JACKET)
@@ -218,6 +225,7 @@ def test_carrinho_persiste_apos_recarregar_a_pagina(inventory_page: InventoryPag
     expect(cart.item_names).to_have_text([Products.BACKPACK, Products.FLEECE_JACKET])
 
 
+# CT-CART-CHECKOUT-08
 def test_concluir_o_pedido_esvazia_o_carrinho(page: Page, standard_session, cart_with):
     # RN-19. Carrinho montado pelo localStorage e resumo aberto pela URL: o
     # caminho até aqui já é coberto pela jornada completa.
@@ -233,6 +241,7 @@ def test_concluir_o_pedido_esvazia_o_carrinho(page: Page, standard_session, cart
     assert cart_ids(page) == [], "o localStorage ainda tem itens depois do pedido concluído"
 
 
+# CT-CART-CHECKOUT-09
 def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standard_session, cart_with):
     # Carrinho montado pelo localStorage: o "Add to cart" da tela já tem teste
     # próprio e não pode derrubar este, que verifica a remoção.
@@ -252,6 +261,7 @@ def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standa
     assert_item(row, fleece)
 
 
+# CT-CART-CHECKOUT-10
 def test_carrinho_mostra_cada_produto_com_nome_preco_e_quantidade_1(inventory_page: InventoryPage):
     # Nome e preço conferidos contra a tabela de referência, não contra a tela.
     # RN-11: o botão alterna entre Add to cart e Remove, então não há como
