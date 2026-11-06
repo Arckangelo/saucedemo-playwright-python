@@ -14,7 +14,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 41 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos e as convenções do código.
+- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 59 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos e as convenções do código.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
@@ -157,7 +157,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, 41 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, e `tests/test_convencoes.py` (6) barra `assert` sem mensagem.
+Além delas, 59 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, e `tests/test_convencoes.py` (24) barra no código da suíte `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado, depurador e senha fora de `data/constants.py`.
 
 ### Perfis de usuário
 
@@ -271,7 +271,7 @@ saucedemo-playwright-python/
 │   ├── test_console_e_rede.py
 │   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
 │   ├── test_regra_dos_bugs.py # Escreve xfail fora da regra para testar a conferência
-│   ├── test_convencoes.py     # Convenções do código conferidas (assert sem mensagem)
+│   ├── test_convencoes.py     # Convenções do código conferidas (assert sem mensagem, atalhos proibidos)
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
 │   └── test_visual_user.py
@@ -390,7 +390,8 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Erro JavaScript falha qualquer teste:** a fixture `browser_errors` (autouse) falha o teste no teardown se a página lançar uma exceção não tratada, como o Cypress faz por padrão. Só os testes com o marker `allow_js_errors` toleram exceções, e cada uso cita o bug que as gera (hoje, BUG-015, BUG-016 e BUG-018, todos do `error_user`).
 - **Estado conferido por baixo da tela onde a tela não basta:** `cart_ids` lê o carrinho no `localStorage` e `session_cookie` lê o cookie de sessão. São usados onde a tela não prova o efeito: os ids gravados ao adicionar, o carrinho esvaziado depois do pedido e o cookie apagado no logout. Onde a tela já é calculada a partir desse estado (o contador do carrinho), conferir os dois seria redundante.
 - **Asserções com mensagem:** toda `assert` diz o que está sendo conferido ("subtotal do resumo", "ids do carrinho no localStorage"), e os `expect` de preparação dizem que são pré-condição ou controle positivo. Assim, uma falha mostra de cara se quebrou a verificação ou a preparação. Os demais `expect` usam a mensagem do próprio Playwright, que já traz o elemento, o valor esperado e o obtido.
-- **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
+- **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado. A regra é conferida no CI por `tests/test_convencoes.py`, junto com os outros atalhos proibidos (`page.goto` direto, teste pulado, depurador e senha fora da massa de dados); as poucas exceções ficam numa lista, com motivo e quantidade exata.
+- **Marcadores conferidos:** com `--strict-markers`, um marcador digitado errado (`smok` em vez de `smoke`) é erro de coleta, e não um filtro que seleciona o teste em silêncio.
 - **Confirmar que algo NÃO aconteceu, sem esperar um tempo fixo:** para provar um bug (o contador não mudou, o pedido não foi concluído), não adianta esperar o efeito, porque ele nunca vem. Em vez de aguardar um tempo fixo, o teste executa a ação, espera o navegador desenhar dois quadros (`wait_for_render`, com `requestAnimationFrame`) e lê o estado sem esperar mais. O navegador só desenha um quadro depois de processar o evento e a atualização de tela que ele dispara, então esse é o sinal concreto de que a ação já teve efeito, se fosse ter. A técnica foi validada no `standard_user`: em 175 repetições de 7 ações diferentes, o efeito sempre já estava na tela depois dos dois quadros. Onde há um sinal ainda mais direto (a página de pedido concluído apareceu, o contador sumiu), ele é usado.
 - **Controle positivo antes de todo "não aparece":** uma asserção negativa só vale depois de garantir que a página certa já foi desenhada; sem isso, ela passa com a página ainda carregando. Os dois quadros bastam para ações que mudam a tela atual (contador, botão), mas não para cliques que trocam de tela: o site muda a URL durante o clique e só depois desenha a tela nova, e com a CPU 30 vezes mais lenta os testes do BUG-001 e do BUG-024 acusavam o bug como corrigido (3 de 3 execuções). Por isso, depois de uma troca de tela, a URL decide se a etapa avançou (`on_page`) e o elemento da tela nova é esperado, não lido na hora (`reached`). Com essa regra, a suíte inteira com a CPU lenta não dá nenhum resultado falso.
 - **Exceções documentadas (esperas por sinal, não por tempo):**

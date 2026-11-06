@@ -78,8 +78,12 @@ para quando o assunto aparecer.
     - exceção JavaScript falha o teste; `allow_js_errors` só com comentário citando o bug que a gera;
     - perfis com defeito comparados ao `standard_user` como oráculo (`oracle_inventory`), em vez de
       valores fixos no código.
+    - `tests/test_convencoes.py` barra no CI, em `tests/`, `support/`, `pages/` e `conftest.py`:
+      `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado (`skip`), depurador e a
+      senha fora de `data/constants.py`. Exceção só em `ALLOWED`, com motivo e quantidade exata.
 12. **Markers:** `smoke` para fluxos críticos, `regression` para regressão por perfil e bordas;
-    `known_bug` é aplicado sozinho por `support/known_bugs.py` (não marque à mão).
+    `known_bug` é aplicado sozinho por `support/known_bugs.py` (não marque à mão). Com
+    `--strict-markers`, marcador fora da lista do `pytest.ini` é erro.
 13. **Dependências:** versões exatas no `requirements.txt`, publicadas há pelo menos duas semanas; o
     pip-audit do CI falha em severidade alta ou crítica.
 
