@@ -233,6 +233,7 @@ saucedemo-playwright-python/
 │   └── constants.py       # Usuários, produtos, ids e mensagens esperadas
 ├── docs/
 │   ├── analise-de-mutacao.md     # Testes do standard_user rodados com os perfis defeituosos
+│   ├── insumos-do-ambiente.md    # Ambiente, fonte de verdade, dados, critérios e instabilidades
 │   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
 │   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
