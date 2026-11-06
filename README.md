@@ -40,6 +40,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 - [Integração contínua](#integração-contínua)
 - [Segurança do pipeline](#segurança-do-pipeline)
 - [Decisões técnicas](#decisões-técnicas)
+- [Uso de IA](#uso-de-ia)
 - [Autor](#autor)
 
 ---
@@ -408,6 +409,17 @@ Os próximos passos, detalhados nas [sugestões de melhoria](docs/sugestoes-de-m
 - avaliar as 4 [suspeitas](docs/relatorio-de-bugs.md#suspeitas) do relatório, como o pedido que pode ser finalizado de novo pelo botão Voltar.
 - testar o recibo em PDF do botão **Generate PDF order** (itens, total e dados de entrega), funcionalidade nova do site que ainda não tem teste;
 - fechar as lacunas de cobertura das [regras de negócio](docs/requisitos-inferidos.md#regras-de-negócio): a ordem de validação do login e do checkout (RN-02 e RN-15), a validade de 10 minutos da sessão (RN-05), o inventário abrir em A–Z (RN-07), o clique na imagem do produto (RN-09) e o comportamento do resumo ao recarregar e ao voltar ao passo 1 (RN-20).
+
+---
+
+## Uso de IA
+
+Este projeto foi desenvolvido com auxílio do [Claude Code](https://claude.com/claude-code), assistente de programação com IA da Anthropic.
+
+- **O que a IA fez:** propôs e escreveu código, testes e documentação, investigou o comportamento do site e rodou os testes.
+- **O que eu fiz:** defini o que testar e as regras do projeto, decidi entre as propostas (aceitando, ajustando ou recusando), revisei cada mudança e aprovei cada PR antes do merge.
+- **Como o resultado é validado:** nenhuma mudança entra sem os testes rodados; toda proteção nova é testada simulando a falha que ela deveria pegar (como em `tests/test_protecao_site.py`); a [análise de mutação](#análise-de-mutação) confere se os testes pegam os defeitos dos perfis de treino; e o CI roda a suíte a cada push.
+- As regras que a IA segue neste repositório estão no [CLAUDE.md](CLAUDE.md), em ordem de prioridade.
 
 ---
 
