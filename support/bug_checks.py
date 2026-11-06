@@ -102,7 +102,7 @@ def check_add_and_remove(inventory: InventoryPage, product: str):
     """Adiciona e remove um produto, conferindo o contador e o texto do botão."""
     button = inventory.item_button(product)
     badge = inventory.header.cart_badge
-    expect(button).to_have_text("Add to cart")  # pré-condição: carrinho vazio
+    expect(button, "pré-condição: carrinho vazio").to_have_text("Add to cart")
 
     # all_inner_texts() e inner_text() de um elemento que existe não esperam:
     # leem o estado já renderizado.
@@ -144,7 +144,7 @@ def find_wrong_product_details(inventory: InventoryPage, products: list[str]) ->
     wrong = []
     for product in products:
         detail = inventory.open_product(product)
-        expect(detail.back_button).to_be_visible()  # pré-condição: está no detalhe
+        expect(detail.back_button, "pré-condição: está no detalhe").to_be_visible()
         shown = detail.name.inner_text()
         if shown != product:
             wrong.append(f"'{product}' abriu '{shown}' (id={detail.get_product_id()})")

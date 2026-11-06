@@ -110,7 +110,7 @@ def test_remover_o_ultimo_item_esconde_o_contador_e_volta_o_botao(
     # a remoção é clicada na tela: é este teste que garante o botão Remove.
     cart_with(PRODUCT_IDS[Products.BACKPACK])
     inventory = InventoryPage(page).open()
-    expect(inventory.header.cart_badge).to_have_text("1")  # pré-condição: o carrinho foi montado
+    expect(inventory.header.cart_badge, "pré-condição: o carrinho foi montado").to_have_text("1")
 
     inventory.remove_from_cart(Products.BACKPACK)
 
@@ -135,14 +135,14 @@ def test_reset_app_state_restaura_os_botoes(page: Page, standard_session, cart_w
     products = [Products.BACKPACK, Products.BIKE_LIGHT]
     cart_with(*(PRODUCT_IDS[product] for product in products))
     inventory = InventoryPage(page).open()
-    expect(inventory.header.cart_badge).to_have_text("2")  # pré-condição: o carrinho foi montado
+    expect(inventory.header.cart_badge, "pré-condição: o carrinho foi montado").to_have_text("2")
 
     inventory.header.reset_app_state()
-    expect(inventory.header.cart_badge).to_be_hidden()  # pré-condição: o reset aconteceu
+    expect(inventory.header.cart_badge, "pré-condição: o reset aconteceu").to_be_hidden()
 
     # O contador sumiu (sinal acima): a tela já reagiu ao reset.
     wait_for_render(inventory.page)
     for product in products:
         button = inventory.item_button(product)
         with bug_check(StaleCartButtonsError, f"Botão de '{product}' continua em 'Remove'"):
-            assert button.inner_text() == "Add to cart"
+            assert button.inner_text() == "Add to cart", "texto do botão depois do reset"

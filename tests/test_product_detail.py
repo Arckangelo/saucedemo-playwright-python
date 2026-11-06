@@ -13,7 +13,7 @@ class PhantomCartItemError(AssertionError):
 
 
 def test_detalhe_mostra_o_produto_clicado(inventory_page: InventoryPage):
-    assert find_wrong_product_details(inventory_page, Products.ALL) == []
+    assert find_wrong_product_details(inventory_page, Products.ALL) == [], "produtos que abriram outro detalhe"
 
 
 @pytest.mark.parametrize(
@@ -33,14 +33,16 @@ def test_url_do_detalhe_abre_o_produto_pelo_id(inventory_page: InventoryPage, pr
 )
 def test_produto_inexistente_nao_entra_no_carrinho(inventory_page: InventoryPage, invalid_id: str):
     detail = ProductDetailPage(inventory_page.page).open_by_id(invalid_id)
-    expect(detail.name).to_have_text(Messages.ITEM_NOT_FOUND)  # pré-condição
+    expect(detail.name, "pré-condição: o id inexistente abriu a página ITEM NOT FOUND").to_have_text(
+        Messages.ITEM_NOT_FOUND
+    )
 
     if detail.add_to_cart_button.is_visible():
         detail.add_to_cart_button.click()
     wait_for_render(detail.page)
     badge = detail.header.cart_badge
     with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.all_inner_texts()} para o id {invalid_id}"):
-        assert badge.all_inner_texts() == []
+        assert badge.all_inner_texts() == [], "o contador conta o produto inexistente"
 
 
 @pytest.mark.regression
@@ -60,4 +62,4 @@ def test_carrinho_ignora_ids_inexistentes_no_localstorage(inventory_page: Invent
     wait_for_render(page)
     badge = inventory_page.header.cart_badge
     with bug_check(PhantomCartItemError, lambda: f"Contador mostra {badge.all_inner_texts()} com o carrinho vazio"):
-        assert badge.all_inner_texts() == []
+        assert badge.all_inner_texts() == [], "o contador conta o id inexistente do localStorage"

@@ -107,6 +107,6 @@ def test_logout_encerra_a_sessao(inventory_page: InventoryPage, context: Browser
     # Não basta voltar para a tela de login: a sessão precisa ter sido de fato
     # encerrada. O cookie tem de sumir (a causa) e o inventário, reaberto, tem
     # de ser bloqueado (o efeito).
-    assert session_cookie(context) is None
+    assert session_cookie(context) is None, "o cookie de sessão continua no navegador depois do logout"
     inventory_page.open()
     expect(login.error_message).to_have_text(Messages.not_logged_in(InventoryPage.PATH))

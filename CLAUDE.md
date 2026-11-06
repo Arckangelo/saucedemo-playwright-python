@@ -68,6 +68,10 @@ para quando o assunto aparecer.
       `cart_with(...)`; a tela só para o que está sendo testado;
     - estado conferido por baixo da tela (`cart_ids`, `session_cookie`) onde a tela não prova o efeito;
     - nenhum texto ou dado solto no teste: usuários, produtos e mensagens em `data/constants.py`;
+    - toda `assert` tem mensagem dizendo o que é conferido (`assert total == esperado, "total do
+      resumo"`); `expect` de preparação leva a mensagem `"pré-condição: ..."` ou `"controle
+      positivo: ..."`; os demais `expect` usam a mensagem do Playwright, que já mostra o elemento, o
+      esperado e o obtido;
     - exceção JavaScript falha o teste; `allow_js_errors` só com comentário citando o bug que a gera;
     - perfis com defeito comparados ao `standard_user` como oráculo (`oracle_inventory`), em vez de
       valores fixos no código.
