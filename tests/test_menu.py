@@ -13,6 +13,7 @@ class BrokenAboutLinkError(AssertionError):
     """O link About não aponta para o site da Sauce Labs."""
 
 
+# CT-MENU-01
 def test_all_items_volta_para_o_inventario(inventory_page: InventoryPage):
     cart = inventory_page.go_to_cart()
     cart.header.go_to_all_items()
@@ -21,6 +22,7 @@ def test_all_items_volta_para_o_inventario(inventory_page: InventoryPage):
     expect(inventory_page.header.title).to_have_text("Products")
 
 
+# CT-MENU-02
 @pytest.mark.parametrize(
     "username",
     [

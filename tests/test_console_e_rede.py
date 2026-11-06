@@ -29,6 +29,7 @@ TELEMETRY_TIMEOUT = 10_000
 TELEMETRY_HOST = "backtrace.io"
 
 
+# CT-CONSOLE-E-REDE-01
 @pytest.mark.regression
 @pytest.mark.xfail(
     strict=True,
@@ -50,6 +51,7 @@ def test_rotas_internas_respondem_http_200(page: Page):
         raise InternalRouteStatusError(f"Status por rota: {errors}")
 
 
+# CT-CONSOLE-E-REDE-02
 @pytest.mark.regression
 @pytest.mark.xfail(
     strict=True,
