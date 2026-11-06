@@ -14,7 +14,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 35 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua) e a regra dos bugs conhecidos.
+- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 41 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos e as convenções do código.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
@@ -156,7 +156,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, 35 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, e `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro.
+Além delas, 41 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, e `tests/test_convencoes.py` (6) barra `assert` sem mensagem.
 
 ### Perfis de usuário
 
@@ -269,6 +269,7 @@ saucedemo-playwright-python/
 │   ├── test_console_e_rede.py
 │   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
 │   ├── test_regra_dos_bugs.py # Escreve xfail fora da regra para testar a conferência
+│   ├── test_convencoes.py     # Convenções do código conferidas (assert sem mensagem)
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
 │   └── test_visual_user.py
