@@ -14,7 +14,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 19 testes conferem a própria [proteção contra instabilidade](#integração-contínua) da suíte.
+- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 35 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua) e a regra dos bugs conhecidos.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
@@ -156,7 +156,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, `tests/test_protecao_site.py` tem 19 testes da própria suíte, e não do site: simulam a queda do site para provar que a proteção contra instabilidade funciona.
+Além delas, 35 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, e `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro.
 
 ### Perfis de usuário
 
@@ -257,6 +257,7 @@ saucedemo-playwright-python/
 ├── support/
 │   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
 │   ├── item_checks.py     # assert_item: confere uma linha com a tabela de preços
+│   ├── known_bugs.py      # Regra dos xfail de bugs conhecidos, conferida, e o marker known_bug
 │   ├── site_guard.py      # Proteção contra instabilidade: safe_goto, SITE INDISPONÍVEL e disjuntor
 │   └── state.py           # cart_ids e session_cookie: leem o estado por baixo da tela
 ├── tests/                 # Os testes, separados por área e por perfil
@@ -267,6 +268,7 @@ saucedemo-playwright-python/
 │   ├── test_cart_checkout.py
 │   ├── test_console_e_rede.py
 │   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
+│   ├── test_regra_dos_bugs.py # Escreve xfail fora da regra para testar a conferência
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
 │   └── test_visual_user.py
@@ -381,7 +383,7 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
 - **Tabela de preços como fonte de verdade:** `PRODUCT_PRICES` (em `data/constants.py`) guarda id, nome e preço dos 6 produtos, conferidos uma única vez no site. Ordenação, linhas do carrinho e do resumo, subtotal, imposto e total são calculados a partir dela, nunca a partir da própria tela: um preço errado exibido e cobrado de forma coerente passaria despercebido se o teste somasse o que a tela mostra.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
-- **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. O `conftest.py` aplica o marker `known_bug` a todo xfail com "BUG-", então basta seguir a convenção.
+- **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. A regra é conferida automaticamente (`support/known_bugs.py`): um xfail sem `strict=True`, sem `raises=` específico, com motivo fora do formato ou com ID e issue que não batem com o `BUGS.md` faz o teste terminar como ERRO, sem ser executado. O mesmo plugin aplica o marker `known_bug` a todo xfail com "BUG-".
 - **Erro JavaScript falha qualquer teste:** a fixture `browser_errors` (autouse) falha o teste no teardown se a página lançar uma exceção não tratada, como o Cypress faz por padrão. Só os testes com o marker `allow_js_errors` toleram exceções, e cada uso cita o bug que as gera (hoje, BUG-015, BUG-016 e BUG-018, todos do `error_user`).
 - **Estado conferido por baixo da tela onde a tela não basta:** `cart_ids` lê o carrinho no `localStorage` e `session_cookie` lê o cookie de sessão. São usados onde a tela não prova o efeito: os ids gravados ao adicionar, o carrinho esvaziado depois do pedido e o cookie apagado no logout. Onde a tela já é calculada a partir desse estado (o contador do carrinho), conferir os dois seria redundante.
 - **Sem `sleep`:** o Playwright espera automaticamente os elementos ficarem prontos. Para o usuário lento, apenas o tempo limite daquela verificação foi aumentado.
