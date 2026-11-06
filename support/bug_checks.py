@@ -8,9 +8,10 @@ atrás do xfail. É o mesmo padrão do BrokenProductImagesError.
 
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from urllib.parse import urlparse
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Locator, Page, expect
 
 from data.constants import Products
 from pages import InventoryPage
@@ -45,6 +46,36 @@ def wait_for_render(page: Page):
     aguardar um tempo fixo por algo que não vai acontecer.
     """
     page.evaluate(_TWO_FRAMES)
+
+
+def on_page(page: Page, path: str) -> bool:
+    """A página está em `path`, depois de a última ação ser processada.
+
+    Num clique que troca de tela, o site muda a URL durante o próprio clique,
+    antes de desenhar a tela nova. Por isso a URL é o sinal de que a etapa
+    avançou (ou não), mesmo quando a tela ainda está sendo desenhada.
+    """
+    wait_for_render(page)
+    return urlparse(page.url).path == path
+
+
+def reached(locator: Locator, path: str) -> bool:
+    """A etapa avançou: a página foi para `path` e mostra `locator`.
+
+    A URL decide se a etapa avançou, e o elemento da tela nova é ESPERADO (é o
+    controle positivo de que ela foi desenhada), em vez de lido na hora: com a
+    CPU lenta, dois quadros não bastam para desenhar uma tela nova, e "o
+    elemento não está lá" seria lido como "a etapa foi bloqueada". A espera
+    longa só acontece se a URL mudou e o elemento nunca aparece (ex.: uma
+    correção que esconde o botão Finish).
+    """
+    if not on_page(locator.page, path):
+        return False
+    try:
+        expect(locator).to_be_visible()
+    except AssertionError:
+        return False
+    return True
 
 
 @contextmanager

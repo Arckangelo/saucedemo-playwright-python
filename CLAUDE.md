@@ -56,6 +56,9 @@ para quando o assunto aparecer.
 11. **Como escrever testes:**
     - nunca `sleep` nem `wait_for_timeout`: o Playwright espera sozinho; para provar que algo NÃO
       aconteceu, use `wait_for_render` (dois quadros) ou um sinal direto, nunca um tempo fixo;
+    - toda asserção negativa ("não aparece", "não mudou") vem depois de um controle positivo de que a
+      página certa já foi desenhada; depois de um clique que troca de tela, dois quadros não bastam:
+      use `on_page` (a URL decide se avançou) e `reached` (espera o elemento da tela nova);
     - seletores por `data-test` (`get_by_test_id`); exceção só com comentário explicando, como o botão
       do menu (`#react-burger-menu-btn`);
     - valor esperado vem de `PRODUCT_PRICES` em `data/constants.py`, nunca da tela testada; dinheiro em
