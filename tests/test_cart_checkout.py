@@ -7,8 +7,14 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TAX_RATE, Messages, Products
-from pages import CartPage, CheckoutInformationPage, CheckoutOverviewPage, InventoryPage
-from support.bug_checks import bug_check, wait_for_render
+from pages import (
+    CartPage,
+    CheckoutCompletePage,
+    CheckoutInformationPage,
+    CheckoutOverviewPage,
+    InventoryPage,
+)
+from support.bug_checks import bug_check, on_page, reached
 from support.item_checks import assert_item
 from support.state import cart_ids
 
@@ -125,19 +131,15 @@ def test_checkout_rejeita_campos_so_com_espacos(
     checkout = checkout_information_page
     checkout.fill_information(**{**CHECKOUT_INFO, blank_field: "   "})
     checkout.continue_button.click()
-    wait_for_render(checkout.page)
 
+    # Ficar no passo 1 (pela URL) e mostrar o erro (esperado, não lido na hora):
+    # com a tela lenta, ler o erro na hora acusaria o bug mesmo com o site certo.
     with bug_check(
         BlankFieldAcceptedError,
         lambda: f"Campo {field_label} só com espaços foi aceito; página atual: {checkout.page.url}",
     ):
-        assert checkout.error_message.is_visible()
-
-
-def _blocked(locator) -> bool:
-    """True se, depois de a tela ser renderizada, o elemento não estiver lá: a etapa foi bloqueada."""
-    wait_for_render(locator.page)
-    return not locator.is_visible()
+        assert on_page(checkout.page, CheckoutInformationPage.PATH), "o formulário avançou"
+        expect(checkout.error_message).to_be_visible()
 
 
 @pytest.mark.regression
@@ -148,21 +150,26 @@ def _blocked(locator) -> bool:
 )
 def test_nao_conclui_pedido_com_carrinho_vazio(inventory_page: InventoryPage):
     cart = inventory_page.go_to_cart()
+    # Controle positivo: a página do carrinho já foi desenhada. Sem ele, o
+    # "carrinho vazio" e o "Checkout bloqueado" abaixo passariam com a página
+    # ainda carregando (com a CPU lenta, o teste acusava o bug como corrigido).
+    expect(cart.continue_shopping_button).to_be_visible()
     expect(cart.items).to_have_count(0)  # pré-condição: carrinho vazio
 
     # A correção pode bloquear o pedido em qualquer etapa (botão Checkout
     # escondido ou desabilitado, formulário que não avança, Finish que não
     # conclui). Cada bloqueio conta como comportamento correto: o teste passa,
     # e o xfail(strict=True) avisa que o bug foi corrigido.
-    if _blocked(cart.checkout_button) or not cart.checkout_button.is_enabled():
+    # O botão é desenhado junto com a página do carrinho (controle acima).
+    if not cart.checkout_button.is_visible() or not cart.checkout_button.is_enabled():
         return
     information = cart.checkout()
     information.fill_information(**CHECKOUT_INFO)
     overview = information.continue_to_overview()
-    if _blocked(overview.finish_button):
+    if not reached(overview.finish_button, CheckoutOverviewPage.PATH):
         return
     complete = overview.finish()
-    if _blocked(complete.complete_header):
+    if not reached(complete.complete_header, CheckoutCompletePage.PATH):
         return
     raise EmptyCartOrderError(f"Pedido vazio concluído: {complete.complete_header.inner_text()}")
 
@@ -178,15 +185,15 @@ def test_resumo_exige_o_passo_1_preenchido(page: Page, standard_session, cart_wi
     # pelo formulário do passo 1.
     cart_with(PRODUCT_IDS[Products.BACKPACK])
     overview = CheckoutOverviewPage(page).open()
-
     # A correção pode bloquear em qualquer ponto (voltar ao passo 1, esconder o
     # Finish ou não concluir). Cada bloqueio é o comportamento correto: o teste
-    # passa, e o xfail(strict=True) avisa que o bug foi corrigido.
-    if _blocked(overview.finish_button):
+    # passa, e o xfail(strict=True) avisa que o bug foi corrigido. reached()
+    # espera a tela ser desenhada antes de concluir que algo não está lá.
+    if not reached(overview.finish_button, CheckoutOverviewPage.PATH):
         return
     expect(overview.items).to_have_count(1)  # pré-condição: o resumo mostra o carrinho montado
     complete = overview.finish()
-    if _blocked(complete.complete_header):
+    if not reached(complete.complete_header, CheckoutCompletePage.PATH):
         return
     raise SkippedCheckoutStepError(f"Pedido concluído sem nome, sobrenome e CEP: {page.url}")
 

@@ -4,14 +4,12 @@ Mesmo padrão do test_problem_user.py: o teste descreve o comportamento correto
 e cada bug é tolerado apenas pela sua exceção específica.
 """
 
-import re
-
 import pytest
 from playwright.sync_api import Page, expect
 
 from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Messages, Products, Users
-from pages import CheckoutInformationPage, CheckoutOverviewPage
-from support.bug_checks import add_remove_params, bug_check, check_add_and_remove, wait_for_render
+from pages import CheckoutCompletePage, CheckoutInformationPage, CheckoutOverviewPage
+from support.bug_checks import add_remove_params, bug_check, check_add_and_remove, on_page, wait_for_render
 
 pytestmark = pytest.mark.regression
 
@@ -96,11 +94,12 @@ def test_checkout_exige_sobrenome(checkout_information):
     checkout_information.postal_code_input.fill(CHECKOUT_INFO["postal_code"])
     checkout_information.continue_button.click()
 
+    # Ficar no passo 1 (pela URL) e mostrar o erro (esperado, não lido na hora):
+    # com a tela lenta, ler o erro na hora acusaria o bug mesmo com o site certo.
     page = checkout_information.page
-    wait_for_render(page)
-    error = checkout_information.error_message
     with bug_check(MissingLastNameAcceptedError, lambda: f"Sem erro de validação; página atual: {page.url}"):
-        assert error.all_inner_texts() == [Messages.LAST_NAME_REQUIRED]
+        assert on_page(page, CheckoutInformationPage.PATH), "o formulário avançou sem sobrenome"
+        expect(checkout_information.error_message).to_have_text(Messages.LAST_NAME_REQUIRED)
 
 
 # BUG-018: o clique em Finish lança "wa.cesetRart is not a function" e o pedido não conclui.
@@ -120,10 +119,11 @@ def test_finish_conclui_o_pedido(page: Page, session_as, cart_with, browser_erro
     expect(overview.item_names).to_have_text([Products.BACKPACK])  # pré-condição: o carrinho foi montado
 
     complete = overview.finish()
-    wait_for_render(page)
+    # A URL diz se o pedido avançou; a tela nova é esperada, não lida na hora:
+    # com a tela lenta, ler na hora acusaria o bug mesmo com o site certo.
     with bug_check(
         FinishFailedError,
         lambda: f"Continua em {page.url}; erros JavaScript: {browser_errors.page_errors}",
     ):
-        assert re.search(r"/checkout-complete\.html$", page.url)
-        assert complete.complete_header.all_inner_texts() == [Messages.ORDER_COMPLETE]
+        assert on_page(page, CheckoutCompletePage.PATH), "o Finish não levou ao pedido concluído"
+        expect(complete.complete_header).to_have_text(Messages.ORDER_COMPLETE)
