@@ -186,7 +186,27 @@ def test_diferencas_do_catalogo_dizem_exatamente_o_que_mudou():
     current[6] = {"name": "Sauce Labs Cap", "price": Decimal("12.00")}
     assert catalog_changes(EXPECTED, current) == [
         "id 0 (Sauce Labs Bike Light): saiu do catálogo",
-        "Sauce Labs Backpack: 29.99 → 31.99",
+        "Sauce Labs Backpack: 29.99 → 31.99 (+7%)",
         "id 6 (Sauce Labs Cap): entrou no catálogo, a 12.00",
     ], "diferenças descritas"
     assert catalog_changes(EXPECTED, EXPECTED) == [], "catálogo igual não tem diferenças"
+
+
+@pytest.mark.parametrize(
+    "before, now, expected",
+    [
+        pytest.param("29.99", "2.99", "29.99 → 2.99 (-90%, SUSPEITO)", id="erro-de-digitacao"),
+        pytest.param("29.99", "49.99", "29.99 → 49.99 (+67%, SUSPEITO)", id="alta-grande"),
+        pytest.param("29.99", "31.99", "29.99 → 31.99 (+7%)", id="reajuste"),
+        pytest.param("10.00", "15.00", "10.00 → 15.00 (+50%)", id="alta-de-50-no-limite"),
+        pytest.param("10.00", "15.01", "10.00 → 15.01 (+50%, SUSPEITO)", id="alta-acima-de-50"),
+        pytest.param("10.00", "5.00", "10.00 → 5.00 (-50%)", id="queda-de-50-no-limite"),
+        pytest.param("10.00", "4.99", "10.00 → 4.99 (-50%, SUSPEITO)", id="queda-acima-de-50"),
+    ],
+)
+def test_variacao_acima_de_50_por_cento_e_marcada_como_suspeita(before: str, now: str, expected: str):
+    # 29.99 → 2.99 parece erro de digitação, não reajuste: o teste de guarda
+    # destaca, para ninguém atualizar a tabela sem perguntar.
+    current = {**EXPECTED, 4: {"name": "Sauce Labs Backpack", "price": Decimal(now)}}
+    reference = {**EXPECTED, 4: {"name": "Sauce Labs Backpack", "price": Decimal(before)}}
+    assert catalog_changes(reference, current) == [f"Sauce Labs Backpack: {expected}"], "variação descrita"

@@ -25,7 +25,7 @@ há plano B silencioso com uma tabela fixa. Queda do site vira SiteUnavailable
 """
 
 import re
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from playwright.sync_api import APIRequestContext
 from playwright.sync_api import Error as PlaywrightError
@@ -40,6 +40,10 @@ SIZE_SUFFIX = re.compile(r"\((?:XS|S|M|L|XL|XXL)\)$")
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 INTEGER = re.compile(r"\d+")
 _QUOTES = "`'\""
+# Variação de preço acima disso (para mais ou para menos) é marcada como
+# SUSPEITO no teste de guarda: mais parece erro de digitação (29.99 → 2.99)
+# do que reajuste.
+SUSPICIOUS_CHANGE = Decimal("0.5")
 
 Catalog = dict[int, dict]
 
@@ -178,6 +182,14 @@ def script_path(index_html: str) -> str:
 # --- Comparação ---------------------------------------------------------------
 
 
+def price_change(before: Decimal, now: Decimal) -> str:
+    """Variação de um preço, com a marca SUSPEITO acima de SUSPICIOUS_CHANGE: "29.99 → 2.99 (-90%, SUSPEITO)"."""
+    ratio = (now - before) / before
+    percent = (ratio * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    mark = ", SUSPEITO" if abs(ratio) > SUSPICIOUS_CHANGE else ""
+    return f"{before} → {now} ({percent:+}%{mark})"
+
+
 def catalog_changes(reference: Catalog, current: Catalog) -> list[str]:
     """O que mudou do catálogo de referência para o atual, uma linha por diferença."""
     changes = []
@@ -191,7 +203,7 @@ def catalog_changes(reference: Catalog, current: Catalog) -> list[str]:
             if before["name"] != now["name"]:
                 changes.append(f"id {product_id}: nome '{before['name']}' → '{now['name']}'")
             if before["price"] != now["price"]:
-                changes.append(f"{now['name']}: {before['price']} → {now['price']}")
+                changes.append(f"{now['name']}: {price_change(before['price'], now['price'])}")
     return changes
 
 
