@@ -514,9 +514,9 @@ Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da p
 | **Pré-condições** | Sem login. |
 | **Dados de teste** | Tabela conferida em 27/10/2026 (PRODUCT_PRICES): Bike Light $9.99, Bolt T-Shirt $15.99, Onesie $7.99, T-Shirt (Red) $15.99, Backpack $29.99 e Fleece Jacket $49.99. |
 | **Passos** | 1. Ler o catálogo do JavaScript do site.<br>2. Comparar cada id, nome e preço com a tabela. |
-| **Resultado esperado** | Nenhuma diferença. Se houver, a falha lista cada uma (ex.: "Sauce Labs Backpack: 29.99 → 31.99"). |
+| **Resultado esperado** | Nenhuma diferença. Se houver, a falha lista cada uma com a variação (ex.: "Sauce Labs Backpack: 29.99 → 31.99 (+7%)") e marca como SUSPEITO a variação acima de 50% (ex.: "29.99 → 2.99 (-90%, SUSPEITO)"). |
 | **Status** | Passou |
-| **Observações** | Os outros casos leem o preço do catálogo, então uma mudança de preço não os derruba: só este caso falha. É também a única defesa contra um preço errado no próprio catálogo. Num produto com preço dinâmico, este caso e a tabela seriam removidos. |
+| **Observações** | Os outros casos leem o preço do catálogo, então uma mudança de preço não os derruba: só este caso falha. É também a única defesa contra um preço errado no próprio catálogo: por isso a falha pede para confirmar com quem define os preços antes de atualizar a tabela, e um engano vira bug do site. Num produto com preço dinâmico, a comparação com a tabela daria lugar a uma regra de variação máxima na origem do preço. |
 
 ## Perfis com defeito
 
@@ -794,7 +794,7 @@ Estes arquivos testam a própria suíte, e não o site: não têm ID CT nem caso
 
 | O que garante | Testes |
 |---|---|
-| A leitura do catálogo de preços, com um JavaScript de exemplo e sem rede: escolhe a lista do inventário (e não a das variações de tamanho) por critério, sem depender da posição no arquivo; converte o preço direto para Decimal; formato irreconhecível falha com "não foi possível ler o catálogo"; queda do site vira "SITE INDISPONÍVEL". | 21 |
+| A leitura do catálogo de preços, com um JavaScript de exemplo e sem rede: escolhe a lista do inventário (e não a das variações de tamanho) por critério, sem depender da posição no arquivo; converte o preço direto para Decimal; formato irreconhecível falha com "não foi possível ler o catálogo"; queda do site vira "SITE INDISPONÍVEL"; o teste de guarda mostra a variação de cada preço e marca como SUSPEITO a que passa de 50%, para mais ou para menos. | 28 |
 
 ### test_convencoes.py
 

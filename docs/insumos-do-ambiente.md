@@ -48,8 +48,10 @@ ler o catálogo", sem plano B silencioso.
 
 **Limite:** um preço errado no próprio catálogo (cobrado errado de forma coerente em todas as telas)
 não é percebido pelos testes que leem o catálogo. Só o teste de guarda (`tests/test_catalogo.py`), que
-compara o catálogo com a tabela `PRODUCT_PRICES` conferida em 27/10/2026, avisa que um preço mudou.
-Nesse caso é preciso investigar, e a tabela só é atualizada se a mudança for confirmada. Afrouxar a
+compara o catálogo com a tabela `PRODUCT_PRICES` conferida em 27/10/2026, avisa que um preço mudou,
+com a variação em porcentagem e a marca SUSPEITO acima de 50% (ex.: "29.99 → 2.99 (-90%, SUSPEITO)").
+Nesse caso é preciso confirmar com quem define os preços: a tabela só é atualizada se a mudança for
+intencional; se foi engano, é bug do site. Afrouxar a
 asserção nunca é a saída (regra 3 do `CLAUDE.md`).
 
 ## 3. Usuários e dados
