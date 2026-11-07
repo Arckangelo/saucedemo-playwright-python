@@ -36,11 +36,24 @@ class Products:
     ALL = [BACKPACK, BIKE_LIGHT, BOLT_TSHIRT, FLEECE_JACKET, ONESIE, RED_TSHIRT]
 
 
-# Tabela de referência do catálogo: id -> nome e preço. É a fonte de verdade
-# dos testes, independente do que a tela mostrar (no Cypress, os preços vinham
-# da API). Valores conferidos uma única vez no site, como standard_user, em
-# 27/10/2026. Não gere esta tabela a partir da tela: o teste passaria a
-# comparar a tela com ela mesma. Preço em Decimal, como no resto da suíte.
+# Id de cada produto na URL do detalhe (/inventory-item.html?id=N) e no
+# localStorage do carrinho (RN-08). É a identidade do produto, usada para
+# montar o carrinho e abrir telas; o preço NÃO vem daqui.
+PRODUCT_IDS = {
+    Products.BIKE_LIGHT: 0,
+    Products.BOLT_TSHIRT: 1,
+    Products.ONESIE: 2,
+    Products.RED_TSHIRT: 3,
+    Products.BACKPACK: 4,
+    Products.FLEECE_JACKET: 5,
+}
+
+# Catálogo conferido no site, como standard_user, em 27/10/2026. NÃO é a fonte
+# do valor esperado dos testes: os preços vêm do catálogo do site, lido na hora
+# (fixture catalog_prices, support/catalog.py). Esta tabela só é usada pelo
+# teste de guarda (tests/test_catalogo.py), que avisa, num teste só e com
+# diagnóstico claro, quando um preço do site muda. Num produto com preço
+# dinâmico, a tabela e o teste de guarda seriam removidos.
 PRODUCT_PRICES = {
     0: {"name": Products.BIKE_LIGHT, "price": Decimal("9.99")},
     1: {"name": Products.BOLT_TSHIRT, "price": Decimal("15.99")},
@@ -49,11 +62,6 @@ PRODUCT_PRICES = {
     4: {"name": Products.BACKPACK, "price": Decimal("29.99")},
     5: {"name": Products.FLEECE_JACKET, "price": Decimal("49.99")},
 }
-
-# Id de cada produto na URL do detalhe (/inventory-item.html?id=N) e no
-# localStorage do carrinho. Ids fora desta lista não existem no catálogo.
-# Derivado da tabela acima, para a relação id <-> nome existir num lugar só.
-PRODUCT_IDS = {product["name"]: product_id for product_id, product in PRODUCT_PRICES.items()}
 
 ABOUT_URL = "https://saucelabs.com/"
 

@@ -7,7 +7,7 @@ e cada bug é tolerado apenas pela sua exceção específica.
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Messages, Products, Users
+from data.constants import CHECKOUT_INFO, PRODUCT_IDS, TOTAL_PRODUCTS, Messages, Products, Users
 from pages import CheckoutCompletePage, CheckoutInformationPage, CheckoutOverviewPage
 from support.bug_checks import add_remove_params, bug_check, check_add_and_remove, on_page, wait_for_render
 
@@ -36,7 +36,7 @@ class FinishFailedError(AssertionError):
     raises=SortingBrokenError,
     reason="BUG-014 (#15): a ordenação do error_user exibe 'Sorting is broken!' e não ordena",
 )
-def test_ordenacao_por_nome_z_a(login_as, page: Page):
+def test_ordenacao_por_nome_z_a(login_as, page: Page, catalog_prices):
     # Sem um handler, o Playwright fecha os alertas sozinho e não saberíamos
     # que apareceram. Aqui guardamos a mensagem e aceitamos o alerta.
     alerts = []
@@ -44,7 +44,7 @@ def test_ordenacao_por_nome_z_a(login_as, page: Page):
 
     inventory = login_as(Users.ERROR)
     expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
-    expected = sorted((product["name"] for product in PRODUCT_PRICES.values()), reverse=True)
+    expected = sorted((product["name"] for product in catalog_prices.values()), reverse=True)
 
     inventory.sort_by("za")
     wait_for_render(page)

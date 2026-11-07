@@ -6,7 +6,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TAX_RATE, Messages, Products
+from data.constants import CHECKOUT_INFO, PRODUCT_IDS, TAX_RATE, Messages, Products
 from pages import (
     CartPage,
     CheckoutCompletePage,
@@ -46,7 +46,7 @@ def checkout_information_page(page: Page, standard_session, cart_with) -> Checko
 
 # CT-CART-CHECKOUT-01
 @pytest.mark.smoke
-def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: InventoryPage):
+def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: InventoryPage, catalog_prices):
     # A única jornada inteira pela tela: adicionar, carrinho, formulário,
     # resumo e Finish. Os cálculos do resumo têm teste próprio.
     products = [Products.BACKPACK, Products.BOLT_TSHIRT, Products.ONESIE]
@@ -57,10 +57,10 @@ def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: Inven
     information = inventory_page.go_to_cart().checkout()
     information.fill_information(**CHECKOUT_INFO)
     overview = information.continue_to_overview()
-    # Cada linha conferida contra a tabela de referência, não contra a tela.
+    # Cada linha conferida contra o catálogo do site, não contra a tela.
     expect(overview.items, "pré-condição: todas as linhas na tela antes de lê-las").to_have_count(len(products))
     for row, product in zip(overview.get_rows(), products, strict=True):
-        assert_item(row, PRODUCT_IDS[product])
+        assert_item(row, catalog_prices, PRODUCT_IDS[product])
 
     # Que o carrinho é esvaziado depois do pedido é conferido em
     # test_concluir_o_pedido_esvazia_o_carrinho, direto no localStorage.
@@ -69,7 +69,7 @@ def test_compra_completa_do_inventario_ao_pedido_concluido(inventory_page: Inven
 
 
 # CT-CART-CHECKOUT-02
-def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, cart_with):
+def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, cart_with, catalog_prices):
     # RN-17. Carrinho montado pelo localStorage e resumo aberto pela URL: o
     # caminho até o resumo é coberto pela jornada completa.
     products = [Products.BACKPACK, Products.BOLT_TSHIRT, Products.ONESIE]
@@ -77,13 +77,14 @@ def test_resumo_calcula_subtotal_imposto_e_total(page: Page, standard_session, c
     overview = CheckoutOverviewPage(page).open()
     expect(overview.items, "pré-condição: o carrinho foi montado").to_have_count(len(products))
 
-    # Valores esperados calculados a partir da tabela de referência, não dos
-    # preços exibidos: se o site exibisse e cobrasse um preço errado de forma
-    # coerente (como o BUG-019), somar a própria tela não perceberia.
-    expected_subtotal = sum(PRODUCT_PRICES[PRODUCT_IDS[product]]["price"] for product in products)
+    # Valores esperados calculados a partir do catálogo do site, não dos preços
+    # exibidos: se a tela exibisse e cobrasse um preço errado de forma coerente
+    # (como o BUG-019), somar a própria tela não perceberia. Do site só vêm os
+    # preços: a regra do imposto (TAX_RATE) fica aqui, e não na conta do site.
+    expected_subtotal = sum(catalog_prices[PRODUCT_IDS[product]]["price"] for product in products)
     expected_tax = (expected_subtotal * Decimal(TAX_RATE)).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
-    assert overview.get_subtotal() == expected_subtotal, "subtotal do resumo (soma da tabela de preços)"
+    assert overview.get_subtotal() == expected_subtotal, "subtotal do resumo (soma dos preços do catálogo)"
     assert overview.get_tax() == expected_tax, "imposto do resumo (8% do subtotal, RN-17)"
     assert overview.get_total() == expected_subtotal + expected_tax, "total do resumo (subtotal + imposto)"
 
@@ -242,7 +243,9 @@ def test_concluir_o_pedido_esvazia_o_carrinho(page: Page, standard_session, cart
 
 
 # CT-CART-CHECKOUT-09
-def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standard_session, cart_with):
+def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(
+    page: Page, standard_session, cart_with, catalog_prices
+):
     # Carrinho montado pelo localStorage: o "Add to cart" da tela já tem teste
     # próprio e não pode derrubar este, que verifica a remoção.
     backpack, fleece = PRODUCT_IDS[Products.BACKPACK], PRODUCT_IDS[Products.FLEECE_JACKET]
@@ -258,12 +261,12 @@ def test_remover_do_carrinho_mantem_os_demais_apos_recarregar(page: Page, standa
     page.reload()
     expect(cart.items).to_have_count(1)
     (row,) = cart.get_rows()
-    assert_item(row, fleece)
+    assert_item(row, catalog_prices, fleece)
 
 
 # CT-CART-CHECKOUT-10
-def test_carrinho_mostra_cada_produto_com_nome_preco_e_quantidade_1(inventory_page: InventoryPage):
-    # Nome e preço conferidos contra a tabela de referência, não contra a tela.
+def test_carrinho_mostra_cada_produto_com_nome_preco_e_quantidade_1(inventory_page: InventoryPage, catalog_prices):
+    # Nome e preço conferidos contra o catálogo do site, não contra a tela.
     # RN-11: o botão alterna entre Add to cart e Remove, então não há como
     # adicionar o mesmo produto duas vezes; a quantidade de cada linha é 1.
     products = [Products.BACKPACK, Products.FLEECE_JACKET]
@@ -273,4 +276,4 @@ def test_carrinho_mostra_cada_produto_com_nome_preco_e_quantidade_1(inventory_pa
     cart = inventory_page.go_to_cart()
     expect(cart.items, "pré-condição: todas as linhas na tela antes de lê-las").to_have_count(len(products))
     for row, product in zip(cart.get_rows(), products, strict=True):
-        assert_item(row, PRODUCT_IDS[product])
+        assert_item(row, catalog_prices, PRODUCT_IDS[product])

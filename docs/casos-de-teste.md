@@ -1,10 +1,10 @@
 # Casos de teste — saucedemo-playwright-python
 
-Um caso de teste para cada teste automatizado, na mesma ordem em que os testes aparecem em cada arquivo de tests/, identificado pelo mesmo ID CT do comentário no código. Total: 42 casos (87 execuções, contando os parâmetros).
+Um caso de teste para cada teste automatizado, na mesma ordem em que os testes aparecem em cada arquivo de tests/, identificado pelo mesmo ID CT do comentário no código. Total: 43 casos (88 execuções, contando os parâmetros).
 
 **Notas gerais**
 
-- Todos os casos rodam contra o site público https://www.saucedemo.com, que não tem API. Os valores esperados vêm de `data/constants.py`: preços de `PRODUCT_PRICES`, mensagens de `Messages`, nunca da tela testada.
+- Todos os casos rodam contra o site público https://www.saucedemo.com, que não tem API. Nome e preço esperados vêm do catálogo do site, lido na hora do JavaScript da aplicação (fixture `catalog_prices`); mensagens, de `Messages` em `data/constants.py`. Nunca da tela testada. Os preços citados nos casos são os do catálogo em 06/11/2026.
 - O ID de cada caso é o mesmo do comentário `# CT-…` acima do teste no código; o arquivo é o da seção.
 - A senha de todos os usuários é `secret_sauce`. O login é feito uma vez por usuário e o cookie de sessão é copiado para um navegador novo a cada teste: todo caso começa com o carrinho vazio.
 - Quando adicionar pela tela não é o assunto do caso, o carrinho é montado direto no `localStorage` (fixture `cart_with`) e a tela é aberta pela URL.
@@ -24,10 +24,11 @@ Um caso de teste para cada teste automatizado, na mesma ordem em que os testes a
 | Carrinho e checkout | [test_cart_checkout.py](#test_cart_checkoutpy) | 10 |
 | Menu | [test_menu.py](#test_menupy) | 2 |
 | Saúde técnica | [test_console_e_rede.py](#test_console_e_redepy) | 2 |
+| Catálogo de preços | [test_catalogo.py](#test_catalogopy) | 1 |
 | Perfis com defeito | [test_problem_user.py](#test_problem_userpy) | 6 |
 | Perfis com defeito | [test_error_user.py](#test_error_userpy) | 5 |
 | Perfis com defeito | [test_visual_user.py](#test_visual_userpy) | 3 |
-| **Total** | | **42** |
+| **Total** | | **43** |
 
 Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da própria suíte](#testes-da-própria-suíte).
 
@@ -121,7 +122,7 @@ Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da p
 | **Módulo / Área** | Catálogo › Inventário › Ordenação |
 | **Tipo de teste** | Funcional – positivo |
 | **Prioridade** | Média |
-| **Objetivo** | Garantir que as 4 ordenações deixam a lista na ordem certa, calculada a partir de PRODUCT_PRICES. |
+| **Objetivo** | Garantir que as 4 ordenações deixam a lista na ordem certa, calculada a partir do catálogo do site. |
 | **Pré-condições** | standard_user logado, no inventário. |
 | **Dados de teste** | az (nome de A a Z), za (nome de Z a A), lohi (preço do menor para o maior) e hilo (preço do maior para o menor). |
 | **Passos** | 1. Escolher uma ordem diferente da alvo (za para o caso az; az para os demais) e conferir que a lista não está na ordem esperada.<br>2. Escolher a ordenação do caso.<br>3. Verificar a opção selecionada e a lista. |
@@ -264,7 +265,7 @@ Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da p
 **Notas gerais**
 
 - Só o CT-CART-CHECKOUT-01, o 07 e o 10 adicionam produtos pela tela; os demais montam o carrinho no localStorage e abrem a tela do caso pela URL.
-- Preços esperados: Sauce Labs Backpack $29.99, Sauce Labs Bolt T-Shirt $15.99, Sauce Labs Onesie $7.99, Sauce Labs Fleece Jacket $49.99 (PRODUCT_PRICES).
+- Preços esperados: Sauce Labs Backpack $29.99, Sauce Labs Bolt T-Shirt $15.99, Sauce Labs Onesie $7.99, Sauce Labs Fleece Jacket $49.99 (catálogo do site).
 
 #### CT-CART-CHECKOUT-01 — Compra completa, do inventário ao pedido concluído
 
@@ -295,7 +296,7 @@ Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da p
 | **Passos** | 1. Abrir /checkout-step-two.html e conferir que o resumo mostra 3 itens.<br>2. Ler subtotal, imposto e total. |
 | **Resultado esperado** | Subtotal $53.97; imposto $4.32 (8% do subtotal, arredondado a 2 casas); total $58.29. |
 | **Status** | Passou |
-| **Observações** | O esperado vem de PRODUCT_PRICES, não dos preços exibidos: somar a própria tela não pegaria um preço errado exibido e cobrado de forma coerente (como no BUG-019). |
+| **Observações** | O esperado vem do catálogo do site, não dos preços exibidos, e a regra do imposto (TAX_RATE) fica no teste, não na conta do site: somar a própria tela não pegaria um preço errado exibido e cobrado de forma coerente (como no BUG-019). |
 
 #### CT-CART-CHECKOUT-03 — Checkout exige nome, sobrenome e CEP
 
@@ -497,6 +498,25 @@ Os testes da própria suíte, que não testam o site, ficam no fim: [Testes da p
 | **Resultado obtido** | A requisição usa as credenciais literais de exemplo (UNIVERSE e TOKEN) e recebe 401 Unauthorized. |
 | **Status** | XFAIL (bug conhecido) |
 | **Observações** | Se a telemetria sai mas não recebe resposta (o Backtrace demora mais que o limite de 15 s do próprio site), o caso é pulado como inconclusivo, para não dar um falso "corrigido". |
+
+## Catálogo de preços
+
+### test_catalogo.py
+
+#### CT-CATALOGO-01 — Catálogo igual ao conferido em 27/10/2026
+
+| Campo | Descrição |
+|---|---|
+| **Módulo / Área** | Catálogo › Preços |
+| **Tipo de teste** | Contrato – conteúdo do catálogo (guarda) |
+| **Prioridade** | Média |
+| **Objetivo** | Avisar, num caso só e com diagnóstico claro, quando um nome ou preço do catálogo do site muda. |
+| **Pré-condições** | Sem login. |
+| **Dados de teste** | Tabela conferida em 27/10/2026 (PRODUCT_PRICES): Bike Light $9.99, Bolt T-Shirt $15.99, Onesie $7.99, T-Shirt (Red) $15.99, Backpack $29.99 e Fleece Jacket $49.99. |
+| **Passos** | 1. Ler o catálogo do JavaScript do site.<br>2. Comparar cada id, nome e preço com a tabela. |
+| **Resultado esperado** | Nenhuma diferença. Se houver, a falha lista cada uma (ex.: "Sauce Labs Backpack: 29.99 → 31.99"). |
+| **Status** | Passou |
+| **Observações** | Os outros casos leem o preço do catálogo, então uma mudança de preço não os derruba: só este caso falha. É também a única defesa contra um preço errado no próprio catálogo. Num produto com preço dinâmico, este caso e a tabela seriam removidos. |
 
 ## Perfis com defeito
 
@@ -701,10 +721,10 @@ Os perfis problem_user, error_user e visual_user têm defeitos injetados de prop
 
 **Notas gerais**
 
-- Todos os casos usam o visual_user. O standard_user é o oráculo: preços, imagens e posições esperados são lidos dele na hora, em outro navegador, e não ficam fixos no código.
+- Todos os casos usam o visual_user. Os preços esperados vêm do catálogo do site (o preço cobrado); imagens e posições vêm do standard_user, o oráculo, lido na hora em outro navegador. Nada fica fixo no código.
 - Os valores comparados são os do DOM, e não screenshots, que variam com fonte, sistema e navegador.
 
-#### CT-VISUAL-USER-01 — Preços iguais aos do standard_user
+#### CT-VISUAL-USER-01 — Preços iguais aos do catálogo
 
 | Campo | Descrição |
 |---|---|
@@ -712,11 +732,11 @@ Os perfis problem_user, error_user e visual_user têm defeitos injetados de prop
 | **Tipo de teste** | Funcional – consistência |
 | **Prioridade** | Alta |
 | **Bug relacionado** | BUG-019 |
-| **Objetivo** | Garantir que o visual_user vê os mesmos preços que o standard_user. |
-| **Pré-condições** | visual_user logado; standard_user logado em outro navegador; os dois no inventário. |
+| **Objetivo** | Garantir que o visual_user vê, no inventário, o preço que é cobrado. |
+| **Pré-condições** | visual_user logado, no inventário. |
 | **Dados de teste** | Os 6 produtos do catálogo. |
-| **Passos** | 1. Ler o preço de cada produto nos dois inventários.<br>2. Conferir que os 6 produtos foram lidos dos dois lados.<br>3. Comparar os preços por produto. |
-| **Resultado esperado** | Os 6 preços são iguais aos do standard_user. |
+| **Passos** | 1. Ler o preço de cada produto no inventário.<br>2. Conferir que os 6 produtos foram lidos.<br>3. Comparar cada preço com o do catálogo. |
+| **Resultado esperado** | Os 6 preços são iguais aos do catálogo: Bike Light $9.99, Bolt T-Shirt $15.99, Onesie $7.99, T-Shirt (Red) $15.99, Backpack $29.99 e Fleece Jacket $49.99. |
 | **Resultado obtido** | Os preços mudam a cada carregamento e nenhum coincide com o catálogo (a Backpack já apareceu a $21.45, $98.47 e $67.68). O carrinho e o resumo mostram o preço real, que é o cobrado. |
 | **Status** | XFAIL (bug conhecido) |
 | **Observações** | Com os 6 comparados, um XPASS por coincidência exigiria que todos os preços aleatórios batessem com os reais ao mesmo tempo. |
@@ -730,7 +750,7 @@ Os perfis problem_user, error_user e visual_user têm defeitos injetados de prop
 | **Prioridade** | Baixa |
 | **Bug relacionado** | BUG-020 |
 | **Objetivo** | Garantir que o visual_user vê a mesma imagem de cada produto que o standard_user. |
-| **Pré-condições** | Iguais às do CT-VISUAL-USER-01. |
+| **Pré-condições** | visual_user logado; standard_user logado em outro navegador; os dois no inventário. |
 | **Dados de teste** | Os 6 produtos do catálogo. |
 | **Passos** | 1. Ler o endereço da imagem de cada produto nos dois inventários.<br>2. Comparar por produto. |
 | **Resultado esperado** | Os 6 endereços são iguais aos do standard_user. |
@@ -746,7 +766,7 @@ Os perfis problem_user, error_user e visual_user têm defeitos injetados de prop
 | **Prioridade** | Média |
 | **Bug relacionado** | BUG-021, BUG-022 |
 | **Objetivo** | Garantir que os elementos principais do inventário ficam na mesma posição e no mesmo tamanho que no standard_user. |
-| **Pré-condições** | Iguais às do CT-VISUAL-USER-01. |
+| **Pré-condições** | Iguais às do CT-VISUAL-USER-02. |
 | **Dados de teste** | Ícone do carrinho, botão do menu, título, seletor de ordenação, botão do primeiro produto (Backpack) e botão do último produto (T-Shirt (Red)), um por execução; tolerância de 5 px. |
 | **Passos** | 1. Esperar as fontes web carregarem nas duas páginas.<br>2. Medir posição (x, y), largura e altura do elemento nas duas.<br>3. Comparar. |
 | **Resultado esperado** | Nenhuma diferença maior que 5 px em x, y, largura ou altura. |
@@ -770,8 +790,14 @@ Estes arquivos testam a própria suíte, e não o site: não têm ID CT nem caso
 |---|---|
 | Todo xfail de bug conhecido tem strict=True, raises= com exceção própria e motivo "BUG-NNN (#issue): ..." com ID e issue iguais aos do BUGS.md; um xfail fora da regra termina como ERRO, também com pytest-xdist. | 16 |
 
+### test_leitura_do_catalogo.py
+
+| O que garante | Testes |
+|---|---|
+| A leitura do catálogo de preços, com um JavaScript de exemplo e sem rede: escolhe a lista do inventário (e não a das variações de tamanho) por critério, sem depender da posição no arquivo; converte o preço direto para Decimal; formato irreconhecível falha com "não foi possível ler o catálogo"; queda do site vira "SITE INDISPONÍVEL". | 21 |
+
 ### test_convencoes.py
 
 | O que garante | Testes |
 |---|---|
-| Toda assert de tests/ e support/ tem mensagem dizendo o que é conferido. | 6 |
+| No código da suíte (tests/, support/, pages/ e conftest.py): toda assert tem mensagem; nenhuma espera fixa, page.goto direto, teste pulado, depurador ou senha fora de data/constants.py, salvo as exceções listadas; a tabela de preços fixa só no teste de guarda. | 29 |

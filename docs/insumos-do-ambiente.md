@@ -8,7 +8,7 @@ atualizado quando algum desses pontos mudar.
 | # | Insumo | Resposta curta |
 |:-:|---|---|
 | 1 | [Ambiente e permissão](#1-ambiente-e-permissão) | Produção pública de terceiros, compartilhada; nada é criado no servidor |
-| 2 | [Fonte de verdade](#2-fonte-de-verdade) | Sem API nem banco: tabela `PRODUCT_PRICES`, código-fonte oficial, `standard_user` como oráculo e o estado gravado no navegador |
+| 2 | [Fonte de verdade](#2-fonte-de-verdade) | Sem API nem banco: catálogo lido do JavaScript do site na hora, código-fonte oficial, `standard_user` como oráculo e o estado gravado no navegador |
 | 3 | [Usuários e dados](#3-usuários-e-dados) | 6 usuários fixos do site; os dados de cada teste vivem num contexto novo do navegador e somem com ele |
 | 4 | [Critérios de aceite e bordas](#4-critérios-de-aceite-e-bordas) | Regras RN-01 a RN-20 inferidas por engenharia reversa; o efeito é conferido no `localStorage` e no cookie |
 | 5 | [Instabilidades](#5-instabilidades) | Checagem no início e em toda página aberta; queda vira "SITE INDISPONÍVEL"; a página real tem o título "Swag Labs" |
@@ -37,14 +37,20 @@ tela que está sendo testada:
 
 | Fonte | O que confere | Onde |
 |---|---|---|
-| Tabela de referência `PRODUCT_PRICES` | id, nome e preço dos 6 produtos; ordenação, linhas, subtotal, imposto e total são calculados a partir dela | `data/constants.py` |
+| Catálogo do site, lido na hora | nome e preço dos 6 produtos, tirados do JavaScript da aplicação (o mesmo de onde a tela os tira); ordenação, linhas, subtotal, imposto e total são calculados a partir dele | fixture `catalog_prices`, `support/catalog.py` |
 | Código-fonte oficial do site | regras que a tela não explica, como o imposto de 8% (RN-17) | [sample-app-web](https://github.com/saucelabs/sample-app-web) |
-| `standard_user` como oráculo | o que os outros perfis deveriam ver (preços, imagens, posições), lido em outro contexto durante o teste | fixture `oracle_inventory` no `conftest.py` |
+| `standard_user` como oráculo | o que os outros perfis deveriam ver (imagens, posições), lido em outro contexto durante o teste | fixture `oracle_inventory` no `conftest.py` |
 | Estado gravado no navegador | o efeito da ação, onde a tela não prova nada: ids do carrinho e cookie de sessão | `support/state.py` (`cart_ids`, `session_cookie`) |
 
-**Limite:** a tabela foi conferida no site uma vez. Se o site mudar um preço de propósito, um teste
-falha. Nesse caso é preciso investigar, e a tabela só é atualizada se a mudança for confirmada.
-Afrouxar a asserção nunca é a saída (regra 3 do `CLAUDE.md`).
+Do JavaScript só saem nomes e preços: a regra do imposto continua no teste (`TAX_RATE`). Se o formato
+do arquivo mudar e o catálogo não puder ser lido com segurança, os testes falham com "não foi possível
+ler o catálogo", sem plano B silencioso.
+
+**Limite:** um preço errado no próprio catálogo (cobrado errado de forma coerente em todas as telas)
+não é percebido pelos testes que leem o catálogo. Só o teste de guarda (`tests/test_catalogo.py`), que
+compara o catálogo com a tabela `PRODUCT_PRICES` conferida em 27/10/2026, avisa que um preço mudou.
+Nesse caso é preciso investigar, e a tabela só é atualizada se a mudança for confirmada. Afrouxar a
+asserção nunca é a saída (regra 3 do `CLAUDE.md`).
 
 ## 3. Usuários e dados
 
