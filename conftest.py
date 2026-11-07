@@ -31,8 +31,9 @@ import pytest
 from playwright.sync_api import Browser, BrowserContext, Page, Response, expect
 from pytest_html import extras
 
-from data.constants import PASSWORD, PRODUCT_PRICES, SLOW_RENDER_TIMEOUT, Users
+from data.constants import PASSWORD, PRODUCT_IDS, SLOW_RENDER_TIMEOUT, Users
 from pages import InventoryPage, LoginPage
+from support.catalog import Catalog, fetch_catalog
 from support.site_guard import is_unavailable_report, site_unavailable_reason
 
 # pytester: roda uma sessão de pytest dentro de um teste (tests/test_protecao_site.py).
@@ -87,6 +88,22 @@ def configure_test_id_attribute(playwright):
     eles precisem pedi-la.
     """
     playwright.selectors.set_test_id_attribute("data-test")
+
+
+@pytest.fixture(scope="session")
+def catalog_prices(playwright, base_url: str) -> Catalog:
+    """Catálogo do site, lido do JavaScript da aplicação: {id: {"name": ..., "price": Decimal}}.
+
+    É a fonte do valor esperado de nomes e preços, independente da tela e lida
+    na hora (ver support/catalog.py). Baixado uma vez por execução (por
+    processo, com o xdist). Queda do site vira SITE INDISPONÍVEL; formato que
+    não dá para ler falha com "não foi possível ler o catálogo".
+    """
+    request = playwright.request.new_context(base_url=base_url)
+    try:
+        return fetch_catalog(request)
+    finally:
+        request.dispose()
 
 
 @pytest.fixture
@@ -193,7 +210,7 @@ def cart_with(context: BrowserContext, base_url: str) -> Callable[..., None]:
         nonlocal seeded
         if seeded:
             raise RuntimeError("cart_with() só pode ser chamada uma vez por teste")
-        unknown = set(product_ids) - PRODUCT_PRICES.keys()
+        unknown = set(product_ids) - set(PRODUCT_IDS.values())
         if unknown or len(set(product_ids)) != len(product_ids):
             raise ValueError(f"Ids fora do catálogo ou repetidos: {list(product_ids)}")
         context.add_init_script(

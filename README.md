@@ -14,14 +14,14 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **87 execuções** de teste do site: 49 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 59 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos e as convenções do código.
+- **Tamanho:** **88 execuções** de teste do site: 50 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 85 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos, a leitura do catálogo de preços e as convenções do código.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
-- **Por que dá para confiar nos testes:** preços e totais conferidos contra uma tabela de referência (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
+- **Por que dá para confiar nos testes:** preços e totais conferidos contra o catálogo do site, lido na hora (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
 - **CI:** GitHub Actions a cada push e pull request, execução diária e [relatório publicado](https://arckangelo.github.io/saucedemo-playwright-python/).
 - **Para rodar:** `pip install -r requirements.txt && playwright install chromium && pytest` (detalhes em [Como executar](#como-executar)).
 
-<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 17 defeitos de treino que o site injeta de propósito nos perfis especiais (8 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 87, cobrindo os 6 perfis de usuário; 25 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
+<p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 17 defeitos de treino que o site injeta de propósito nos perfis especiais (8 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 88, cobrindo os 6 perfis de usuário; 25 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
 > Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
 
@@ -47,7 +47,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 
 ## Destaques
 
-- **87 execuções de teste** a partir de 42 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
+- **88 execuções de teste** a partir de 43 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
 - **25 defeitos documentados** (8 que afetam todos os usuários e 17 de treino dos perfis especiais), 24 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada. Resumo rápido em [BUGS.md](BUGS.md).
 - **Análise de mutação com os próprios perfis do site:** os testes do `standard_user` rodam com o `problem_user` e o `error_user` (`--base-user`). Nenhum teste sobrevive numa funcionalidade que o perfil quebra (na versão anterior, 2 sobreviviam), e a análise revelou o [BUG-025](docs/relatorio-de-bugs.md#bug-025). Ver [Análise de mutação](#análise-de-mutação).
@@ -140,7 +140,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | | Produto inexistente não entra no carrinho (pela URL e pelo `localStorage`) | 3 |
 | **Menu** | All Items volta ao inventário; About aponta para a Sauce Labs | 3 |
 | **Carrinho e checkout** | Compra completa pela tela, do inventário ao pedido concluído, conferindo cada item | 1 |
-| | Resumo calcula subtotal, imposto de 8% e total com a tabela de preços | 1 |
+| | Resumo calcula subtotal, imposto de 8% e total com os preços do catálogo | 1 |
 | | Concluir o pedido esvazia o carrinho no `localStorage` | 1 |
 | | Formulário exige nome, sobrenome e CEP | 3 |
 | | Formulário rejeita campos só com espaços | 3 |
@@ -152,12 +152,13 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 | **Saúde técnica** | Rotas respondem HTTP 200; telemetria sem erros (erros JavaScript são conferidos em todos os testes) | 2 |
 | **problem_user** | Ordenação, adicionar e remover cada produto, detalhe, sobrenome, subtotal do resumo e carrinho após o pedido | 11 |
 | **error_user** | Ordenação, adicionar e remover cada produto, sobrenome e botão Finish | 10 |
-| **visual_user** | Preços, imagens e layout comparados com o `standard_user` | 8 |
-| | **Total** | **87** |
+| **visual_user** | Preços comparados com o catálogo; imagens e layout comparados com o `standard_user` | 8 |
+| **Catálogo** | Catálogo do site igual ao conferido em 27/10/2026 (teste de guarda dos preços) | 1 |
+| | **Total** | **88** |
 
-Das 87 execuções, 49 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
+Das 88 execuções, 50 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, 59 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, e `tests/test_convencoes.py` (24) barra no código da suíte `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado, depurador e senha fora de `data/constants.py`.
+Além delas, 85 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, `tests/test_leitura_do_catalogo.py` (21) testa a leitura do catálogo de preços com um JavaScript de exemplo, sem rede, e `tests/test_convencoes.py` (29) barra no código da suíte `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado, depurador, senha fora de `data/constants.py` e a tabela de preços fixa fora do teste de guarda.
 
 ### Perfis de usuário
 
@@ -258,7 +259,8 @@ saucedemo-playwright-python/
 │   └── reproduzir_bug_023.py   # Reproduz a condição de corrida do menu (BUG-023) com a CPU mais lenta
 ├── support/
 │   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
-│   ├── item_checks.py     # assert_item: confere uma linha com a tabela de preços
+│   ├── catalog.py         # Lê o catálogo de preços do JavaScript do site (fixture catalog_prices)
+│   ├── item_checks.py     # assert_item: confere uma linha com o catálogo do site
 │   ├── known_bugs.py      # Regra dos xfail de bugs conhecidos, conferida, e o marker known_bug
 │   ├── site_guard.py      # Proteção contra instabilidade: safe_goto, SITE INDISPONÍVEL e disjuntor
 │   └── state.py           # cart_ids e session_cookie: leem o estado por baixo da tela
@@ -271,6 +273,8 @@ saucedemo-playwright-python/
 │   ├── test_console_e_rede.py
 │   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
 │   ├── test_regra_dos_bugs.py # Escreve xfail fora da regra para testar a conferência
+│   ├── test_leitura_do_catalogo.py # Leitura do catálogo com um JavaScript de exemplo, sem rede
+│   ├── test_catalogo.py   # Teste de guarda: avisa quando um preço do site muda
 │   ├── test_convencoes.py     # Convenções do código conferidas (assert sem mensagem, atalhos proibidos)
 │   ├── test_problem_user.py
 │   ├── test_error_user.py
@@ -383,8 +387,14 @@ Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 - **Seletores estáveis:** todos os elementos são localizados pelo atributo `data-test` do site (`get_by_test_id`), que não muda quando o layout ou o texto mudam. Os botões do card usam o prefixo do `data-test` (`add-to-cart-…` vira `remove-…` depois do clique), sem depender do texto exibido. Só duas exceções, justificadas no código: os botões de abrir e fechar o menu são localizados pelo **ID** (`#react-burger-menu-btn`), porque o `data-test="open-menu"` está na imagem do ícone, que fica por baixo do botão e não recebe o clique; e o sinal de que o menu fechado já foi escondido ([BUG-023](docs/relatorio-de-bugs.md#bug-023)) é "o elemento `[hidden]` que contém o link All Items", ancorado num `data-test`, porque o contêiner não tem `data-test` nem ID. Nenhum seletor depende de classe CSS ou de tag.
 - **Login reaproveitado:** o login é feito uma única vez por usuário e o cookie de sessão é reutilizado (fixtures `login_as` e `session_as`). Cada teste ainda recebe um navegador limpo, então o carrinho sempre começa vazio e os testes não dependem uns dos outros.
 - **Carrinho montado sem passar pela tela:** o SauceDemo não tem API, e o carrinho mora no `localStorage` como lista de ids. A fixture `cart_with(4, 5)` grava essa lista antes de a página carregar, uma única vez por aba (para um item removido não "voltar" no reload), e só aceita ids do catálogo, sem repetição. Só os testes do botão "Add to cart" e a jornada completa clicam na tela; os demais (checkout, Reset App State, `problem_user` e `error_user`) abrem a tela direto pela URL e não falham por causa do botão de adicionar (BUG-010 e BUG-015).
-- **`standard_user` como oráculo:** os testes do `visual_user` leem preços, imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
-- **Tabela de preços como fonte de verdade:** `PRODUCT_PRICES` (em `data/constants.py`) guarda id, nome e preço dos 6 produtos, conferidos uma única vez no site. Ordenação, linhas do carrinho e do resumo, subtotal, imposto e total são calculados a partir dela, nunca a partir da própria tela: um preço errado exibido e cobrado de forma coerente passaria despercebido se o teste somasse o que a tela mostra.
+- **`standard_user` como oráculo:** os testes do `visual_user` leem imagens e posições do `standard_user` em outro contexto do navegador, durante o próprio teste, em vez de fixar valores no código. Os preços do `visual_user` são comparados com o catálogo do site, e não com a tela do `standard_user`: o catálogo é o preço cobrado, e a tela do `standard_user` também está sob teste. Posições usam tolerância de 5 px e só são medidas depois que as fontes web carregam, o que eliminou um falso positivo de largura de texto.
+- **Preço esperado lido do catálogo do site, na hora:** o SauceDemo não tem API, mas o JavaScript da aplicação traz o catálogo (`{id:4,name:...,price:29.99}`), de onde a tela tira nomes e preços. A fixture `catalog_prices` (`support/catalog.py`) baixa o `index.html`, descobre o arquivo `/assets/index-<hash>.js` (o hash muda a cada deploy) e lê o catálogo, com o preço convertido do texto direto para `Decimal`. É o mesmo princípio do projeto em Cypress, que lê os preços da API: o valor esperado vem de uma fonte independente da tela, e uma mudança de preço não obriga a mudar o código.
+  - **Por que não da tela:** um preço errado exibido e cobrado de forma coerente passaria despercebido se o teste somasse o que a tela mostra.
+  - **Por que não a conta do site:** o mesmo arquivo tem a conta do imposto (`*.08`), mas dele só saem nomes e preços. A regra do imposto fica no teste (`TAX_RATE`, RN-17); copiá-la faria o teste comparar o site com ele mesmo.
+  - **Qual lista:** o arquivo tem duas listas no mesmo formato. Pelas rotas da aplicação, o inventário, o detalhe, o carrinho e o resumo usam a dos 6 produtos; a outra, com variações de tamanho, é da página `/inventory-long.html`. A escolha é por critério verificável (ids 0 a 5, sem sufixo de tamanho), nunca pela posição no arquivo.
+  - **Formato que muda:** se não der para ler o catálogo com segurança (nenhuma lista, mais de uma candidata, quantidade diferente, preço ilegível), os testes que dependem dele falham com "não foi possível ler o catálogo: ...". Não há plano B silencioso com uma tabela fixa. Queda do site vira "SITE INDISPONÍVEL", como no resto da suíte.
+  - **Teste de guarda:** `PRODUCT_PRICES` (`data/constants.py`), a tabela conferida em 27/10/2026, só é usada por `tests/test_catalogo.py`. Se um preço do site mudar, esse único teste falha dizendo o quê ("Sauce Labs Backpack: 29.99 → 31.99"), e os testes de checkout continuam passando com o preço novo. Num produto com preço dinâmico, a tabela e esse teste seriam removidos.
+  - **Limitação:** um preço errado no próprio catálogo (o site cobrando errado de forma coerente em todas as telas) só é pego pelo teste de guarda.
 - **Dinheiro com `Decimal`:** `float` não representa centavos com exatidão (`0.1 + 0.2 = 0.30000000000000004`). A taxa de 8% foi confirmada no [código-fonte oficial do site](https://github.com/saucelabs/sample-app-web).
 - **Bugs conhecidos com `xfail(strict=True)`:** cada bug fica marcado como falha esperada, com o ID do relatório e o número da issue no motivo (`reason="BUG-010 (#11): ..."`). A marcação aceita apenas a exceção específica daquele bug (`raises=...`): se outra coisa quebrar (login, seletor), o teste falha normalmente em vez de se esconder. E se o bug for corrigido, o teste avisa que a marcação pode ser removida. A regra é conferida automaticamente (`support/known_bugs.py`): um xfail sem `strict=True`, sem `raises=` específico, com motivo fora do formato ou com ID e issue que não batem com o `BUGS.md` faz o teste terminar como ERRO, sem ser executado. O mesmo plugin aplica o marker `known_bug` a todo xfail com "BUG-".
 - **Erro JavaScript falha qualquer teste:** a fixture `browser_errors` (autouse) falha o teste no teardown se a página lançar uma exceção não tratada, como o Cypress faz por padrão. Só os testes com o marker `allow_js_errors` toleram exceções, e cada uso cita o bug que as gera (hoje, BUG-015, BUG-016 e BUG-018, todos do `error_user`).

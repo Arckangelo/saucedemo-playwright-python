@@ -1,8 +1,10 @@
 """visual_user: diferenças visuais em relação ao standard_user.
 
-O standard_user é o ORÁCULO: os valores esperados (preços, imagens, posição e
-tamanho dos elementos) são coletados dele na hora, em outro contexto do
-navegador, em vez de ficarem fixos no código. Comparar valores do DOM é mais
+Os valores esperados são lidos na hora, e não ficam fixos no código. Os preços
+vêm do catálogo do site (fixture catalog_prices): é o preço cobrado, e a tela do
+standard_user também está sob teste. Imagens, posição e tamanho dos elementos
+vêm do standard_user, o ORÁCULO, em outro contexto do navegador: o catálogo não
+tem nada disso. Comparar valores do DOM é mais
 estável no CI do que comparar screenshots, que variam com fonte, sistema
 operacional e navegador. Os screenshots ficam só como evidência no relatório.
 """
@@ -53,15 +55,15 @@ def oracle(oracle_inventory) -> InventoryPage:
     raises=PriceMismatchError,
     reason="BUG-019 (#20): o visual_user vê preços aleatórios, diferentes dos cobrados",
 )
-def test_precos_iguais_aos_do_standard_user(visual_inventory, oracle):
-    expected = oracle.get_prices_by_name()
+def test_precos_iguais_aos_do_catalogo(visual_inventory, catalog_prices):
+    expected = {product["name"]: product["price"] for product in catalog_prices.values()}
     shown = visual_inventory.get_prices_by_name()
     # Pré-condição: os 6 produtos lidos dos dois lados. É um assert comum (não
     # PriceMismatchError), então uma leitura incompleta aparece como FAILED,
     # nunca como XFAIL. Com os 6 comparados, um XPASS por coincidência exigiria
     # que todos os preços aleatórios batessem com os reais ao mesmo tempo.
     assert set(expected) == set(shown) and len(expected) == TOTAL_PRODUCTS, (
-        f"Produtos lidos: oráculo {sorted(expected)}, visual_user {sorted(shown)}"
+        f"Produtos lidos: catálogo {sorted(expected)}, visual_user {sorted(shown)}"
     )
 
     divergent = {

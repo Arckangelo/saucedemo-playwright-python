@@ -20,6 +20,10 @@ CHECKED_DIRS = ["tests", "support", "pages"]
 CHECKED_FILES = ["conftest.py"]
 # A senha pública dos usuários do site só pode aparecer na massa de dados.
 CREDENTIALS_FILE = "data/constants.py"
+# A tabela de preços fixa só serve ao teste de guarda; o preço esperado dos
+# outros testes vem do catálogo do site (fixture catalog_prices).
+FIXED_PRICES = "PRODUCT_PRICES"
+FIXED_PRICES_FILES = {"data/constants.py", "tests/test_catalogo.py"}
 
 # Atalho proibido -> por que é proibido (aparece na mensagem de falha).
 SHORTCUTS = {
@@ -97,6 +101,17 @@ def shortcuts_in(source: str, check_password: bool = True) -> list[tuple[int, st
     return sorted(found)
 
 
+def names_used(source: str, name: str) -> list[int]:
+    """Linhas onde um nome é usado ou importado (não conta em string nem comentário)."""
+    lines = []
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Name) and node.id == name:
+            lines.append(node.lineno)
+        elif isinstance(node, ast.ImportFrom) and any(alias.name == name for alias in node.names):
+            lines.append(node.lineno)
+    return sorted(lines)
+
+
 # --- O detector acerta? --------------------------------------------------------
 
 
@@ -142,6 +157,19 @@ def test_detector_de_atalhos(source: str, expected: list[str]):
     assert [shortcut for _, shortcut in shortcuts_in(source)] == expected, "atalhos apontados pelo detector"
 
 
+@pytest.mark.parametrize(
+    "source, expected",
+    [
+        pytest.param("from data.constants import PRODUCT_PRICES\n", [1], id="import"),
+        pytest.param("x = PRODUCT_PRICES[4]\n", [1], id="uso"),
+        pytest.param("x = catalog_prices[4]\n", [], id="catalogo"),
+        pytest.param('"""PRODUCT_PRICES"""\n# PRODUCT_PRICES\n', [], id="string-e-comentario"),
+    ],
+)
+def test_detector_de_uso_de_nome(source: str, expected: list[int]):
+    assert names_used(source, FIXED_PRICES) == expected, "linhas apontadas pelo detector"
+
+
 def test_senha_na_massa_de_dados_nao_conta():
     source = (PROJECT_ROOT / CREDENTIALS_FILE).read_text(encoding="utf-8")
     assert shortcuts_in(source, check_password=False) == [], "atalhos na massa de dados"
@@ -178,3 +206,16 @@ def test_nenhum_atalho_proibido():
                 f"{allowed} ({reason}); se a exceção não é mais necessária, tire-a de ALLOWED"
             )
     assert not found, "atalhos proibidos:\n" + "\n".join(found)
+
+
+def test_tabela_de_precos_fixa_so_no_teste_de_guarda():
+    found = [
+        f"{path.relative_to(PROJECT_ROOT).as_posix()}:{line}"
+        for path in python_files()
+        if path.relative_to(PROJECT_ROOT).as_posix() not in FIXED_PRICES_FILES
+        for line in names_used(path.read_text(encoding="utf-8"), FIXED_PRICES)
+    ]
+    assert not found, (
+        f"{FIXED_PRICES} fora do teste de guarda (o preço esperado vem do catálogo do site, "
+        "fixture catalog_prices):\n" + "\n".join(found)
+    )

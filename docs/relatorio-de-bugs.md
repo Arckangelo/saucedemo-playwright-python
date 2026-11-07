@@ -522,7 +522,7 @@ fontes web. Comparação: [inventário standard_user](https://github.com/Arckang
 
 | Severidade | Prioridade | Teste |
 |---|---|---|
-| Alta | P1 | `tests/test_visual_user.py::test_precos_iguais_aos_do_standard_user` |
+| Alta | P1 | `tests/test_visual_user.py::test_precos_iguais_aos_do_catalogo` |
 
 **Impacto (Alta):** o cliente decide a compra vendo um preço e paga outro, o que gera reclamações e estornos.
 

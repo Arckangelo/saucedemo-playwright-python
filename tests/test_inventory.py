@@ -3,7 +3,7 @@
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import PASSWORD, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Products, Users
+from data.constants import PASSWORD, PRODUCT_IDS, TOTAL_PRODUCTS, Products, Users
 from pages import InventoryPage, LoginPage
 from support.bug_checks import bug_check, wait_for_render
 
@@ -19,17 +19,16 @@ from support.bug_checks import bug_check, wait_for_render
     ],
 )
 def test_ordenacao_de_produtos(
-    inventory_page: InventoryPage, option: str, sort_by: str, descending: bool
+    inventory_page: InventoryPage, catalog_prices, option: str, sort_by: str, descending: bool
 ):
     # Garante que a lista já foi renderizada: sem isso, a pré-condição abaixo
     # (not_to_have_text) passaria com a lista ainda vazia.
     expect(inventory_page.items).to_have_count(TOTAL_PRODUCTS)
 
-    # O resultado esperado é CALCULADO a partir da tabela de referência, não da
-    # tela: se o site exibisse um produto ou preço errado, ordenar o que está
-    # na tela não perceberia. Se o catálogo mudar, a tabela é atualizada de
-    # propósito, num lugar só.
-    catalog = PRODUCT_PRICES.values()
+    # O resultado esperado é CALCULADO a partir do catálogo do site (lido do
+    # JavaScript da aplicação), não da tela: se a tela exibisse um produto ou
+    # preço errado, ordenar o que está na tela não perceberia.
+    catalog = catalog_prices.values()
     if sort_by == "name":
         locator = inventory_page.item_names
         expected = sorted((product["name"] for product in catalog), reverse=descending)

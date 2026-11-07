@@ -65,8 +65,11 @@ para quando o assunto aparecer.
       use `on_page` (a URL decide se avançou) e `reached` (espera o elemento da tela nova);
     - seletores por `data-test` (`get_by_test_id`); exceção só com comentário explicando, como o botão
       do menu (`#react-burger-menu-btn`);
-    - valor esperado vem de `PRODUCT_PRICES` em `data/constants.py`, nunca da tela testada; dinheiro em
-      `Decimal`;
+    - nome e preço esperados vêm de `catalog_prices` (catálogo do site, lido na hora do JavaScript da
+      aplicação por `support/catalog.py`), nunca da tela testada; dinheiro em `Decimal`. Do site só
+      saem nomes e preços: regras de cálculo, como o imposto (`TAX_RATE`), ficam no teste.
+      `PRODUCT_PRICES` só no teste de guarda (`tests/test_catalogo.py`), conferido por
+      `tests/test_convencoes.py`;
     - login reaproveitado (`login_as`, `session_as`, `standard_session`); carrinho montado com
       `cart_with(...)`; a tela só para o que está sendo testado;
     - estado conferido por baixo da tela (`cart_ids`, `session_cookie`) onde a tela não prova o efeito;
@@ -76,8 +79,8 @@ para quando o assunto aparecer.
       positivo: ..."`; os demais `expect` usam a mensagem do Playwright, que já mostra o elemento, o
       esperado e o obtido;
     - exceção JavaScript falha o teste; `allow_js_errors` só com comentário citando o bug que a gera;
-    - perfis com defeito comparados ao `standard_user` como oráculo (`oracle_inventory`), em vez de
-      valores fixos no código.
+    - perfis com defeito comparados ao `standard_user` como oráculo (`oracle_inventory`) em imagens e
+      layout, em vez de valores fixos no código; preços, com o catálogo.
     - `tests/test_convencoes.py` barra no CI, em `tests/`, `support/`, `pages/` e `conftest.py`:
       `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado (`skip`), depurador e a
       senha fora de `data/constants.py`. Exceção só em `ALLOWED`, com motivo e quantidade exata.

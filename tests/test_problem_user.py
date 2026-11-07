@@ -9,7 +9,7 @@ Detalhes de cada bug em docs/relatorio-de-bugs.md.
 import pytest
 from playwright.sync_api import Page, expect
 
-from data.constants import CHECKOUT_INFO, PRODUCT_IDS, PRODUCT_PRICES, TOTAL_PRODUCTS, Messages, Products, Users
+from data.constants import CHECKOUT_INFO, PRODUCT_IDS, TOTAL_PRODUCTS, Messages, Products, Users
 from pages import CheckoutInformationPage, CheckoutOverviewPage
 from support.bug_checks import (
     WrongProductDetailError,
@@ -45,10 +45,10 @@ class WrongSubtotalError(AssertionError):
     raises=SortNotAppliedError,
     reason="BUG-008 (#9): a ordenação do problem_user não muda a lista e volta para A-Z",
 )
-def test_ordenacao_por_nome_z_a(login_as):
+def test_ordenacao_por_nome_z_a(login_as, catalog_prices):
     inventory = login_as(Users.PROBLEM)
     expect(inventory.items).to_have_count(TOTAL_PRODUCTS)
-    expected = sorted((product["name"] for product in PRODUCT_PRICES.values()), reverse=True)
+    expected = sorted((product["name"] for product in catalog_prices.values()), reverse=True)
 
     inventory.sort_by("za")
     wait_for_render(inventory.page)
@@ -128,7 +128,7 @@ def test_carrinho_esvazia_apos_concluir_o_pedido(page: Page, session_as, cart_wi
     raises=WrongSubtotalError,
     reason="BUG-025 (#37): o resumo do problem_user mostra o subtotal em dobro",
 )
-def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, cart_with):
+def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, cart_with, catalog_prices):
     # Encontrado pela análise de mutação (--base-user problem_user). Carrinho
     # montado pelo localStorage e resumo aberto pela URL: o formulário do passo 1
     # está quebrado para este perfil (BUG-009), e o resumo abre sem ele (BUG-024).
@@ -138,6 +138,6 @@ def test_resumo_calcula_o_subtotal_pela_soma_dos_itens(page: Page, session_as, c
     overview = CheckoutOverviewPage(page).open()
     expect(overview.items, "pré-condição: o carrinho foi montado").to_have_count(len(products))
 
-    expected = sum(PRODUCT_PRICES[PRODUCT_IDS[product]]["price"] for product in products)
+    expected = sum(catalog_prices[PRODUCT_IDS[product]]["price"] for product in products)
     with bug_check(WrongSubtotalError, lambda: f"Subtotal {overview.get_subtotal()}, esperado {expected}"):
-        assert overview.get_subtotal() == expected, "subtotal do resumo (soma da tabela de preços)"
+        assert overview.get_subtotal() == expected, "subtotal do resumo (soma dos preços do catálogo)"
