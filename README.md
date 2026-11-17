@@ -1,29 +1,29 @@
 # SauceDemo E2E — Python + Playwright
 
-[![E2E Tests](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/e2e-tests.yml)
-[![Security](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/security.yml)
-[![CodeQL](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml/badge.svg)](https://github.com/Arckangelo/saucedemo-playwright-python/actions/workflows/codeql.yml)
+[![E2E Tests](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/e2e-tests.yml)
+[![Security](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/security.yml/badge.svg)](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/security.yml)
+[![CodeQL](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/codeql.yml/badge.svg)](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/actions/workflows/codeql.yml)
 ![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)
 ![Playwright](https://img.shields.io/badge/Playwright-1.64-2EAD33?logo=playwright&logoColor=white)
 ![pytest](https://img.shields.io/badge/pytest-9.1-0A9EDC?logo=pytest&logoColor=white)
 
-📊 [Relatório HTML da última execução na `main`](https://arckangelo.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf) · 📋 [Casos de teste](docs/casos-de-teste.md)
+📊 [Relatório HTML da última execução na `main`](https://angelo-roque-barbosa.github.io/saucedemo-playwright-python/) (publicado pelo CI) · 🐞 [Bugs encontrados](BUGS.md) · [Relatório de bugs (PDF)](docs/relatorio-de-bugs.pdf) · 📋 [Casos de teste](docs/casos-de-teste.md) · 🗺️ [Plano de testes](docs/planos-de-testes.md)
 
 Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](https://www.saucedemo.com), loja virtual de demonstração da Sauce Labs feita para praticar automação.
 
 ### Em resumo
 
 - **O que testa:** login, catálogo, detalhe do produto, carrinho, checkout e menu, com os **6 perfis de usuário** do site.
-- **Tamanho:** **88 execuções** de teste do site: 50 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 92 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos, a leitura do catálogo de preços e as convenções do código.
+- **Tamanho:** **88 execuções** de teste do site: 50 verificam o que deve funcionar e 38 documentam bugs conhecidos. À parte, 96 testes conferem a própria suíte: a [proteção contra instabilidade](#integração-contínua), a regra dos bugs conhecidos, o resumo dos bugs no CI, a leitura do catálogo de preços e as convenções do código.
 - **O que encontrou:** **25 bugs**. 8 afetam todos os usuários, inclusive o padrão (por exemplo, um pedido de $0.00 concluído com o carrinho vazio); os outros 17 são os defeitos que o site injeta de propósito nos perfis de treino. Cada bug tem issue, evidência e teste ([lista](BUGS.md)).
 - **Como os bugs ficam na suíte:** cada bug é um teste que descreve o comportamento **correto** e aparece como falha esperada (XFAIL). Se o site corrigir o bug, o teste avisa.
 - **Por que dá para confiar nos testes:** preços e totais conferidos contra o catálogo do site, lido na hora (não contra a própria tela), estado conferido no `localStorage` e no cookie, qualquer erro JavaScript reprova o teste, seletores por `data-test` e uma [análise de mutação](#análise-de-mutação) que não encontra mais testes fracos.
-- **CI:** GitHub Actions a cada push e pull request, execução diária e [relatório publicado](https://arckangelo.github.io/saucedemo-playwright-python/).
+- **CI:** GitHub Actions a cada push e pull request, execução diária e [relatório publicado](https://angelo-roque-barbosa.github.io/saucedemo-playwright-python/).
 - **Para rodar:** `pip install -r requirements.txt && playwright install chromium && pytest` (detalhes em [Como executar](#como-executar)).
 
 <p align="center"><img src="docs/img/resumo-projeto.png" width="420" alt="Resumo do projeto: 8 defeitos que afetam todos os usuários do SauceDemo, inclusive o padrão, mais 17 defeitos de treino que o site injeta de propósito nos perfis especiais (8 no problem_user, 5 no error_user e 4 no visual_user), também mapeados e testados; execuções de teste passaram de 24 para 88, cobrindo os 6 perfis de usuário; 25 issues no GitHub, cada uma com evidência; CI 6 vezes mais rápido a cada push, de 101 s para 17 s. Destaque do BUG-001: até o usuário padrão conclui um pedido com o carrinho vazio, com total de $0.00."></p>
 
-> Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/Arckangelo/automationexercise-cypress-tests).
+> Este projeto complementa meu [projeto em Cypress/JavaScript](https://github.com/angelo-roque-barbosa/automationexercise-cypress-tests).
 
 ---
 
@@ -49,7 +49,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 
 - **88 execuções de teste** a partir de 43 cenários, usando parametrização, cobrindo os **6 perfis de usuário** do site.
 - **Engenharia reversa documentada**: [requisitos inferidos](docs/requisitos-inferidos.md) do comportamento observado, com mapa de fluxos e matriz usuário × funcionalidade.
-- **25 defeitos documentados** (8 que afetam todos os usuários e 17 de treino dos perfis especiais), 24 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada. Resumo rápido em [BUGS.md](BUGS.md).
+- **25 defeitos documentados** (8 que afetam todos os usuários e 17 de treino dos perfis especiais), 24 deles cobertos por testes em vez de ignorados, com [relatório completo e evidências](docs/relatorio-de-bugs.md) e [uma issue por bug](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/issues?q=label%3Abug). O BUG-023, um bug de tempo, tem um script de reprodução controlada. Resumo rápido em [BUGS.md](BUGS.md).
 - **Análise de mutação com os próprios perfis do site:** os testes do `standard_user` rodam com o `problem_user` e o `error_user` (`--base-user`). Nenhum teste sobrevive numa funcionalidade que o perfil quebra (na versão anterior, 2 sobreviviam), e a análise revelou o [BUG-025](docs/relatorio-de-bugs.md#bug-025). Ver [Análise de mutação](#análise-de-mutação).
 - **Page Object Model**: cada tela do site é uma classe, então os testes ficam curtos e legíveis.
 - **Suíte rápida:** login feito uma única vez por usuário e execução em paralelo com pytest-xdist; no CI, cerca de 17 s a cada push e 33 s na suíte completa.
@@ -82,7 +82,7 @@ Suíte de testes automatizados **end-to-end** para o [SauceDemo (Swag Labs)](htt
 
 ```bash
 # Baixar o projeto
-git clone https://github.com/Arckangelo/saucedemo-playwright-python.git
+git clone https://github.com/angelo-roque-barbosa/saucedemo-playwright-python.git
 cd saucedemo-playwright-python
 
 # Criar e ativar um ambiente virtual
@@ -158,7 +158,7 @@ Ao final, abra `reports/report.html` no navegador para ver o resultado.
 
 Das 88 execuções, 50 passam e 38 documentam bugs conhecidos como falha esperada (`xfail`).
 
-Além delas, 92 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, `tests/test_leitura_do_catalogo.py` (28) testa a leitura do catálogo de preços com um JavaScript de exemplo, sem rede, e a marca de variação suspeita do teste de guarda, e `tests/test_convencoes.py` (29) barra no código da suíte `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado, depurador, senha fora de `data/constants.py` e a tabela de preços fixa fora do teste de guarda.
+Além delas, 96 testes conferem a própria suíte, e não o site: `tests/test_protecao_site.py` (19) simula a queda do site para provar que a proteção contra instabilidade funciona, `tests/test_regra_dos_bugs.py` (16) escreve xfail fora da regra de propósito para provar que eles viram erro, `tests/test_resumo_dos_bugs.py` (4) simula cada resultado possível de um teste de bug para conferir o resumo do CI, `tests/test_leitura_do_catalogo.py` (28) testa a leitura do catálogo de preços com um JavaScript de exemplo, sem rede, e a marca de variação suspeita do teste de guarda, e `tests/test_convencoes.py` (29) barra no código da suíte `assert` sem mensagem, espera fixa, `page.goto` direto, teste pulado, depurador, senha fora de `data/constants.py` e a tabela de preços fixa fora do teste de guarda.
 
 ### Perfis de usuário
 
@@ -184,7 +184,7 @@ cada perfil foi comparado com o `standard_user`.
 |---|---|
 | [Requisitos inferidos](docs/requisitos-inferidos.md) | Mapa de telas (Mermaid), 20 regras de negócio, como funcionam cookie, `localStorage` e URL, matriz usuário × funcionalidade e tempos do `performance_glitch_user` |
 | [Relatório de bugs](docs/relatorio-de-bugs.md) ([PDF](docs/relatorio-de-bugs.pdf)) | 25 bugs confirmados (8 que afetam todos os usuários e 17 de treino dos perfis especiais; 2 críticos, 4 altos, 12 médios, 7 baixos), 4 suspeitas e comportamentos intencionais, com passos, evidências e o teste (ou o script de reprodução) de cada um |
-| [Issues dos bugs](https://github.com/Arckangelo/saucedemo-playwright-python/issues?q=label%3Abug) | Uma issue por bug confirmado, com severidade, passos para reproduzir, evidências e o teste que a cobre |
+| [Issues dos bugs](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/issues?q=label%3Abug) | Uma issue por bug confirmado, com severidade, passos para reproduzir, evidências e o teste que a cobre |
 | [Sugestões de melhoria](docs/sugestoes-de-melhoria.md) | Melhorias para a aplicação e para este projeto, com esforço e impacto |
 
 Destaques entre os defeitos que afetam todos os usuários: o `standard_user` consegue concluir um
@@ -239,6 +239,7 @@ saucedemo-playwright-python/
 │   ├── analise-de-mutacao.md     # Testes do standard_user rodados com os perfis defeituosos
 │   ├── casos-de-teste.md         # Um caso de teste por teste do site, com o ID CT do código
 │   ├── insumos-do-ambiente.md    # Ambiente, fonte de verdade, dados, critérios e instabilidades
+│   ├── planos-de-testes.md       # Plano de testes: escopo, estratégia, critérios, cronograma e riscos
 │   ├── requisitos-inferidos.md   # Engenharia reversa: fluxos, regras e matriz de usuários
 │   ├── relatorio-de-bugs.md      # Bugs confirmados, suspeitas e evidências
 │   ├── relatorio-de-bugs.pdf     # O mesmo relatório em PDF (A4), gerado pelo script abaixo
@@ -259,6 +260,7 @@ saucedemo-playwright-python/
 │   └── reproduzir_bug_023.py   # Reproduz a condição de corrida do menu (BUG-023) com a CPU mais lenta
 ├── support/
 │   ├── bug_checks.py      # Verificações compartilhadas pelo problem_user e pelo error_user
+│   ├── bug_summary.py     # Resumo dos bugs, teste a teste, na página da execução do CI
 │   ├── catalog.py         # Lê o catálogo de preços do JavaScript do site (fixture catalog_prices)
 │   ├── item_checks.py     # assert_item: confere uma linha com o catálogo do site
 │   ├── known_bugs.py      # Regra dos xfail de bugs conhecidos, conferida, e o marker known_bug
@@ -273,6 +275,7 @@ saucedemo-playwright-python/
 │   ├── test_console_e_rede.py
 │   ├── test_protecao_site.py  # Simula a queda do site para testar a proteção
 │   ├── test_regra_dos_bugs.py # Escreve xfail fora da regra para testar a conferência
+│   ├── test_resumo_dos_bugs.py # Simula cada resultado de um teste de bug para testar o resumo do CI
 │   ├── test_leitura_do_catalogo.py # Leitura do catálogo com um JavaScript de exemplo, sem rede
 │   ├── test_catalogo.py   # Teste de guarda: avisa quando um preço do site muda
 │   ├── test_convencoes.py     # Convenções do código conferidas (assert sem mensagem, atalhos proibidos)
@@ -312,7 +315,7 @@ saucedemo-playwright-python/
 
 ## Integração contínua
 
-O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha. Na `main`, o job **Publicar relatório no GitHub Pages** coloca o relatório HTML no ar em [https://arckangelo.github.io/saucedemo-playwright-python/](https://arckangelo.github.io/saucedemo-playwright-python/) (só o relatório; os traces ficam no artefato).
+O workflow [`e2e-tests.yml`](.github/workflows/e2e-tests.yml) prepara o Python 3.13, instala as dependências num `venv`, instala o Chromium, executa os testes em paralelo (`pytest -n auto`) e publica o relatório e os traces como artefato (`relatorio-e2e`), inclusive quando algum teste falha. Na `main`, o job **Publicar relatório no GitHub Pages** coloca o relatório HTML no ar em [https://angelo-roque-barbosa.github.io/saucedemo-playwright-python/](https://angelo-roque-barbosa.github.io/saucedemo-playwright-python/) (só o relatório; os traces ficam no artefato).
 
 O que roda depende do gatilho:
 
@@ -324,7 +327,18 @@ O que roda depende do gatilho:
 | Agendamento diário (09:00 UTC, 06:00 em Brasília) | Suíte completa e publicação no GitHub Pages | Detectar mudanças no site, que é de terceiros: um bug corrigido aparece como XPASS e um comportamento novo aparece como falha |
 | Manual (aba **Actions**) | Suíte completa (e publicação, se rodado na `main`) | Rodar sob demanda |
 
-Ao final de cada execução, a página do workflow mostra um **resumo** com a contagem de testes que passaram, de **XFAIL** (bug conhecido que continua reproduzindo) e de **XPASS** (bug conhecido que deixou de reproduzir), além de falhas, erros e pulados. Um XPASS aparece com o teste e o bug: é o sinal para confirmar a correção no site e tirar o `xfail` do teste. O resumo é escrito pelo `conftest.py` (hook `pytest_terminal_summary`) no `$GITHUB_STEP_SUMMARY`; fora do CI, nada é escrito.
+Ao final de cada execução, a página do workflow mostra um **resumo** com a contagem de testes que passaram, de **XFAIL** (bug conhecido que continua reproduzindo) e de **XPASS** (bug conhecido que deixou de reproduzir), além de falhas, erros e pulados. Logo abaixo vem a tabela **Bugs conhecidos, teste a teste** ([`support/bug_summary.py`](support/bug_summary.py)): uma linha por teste de bug, com o ID, a issue e o que aconteceu com ele. Assim, um "tudo certo" na contagem não esconde o que houve com cada bug:
+
+| Resultado na tabela | Significado |
+|---|---|
+| reproduz | XFAIL com a exceção própria do bug: o bug continua lá |
+| **CORRIGIDO?** | o teste passou (XPASS): confirme a correção no site e tire o `xfail` |
+| **falha diferente da do bug** | o teste quebrou por outro motivo (seletor, login, tempo) e não conferiu o bug |
+| **erro na preparação** / **no encerramento** | ex.: um xfail fora da regra dos bugs conhecidos |
+| inconclusivo | o próprio teste se pulou, com o motivo (ex.: BUG-006, telemetria sem resposta) |
+| SITE INDISPONÍVEL | o site caiu: nem bug nem correção |
+
+A contagem é escrita pelo `conftest.py` e a tabela pelo plugin, as duas no `$GITHUB_STEP_SUMMARY` (hook `pytest_terminal_summary`); fora do CI, nada é escrito. No push fora da `main`, que roda sem os testes de bugs, a tabela diz que eles não rodaram.
 
 Os testes de bugs conhecidos ficam fora do push nas outras branches porque não mudam com o código deste repositório: eles acompanham o site, e isso é papel do PR e da execução diária.
 
@@ -440,4 +454,4 @@ Este projeto foi desenvolvido com auxílio do [Claude Code](https://claude.com/c
 
 **Angelo Roque**, QA com foco em automação de testes.
 
-[LinkedIn](https://www.linkedin.com/in/angelo-roque-223b6b259/) · [GitHub](https://github.com/Arckangelo)
+[LinkedIn](https://www.linkedin.com/in/angelo-roque-223b6b259/) · [GitHub](https://github.com/angelo-roque-barbosa)

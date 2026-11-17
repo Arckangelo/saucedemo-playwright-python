@@ -18,7 +18,7 @@ demonstração exibidas publicamente na tela de login do SauceDemo e não são s
 **Não abra uma issue pública** para relatar uma vulnerabilidade.
 
 Use o reporte privado do GitHub: aba **Security** → **Report a vulnerability**
-([link direto](https://github.com/Arckangelo/saucedemo-playwright-python/security/advisories/new)).
+([link direto](https://github.com/angelo-roque-barbosa/saucedemo-playwright-python/security/advisories/new)).
 
 Inclua, se possível:
 

@@ -328,7 +328,8 @@ def pytest_terminal_summary(terminalreporter, config):
     nada é escrito. Com xfail_strict, um XPASS não é contado como "xpassed": o
     pytest o transforma em falha com a mensagem "[XPASS(strict)] ...". Por isso
     ele é separado das falhas comuns: significa que um bug conhecido foi
-    corrigido e o teste precisa sair do xfail.
+    corrigido e o teste precisa sair do xfail. A situação de cada bug, teste a
+    teste, vem logo depois, escrita por support/bug_summary.py.
     """
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not path or hasattr(config, "workerinput"):
@@ -361,9 +362,11 @@ def pytest_terminal_summary(terminalreporter, config):
             "",
         ]
     if xpassed:
-        lines += ["**XPASS:** o bug deixou de reproduzir. Confirme no site e tire o `xfail` do teste:", ""]
-        lines += [f"- `{r.nodeid}`: {str(r.longrepr)[len(_XPASS_STRICT):].strip()}" for r in xpassed]
-        lines.append("")
+        lines += [
+            "**XPASS:** o bug deixou de reproduzir. Confirme no site e tire o `xfail` do teste "
+            "(cada um aparece como CORRIGIDO? na tabela de bugs, logo abaixo).",
+            "",
+        ]
     if real_failures or stats.get("error"):
         lines += ["**Falhas e erros:**", ""]
         lines += [f"- `{r.nodeid}` ({r.when})" for r in real_failures + stats.get("error", [])]

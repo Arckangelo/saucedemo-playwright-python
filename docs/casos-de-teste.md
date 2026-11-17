@@ -790,6 +790,12 @@ Estes arquivos testam a própria suíte, e não o site: não têm ID CT nem caso
 |---|---|
 | Todo xfail de bug conhecido tem strict=True, raises= com exceção própria e motivo "BUG-NNN (#issue): ..." com ID e issue iguais aos do BUGS.md; um xfail fora da regra termina como ERRO, também com pytest-xdist. | 16 |
 
+### test_resumo_dos_bugs.py
+
+| O que garante | Testes |
+|---|---|
+| No CI, o resumo da execução tem uma linha por teste de bug conhecido, com o ID, a issue e o resultado: reproduz, CORRIGIDO? (XPASS), falha diferente da do bug, erro na preparação ou no encerramento, inconclusivo ou SITE INDISPONÍVEL, também com pytest-xdist; sem os testes de bugs, o resumo diz que eles não rodaram; fora do CI, nada é escrito. | 4 |
+
 ### test_leitura_do_catalogo.py
 
 | O que garante | Testes |
