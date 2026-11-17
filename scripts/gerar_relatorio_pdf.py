@@ -31,7 +31,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "docs" / "relatorio-de-bugs.md"
 OUTPUT = ROOT / "docs" / "relatorio-de-bugs.pdf"
-REPO_URL = "https://github.com/Arckangelo/saucedemo-playwright-python"
+REPO_URL = "https://github.com/angelo-roque-barbosa/saucedemo-playwright-python"
 EVIDENCE_LINK = re.compile(r'<a href="([^"]*docs/evidencias/([^"/]+\.(?:jpg|jpeg|png)))"[^>]*>(.*?)</a>')
 
 
